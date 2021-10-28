@@ -37,6 +37,12 @@ pub fn idevice_get_device_list_extended() -> Option<(Vec<idevice_info>, i32)> {
         }
     }
 
+    let device_list_ptr = device_list as *mut *mut std::os::raw::c_char;
+
+    unsafe {
+        unsafe_bindings::idevice_device_list_free(device_list_ptr);
+    }
+
     Some((to_return, device_count))
 }
 
