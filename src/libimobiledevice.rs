@@ -4,6 +4,8 @@
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
+use std::ptr::null;
+
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 
@@ -55,7 +57,7 @@ pub fn idevice_get_device_list_extended() -> Option<(Vec<idevice_info>, i32)> {
     Some((to_return, device_count))
 }
 
-pub fn idevice_new_with_options(udid: String, network: bool) -> Option<idevice_info> {
+pub fn idevice_new_with_options(udid: String, network: bool) -> Option<idevice_t> {
     let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
     let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
 
@@ -71,8 +73,57 @@ pub fn idevice_new_with_options(udid: String, network: bool) -> Option<idevice_i
     if result < 0 {
         return None;
     }
-    Some(unsafe { idevice_info::new(udid, (*device_info).conn_type, (*device_info).conn_data) })
+    Some(unsafe {
+        idevice_t::new(
+            device_info
+        )
+    })
 }
+
+pub fn lockdownd_client_new_with_handshake(
+    device: idevice_t,
+    label: String,
+) -> Option<lockdownd_client> {
+    let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
+    let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
+
+    let label_c_str = std::ffi::CString::new(label).unwrap();
+
+    
+
+    let result = unsafe {
+        unsafe_bindings::lockdownd_client_new_with_handshake(
+            device.device,
+            client_ptr,
+            label_c_str.as_ptr(),
+        )
+    };
+    if result < 0 {
+        return None;
+    }
+
+    todo!()
+}
+
+pub fn lockdownd_get_value(client: lockdownd_client) -> Option<plist> {
+    let mut plist_ptr = std::ptr::null_mut();
+
+    let parent = unsafe_bindings::
+
+    let lock_cli = unsafe_bindings::lockdownd_client_private {
+        parent: client.parent,
+    }
+
+
+    let result =
+        unsafe { unsafe_bindings::lockdownd_get_value(lock_cli, null(), null(), &mut plist_ptr) };
+    if result < 0 {
+        return None;
+    }
+    todo!()
+    //Some(unsafe { plist::new(plist_ptr) })
+}
+
 pub struct idevice_info {
     pub udid: String,
     pub conn_type: u32,
@@ -85,6 +136,56 @@ impl idevice_info {
             udid,
             conn_type,
             conn_data,
+        }
+    }
+}
+
+pub struct idevice_t {
+    pub device: *mut unsafe_bindings::idevice_private
+}
+
+impl idevice_t {
+    pub fn new(device: *mut unsafe_bindings::idevice_private) -> Self {
+        idevice_t {
+            device
+        }
+    }
+}
+
+pub struct lockdownd_client_t {
+    client: unsafe_bindings::lockdownd_client_t,
+}
+
+impl lockdownd_client_t {
+    pub fn new(
+        client: unsafe_bindings::lockdownd_client_t
+    ) -> Self {
+        client
+    }
+}
+
+pub struct idevice_connection {
+    pub device: idevice_private,
+    pub conn_type: u32,
+    pub data: *mut ::std::os::raw::c_void,
+    pub ssl_recv_timeout: ::std::os::raw::c_uint,
+    pub status: u32,
+}
+
+impl idevice_connection {
+    pub fn new(
+        device: idevice_private,
+        conn_type: u32,
+        data: *mut ::std::os::raw::c_void,
+        ssl_recv_timeout: ::std::os::raw::c_uint,
+        status: u32,
+    ) -> Self {
+        idevice_connection {
+            device,
+            conn_type,
+            data,
+            ssl_recv_timeout,
+            status,
         }
     }
 }
