@@ -83,7 +83,7 @@ pub fn idevice_new_with_options(udid: String, network: bool) -> Option<idevice_t
 pub fn lockdownd_client_new_with_handshake(
     device: idevice_t,
     label: String,
-) -> Option<lockdownd_client> {
+) -> Option<lockdownd_client_t> {
     let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
     let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
@@ -102,7 +102,7 @@ pub fn lockdownd_client_new_with_handshake(
         return None;
     }
 
-    todo!()
+    Some(lockdownd_client_t::new(client))
 }
 
 pub fn lockdownd_get_value(client: lockdownd_client) -> Option<plist> {
@@ -157,35 +157,23 @@ pub struct lockdownd_client_t {
 }
 
 impl lockdownd_client_t {
-    pub fn new(
-        client: unsafe_bindings::lockdownd_client_t
-    ) -> Self {
-        client
+    pub fn new( client: unsafe_bindings::lockdownd_client_t) -> Self {
+        lockdownd_client_t {
+            client
+        }
     }
 }
 
-pub struct idevice_connection {
-    pub device: idevice_private,
-    pub conn_type: u32,
-    pub data: *mut ::std::os::raw::c_void,
-    pub ssl_recv_timeout: ::std::os::raw::c_uint,
-    pub status: u32,
+pub struct idevice_connection_t {
+    connection: unsafe_bindings::idevice_connection_t,
 }
 
-impl idevice_connection {
+impl idevice_connection_t {
     pub fn new(
-        device: idevice_private,
-        conn_type: u32,
-        data: *mut ::std::os::raw::c_void,
-        ssl_recv_timeout: ::std::os::raw::c_uint,
-        status: u32,
+        connection: unsafe_bindings::idevice_connection_t,
     ) -> Self {
-        idevice_connection {
-            device,
-            conn_type,
-            data,
-            ssl_recv_timeout,
-            status,
+        idevice_connection_t {
+            connection
         }
     }
 }
