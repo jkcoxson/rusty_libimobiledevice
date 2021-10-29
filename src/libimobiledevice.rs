@@ -1,11 +1,11 @@
 #![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types)] // These are because I want function names to be similar to their C counterparts.
 #![allow(non_snake_case)]
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
-pub use crate::bindings_libimobiledevice as unsafe_bindings;
-use crate::bindings_libimobiledevice::idevice_info_t;
+pub use crate::bindings as unsafe_bindings;
+use crate::bindings::idevice_info_t;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
@@ -39,6 +39,7 @@ pub fn idevice_get_device_list_extended() -> Option<(Vec<idevice_info>, i32)> {
                     .to_string_lossy()
                     .to_string(),
                 (*(*i)).conn_type,
+                (*(*i)).conn_data,
             ));
         }
     }
@@ -54,13 +55,36 @@ pub fn idevice_get_device_list_extended() -> Option<(Vec<idevice_info>, i32)> {
     Some((to_return, device_count))
 }
 
+pub fn idevice_new_with_options(udid: String, network: bool) -> Option<idevice_info> {
+    let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
+    let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
+
+    let udid_c_str = std::ffi::CString::new(udid.clone()).unwrap();
+    let network: u32 = if network {
+        unsafe_bindings::idevice_options_IDEVICE_LOOKUP_NETWORK
+    } else {
+        unsafe_bindings::idevice_options_IDEVICE_LOOKUP_USBMUX
+    };
+    let result = unsafe {
+        unsafe_bindings::idevice_new_with_options(device_info_ptr, udid_c_str.as_ptr(), network)
+    };
+    if result < 0 {
+        return None;
+    }
+    Some(unsafe { idevice_info::new(udid, (*device_info).conn_type, (*device_info).conn_data) })
+}
 pub struct idevice_info {
     pub udid: String,
-    pub conn_type: u32, // I have no idea what to do with conn_data
+    pub conn_type: u32,
+    pub conn_data: *mut std::os::raw::c_void, // What the heck is this?
 }
 
 impl idevice_info {
-    fn new(udid: String, conn_type: u32) -> Self {
-        idevice_info { udid, conn_type }
+    fn new(udid: String, conn_type: u32, conn_data: *mut std::os::raw::c_void) -> Self {
+        idevice_info {
+            udid,
+            conn_type,
+            conn_data,
+        }
     }
 }
