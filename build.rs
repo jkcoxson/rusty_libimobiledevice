@@ -59,4 +59,24 @@ fn main() {
     // Tell cargo to link the library at src/.libs/libimobiledevice.a
     println!("cargo:rustc-link-search={}", libs_path.display());
     println!("cargo:rustc-link-lib=dylib=imobiledevice-1.0");
+
+    ////////////////////////////
+    //     LIBPLIST BUILD     //
+    ////////////////////////////
+
+    // Change directory to libplist
+    env::set_current_dir("../libplist").expect("Could not change directory to libplist");
+    // Run ./autogen.sh
+    let _ = std::process::Command::new("sh")
+        .arg("autogen.sh --without-cython")
+        .status();
+    // Run make
+    let _ = std::process::Command::new("make").status();
+
+    // Get path to libplist/src/.libs
+    let libs_path = env::current_dir().unwrap().join("src").join(".libs");
+
+    // Tell cargo to link the library at src/.libs/libplist.a
+    println!("cargo:rustc-link-search={}", libs_path.display());
+    println!("cargo:rustc-link-lib=dylib=plist-2.0");
 }

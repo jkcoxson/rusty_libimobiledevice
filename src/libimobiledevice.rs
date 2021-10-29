@@ -4,8 +4,6 @@
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
-use std::ptr::null;
-
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 
@@ -101,8 +99,13 @@ pub fn lockdownd_client_new_with_handshake(
 
 pub fn lockdownd_get_value(client: lockdownd_client_t) -> Option<String> {
     let plist_ptr: *mut unsafe_bindings::plist_t = std::ptr::null_mut();
-    let result =
-        unsafe { unsafe_bindings::lockdownd_get_value(client.client, null(), null(), plist_ptr) };
+    println!("got here 1");
+    let domain_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
+    let key_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
+    let result = unsafe {
+        unsafe_bindings::lockdownd_get_value(client.client, domain_ptr, key_ptr, plist_ptr)
+    };
+    println!("got here 2");
     if result < 0 {
         return None;
     }
@@ -116,7 +119,7 @@ pub fn lockdownd_get_value(client: lockdownd_client_t) -> Option<String> {
     unsafe {
         unsafe_bindings::plist_to_xml(*plist_ptr, plist_xml_ptr, plist_xml_len_ptr);
     }
-
+    println!("got here 3");
     // Convert plist_xml to String
     let plist_xml_str = unsafe {
         std::ffi::CStr::from_ptr(plist_xml)
