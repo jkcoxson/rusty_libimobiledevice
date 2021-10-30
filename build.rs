@@ -16,6 +16,7 @@ fn main() {
     let gnutls_path = match env::consts::OS {
         "linux" => "/usr/include",
         "macos" => "/opt/homebrew/include",
+        "windows" => "./gnutils",
         _ => panic!("Unsupported OS"),
     };
 
@@ -42,41 +43,49 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 
-    ////////////////////////////
-    // LIBIMOBILEDEVICE BUILD //
-    ////////////////////////////
+    // Check if folder ./override exists
+    let override_path = PathBuf::from("./override");
+    if override_path.exists() {
+        println!("cargo:rustc-link-search=native={}", override_path.display());
+    } else {
+        ////////////////////////////
+        // LIBIMOBILEDEVICE BUILD //
+        ////////////////////////////
 
-    // Change directory to libimobiledevice
-    let _ = env::set_current_dir("./libimobiledevice");
-    // Run ./autogen.sh
-    let _ = std::process::Command::new("sh").arg("autogen.sh").status();
-    // Run make
-    let _ = std::process::Command::new("make").status();
+        // Change directory to libimobiledevice
+        let _ = env::set_current_dir("./libimobiledevice");
+        // Run ./autogen.sh
+        let _ = std::process::Command::new("sh").arg("autogen.sh").status();
+        // Run make
+        let _ = std::process::Command::new("make").status();
 
-    // Get path to libimobiledevice/src/.libs
-    let libs_path = env::current_dir().unwrap().join("src").join(".libs");
+        // Get path to libimobiledevice/src/.libs
+        let libs_path = env::current_dir().unwrap().join("src").join(".libs");
 
-    // Tell cargo to link the library at src/.libs/libimobiledevice.a
-    println!("cargo:rustc-link-search={}", libs_path.display());
+        // Tell cargo to link the library at src/.libs/libimobiledevice.a
+        println!("cargo:rustc-link-search={}", libs_path.display());
+
+        ////////////////////////////
+        //     LIBPLIST BUILD     //
+        ////////////////////////////
+
+        // Change directory to libplist
+        env::set_current_dir("../libplist").expect("Could not change directory to libplist");
+        // Run ./autogen.sh
+        let _ = std::process::Command::new("sh")
+            .arg("autogen.sh --without-cython")
+            .status();
+        // Run make
+        let _ = std::process::Command::new("make").status();
+
+        // Get path to libplist/src/.libs
+        let libs_path = env::current_dir().unwrap().join("src").join(".libs");
+
+        // Tell cargo to link the library at src/.libs/libplist.a
+        println!("cargo:rustc-link-search={}", libs_path.display());
+    }
+
     println!("cargo:rustc-link-lib=dylib=imobiledevice-1.0");
 
-    ////////////////////////////
-    //     LIBPLIST BUILD     //
-    ////////////////////////////
-
-    // Change directory to libplist
-    env::set_current_dir("../libplist").expect("Could not change directory to libplist");
-    // Run ./autogen.sh
-    let _ = std::process::Command::new("sh")
-        .arg("autogen.sh --without-cython")
-        .status();
-    // Run make
-    let _ = std::process::Command::new("make").status();
-
-    // Get path to libplist/src/.libs
-    let libs_path = env::current_dir().unwrap().join("src").join(".libs");
-
-    // Tell cargo to link the library at src/.libs/libplist.a
-    println!("cargo:rustc-link-search={}", libs_path.display());
     println!("cargo:rustc-link-lib=dylib=plist-2.0");
 }

@@ -4,3 +4,5 @@
 #include "libimobiledevice/common/userpref.h"
 #include "libimobiledevice/src/idevice.h"
 #include "libimobiledevice/src/lockdown.h"
+#include "libimobiledevice/include/libimobiledevice/installation_proxy.h"
+#include "libimobiledevice/include/libimobiledevice/debugserver.h"
