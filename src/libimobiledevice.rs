@@ -98,10 +98,12 @@ pub fn lockdownd_client_new_with_handshake(
 }
 
 pub fn lockdownd_get_value(client: lockdownd_client_t) -> Option<String> {
-    let plist_ptr: *mut unsafe_bindings::plist_t = std::ptr::null_mut();
-    println!("got here 1");
+    let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+    let plist_ptr: *mut unsafe_bindings::plist_t = &mut plist;
     let domain_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
     let key_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
+    println!("got here 1");
+    // Create domain variable
     let result = unsafe {
         unsafe_bindings::lockdownd_get_value(client.client, domain_ptr, key_ptr, plist_ptr)
     };
@@ -152,6 +154,14 @@ pub struct idevice_t {
 impl idevice_t {
     pub fn new(device: *mut unsafe_bindings::idevice_private) -> Self {
         idevice_t { device }
+    }
+    pub fn get_udid(&self) -> String {
+        // Convert self.device.udid to String
+        unsafe {
+            std::ffi::CStr::from_ptr((*self.device).udid)
+                .to_string_lossy()
+                .to_string()
+        }
     }
 }
 
