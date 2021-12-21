@@ -5,7 +5,13 @@
 #![allow(unaligned_references)]
 
 use core::fmt;
-use std::{ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_mut};
+use std::{
+    ffi::CString,
+    fmt::Debug,
+    fmt::{Error, Formatter},
+    io::ErrorKind,
+    ptr::null_mut,
+};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
@@ -82,60 +88,6 @@ pub fn get_devices() -> Vec<Device> {
 // Yucky Functions //
 // To be replaced  //
 /////////////////////
-
-pub fn lockdownd_client_new_with_handshake(
-    device: idevice_t,
-    label: String,
-) -> Option<lockdownd_client_t> {
-    let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
-    let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
-
-    let label_c_str = std::ffi::CString::new(label).unwrap();
-
-    let result = unsafe {
-        unsafe_bindings::lockdownd_client_new_with_handshake(
-            device.device,
-            client_ptr,
-            label_c_str.as_ptr(),
-        )
-    };
-    if result < 0 {
-        return None;
-    }
-
-    Some(lockdownd_client_t::new(client))
-}
-
-pub fn lockdownd_get_value(client: lockdownd_client_t) -> Option<String> {
-    let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
-    let plist_ptr: *mut unsafe_bindings::plist_t = &mut plist;
-    let domain_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
-    let key_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
-    // Create domain variable
-    let result = unsafe {
-        unsafe_bindings::lockdownd_get_value(client.client, domain_ptr, key_ptr, plist_ptr)
-    };
-    if result < 0 {
-        return None;
-    }
-
-    // Variables to be filled by C. Honestly, who thought this was the correct way to do this?
-    let mut plist_xml: *mut std::os::raw::c_char = std::ptr::null_mut();
-    let plist_xml_ptr: *mut *mut std::os::raw::c_char = &mut plist_xml;
-    let mut plist_xml_len: u32 = 0;
-    let plist_xml_len_ptr: *mut u32 = &mut plist_xml_len;
-
-    unsafe {
-        unsafe_bindings::plist_to_xml(*plist_ptr, plist_xml_ptr, plist_xml_len_ptr);
-    }
-    // Convert plist_xml to String
-    let plist_xml_str = unsafe {
-        std::ffi::CStr::from_ptr(plist_xml)
-            .to_string_lossy()
-            .to_string()
-    };
-    Some(plist_xml_str)
-}
 
 pub fn instproxy_client_start_service(
     device: idevice_t,
@@ -328,11 +280,15 @@ pub fn plist_dict_get_item(apps: plist_t, key: String) -> plist_t {
 
 // Structs
 pub struct Device {
+    // Front facing properties
     pub name: String,
     pub udid: String,
     pub network: bool,
+    // Raw properties
     conn_data: *mut std::os::raw::c_void,
     device: *mut unsafe_bindings::idevice_private,
+    lockdown_client: Option<unsafe_bindings::lockdownd_client_t>,
+    proxy_client: Option<unsafe_bindings::instproxy_client_t>,
 }
 
 impl Device {
@@ -348,7 +304,78 @@ impl Device {
             network,
             conn_data,
             device,
+            lockdown_client: None,
+            proxy_client: None,
         };
+    }
+    /// Starts the lockdown service for the device
+    /// This allows things like debuggers to be attached
+    pub fn start_lockdown_service(&mut self, label: String) -> Result<(), String> {
+        let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
+        let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
+
+        let label_c_str = std::ffi::CString::new(label).unwrap();
+
+        let result = unsafe {
+            unsafe_bindings::lockdownd_client_new_with_handshake(
+                self.device,
+                client_ptr,
+                label_c_str.as_ptr(),
+            )
+        };
+
+        if result != 0 {
+            return Err(String::from("Failed to start Lockdown service"));
+        }
+
+        self.lockdown_client = Some(client);
+        Ok(())
+    }
+
+    /// Gets the preference plist from the lockdown service
+    /// Temporarily returns a string until we can parse it
+    pub fn get_preference_plist(&mut self) -> Result<String, String> {
+        if self.lockdown_client.is_none() {
+            self.start_lockdown_service(String::from("com.apple.mobile.lockdown"))?;
+        }
+        let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+        let plist_ptr: *mut unsafe_bindings::plist_t = &mut plist;
+        let domain_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
+        let key_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
+        // Create domain variable
+        let result = unsafe {
+            unsafe_bindings::lockdownd_get_value(
+                self.lockdown_client.unwrap(),
+                domain_ptr,
+                key_ptr,
+                plist_ptr,
+            )
+        };
+        if result != 0 {
+            return Err(String::from("Failed to get preference plist"));
+        }
+
+        // Variables to be filled by C. Honestly, who thought this was the correct way to do this?
+        let mut plist_xml: *mut std::os::raw::c_char = std::ptr::null_mut();
+        let plist_xml_ptr: *mut *mut std::os::raw::c_char = &mut plist_xml;
+        let mut plist_xml_len: u32 = 0;
+        let plist_xml_len_ptr: *mut u32 = &mut plist_xml_len;
+
+        unsafe {
+            unsafe_bindings::plist_to_xml(*plist_ptr, plist_xml_ptr, plist_xml_len_ptr);
+        }
+        // Convert plist_xml to String
+        let plist_xml_str = unsafe {
+            std::ffi::CStr::from_ptr(plist_xml)
+                .to_string_lossy()
+                .to_string()
+        };
+        // Free plist_xml
+        unsafe {
+            unsafe_bindings::plist_free(*plist_ptr);
+        }
+
+        Ok(plist_xml_str)
     }
 }
 

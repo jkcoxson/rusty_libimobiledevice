@@ -6,7 +6,8 @@
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
-// If this has the build feature enabled
+// This was mostly done for rust-analyzer, but it's useful to have it here
+
 #[cfg(feature = "pls-generate")]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
