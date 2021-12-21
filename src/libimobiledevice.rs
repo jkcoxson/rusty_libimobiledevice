@@ -4,46 +4,69 @@
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
-use std::{ffi::CString, ptr::null};
+use core::fmt;
+use std::{ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
-/// Returns a vector of devices found by usbmuxd.
-pub fn idevice_get_device_list_extended() -> Option<(Vec<idevice_info>, i32)> {
-    // I have no idea how this whole function works, sb wrote it so complain to him.
+/////////////////////
+// Smexy Functions //
+/////////////////////
 
-    // get list of idevice_info_t
-    let mut device_list: *mut idevice_info_t = std::ptr::null_mut();
+/// Gets all devices detected by usbmuxd
+pub fn get_devices() -> Vec<Device> {
+    let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
     let result = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
     };
 
-    // idevice_get_device_list_extended returns an error status code, return None if it's not 0s
-    if result < 0 {
-        return None;
+    // No devices are detected
+    if result != 0 {
+        return vec![];
     }
 
     // Create slice of mutable references to idevice_info_t from device_list and device_count
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
 
-    // Package up the found devices into a vector of idevice_info so Rust can manage the memory
-    let mut to_return: Vec<idevice_info> = vec![];
+    let mut to_return = vec![];
     for i in device_list_slice.iter_mut() {
-        unsafe {
-            to_return.push(idevice_info::new(
-                // What the heck C
-                std::ffi::CStr::from_ptr((*(*i)).udid)
-                    .to_string_lossy()
-                    .to_string(),
-                (*(*i)).conn_type,
-                (*(*i)).conn_data,
-            ));
+        let udid = unsafe {
+            std::ffi::CStr::from_ptr((*(*i)).udid)
+                .to_string_lossy()
+                .to_string()
+        };
+        let network = unsafe {
+            if (*(*i)).conn_type == 1 {
+                false
+            } else {
+                true
+            }
+        };
+
+        let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
+        let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
+        let result = unsafe {
+            unsafe_bindings::idevice_new_with_options(
+                device_info_ptr,
+                (*(*i)).udid,
+                if network {
+                    unsafe_bindings::idevice_options_IDEVICE_LOOKUP_NETWORK
+                } else {
+                    unsafe_bindings::idevice_options_IDEVICE_LOOKUP_USBMUX
+                },
+            )
+        };
+        if result != 0 {
+            continue;
         }
+
+        let to_push = Device::new(udid, network, unsafe { (*(*i)).conn_data }, device_info);
+        to_return.push(to_push);
     }
 
     // Drop the memory that the C library allocated
@@ -52,29 +75,13 @@ pub fn idevice_get_device_list_extended() -> Option<(Vec<idevice_info>, i32)> {
         unsafe_bindings::idevice_device_list_free(device_list_ptr);
     }
 
-    // All other variables are dropped at return
-
-    Some((to_return, device_count))
+    to_return
 }
 
-pub fn idevice_new_with_options(udid: String, network: bool) -> Option<idevice_t> {
-    let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
-    let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
-
-    let udid_c_str = std::ffi::CString::new(udid.clone()).unwrap();
-    let network: u32 = if network {
-        unsafe_bindings::idevice_options_IDEVICE_LOOKUP_NETWORK
-    } else {
-        unsafe_bindings::idevice_options_IDEVICE_LOOKUP_USBMUX
-    };
-    let result = unsafe {
-        unsafe_bindings::idevice_new_with_options(device_info_ptr, udid_c_str.as_ptr(), network)
-    };
-    if result < 0 {
-        return None;
-    }
-    Some(idevice_t::new(device_info))
-}
+/////////////////////
+// Yucky Functions //
+// To be replaced  //
+/////////////////////
 
 pub fn lockdownd_client_new_with_handshake(
     device: idevice_t,
@@ -320,6 +327,42 @@ pub fn plist_dict_get_item(apps: plist_t, key: String) -> plist_t {
 }
 
 // Structs
+pub struct Device {
+    pub name: String,
+    pub udid: String,
+    pub network: bool,
+    conn_data: *mut std::os::raw::c_void,
+    device: *mut unsafe_bindings::idevice_private,
+}
+
+impl Device {
+    pub fn new(
+        udid: String,
+        network: bool,
+        conn_data: *mut std::os::raw::c_void,
+        device: *mut unsafe_bindings::idevice_private,
+    ) -> Device {
+        return Device {
+            name: String::new(),
+            udid,
+            network,
+            conn_data,
+            device,
+        };
+    }
+}
+
+impl Debug for Device {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Device {{ name: {}, udid: {}, network: {} }}",
+            self.name, self.udid, self.network
+        )
+    }
+}
+
+// Raw, bad structs
 pub struct idevice_info {
     pub udid: String,
     pub conn_type: u32,
