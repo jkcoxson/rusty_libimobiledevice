@@ -11,3 +11,6 @@ libc = "*"
 [build-dependencies]
 bindgen = "*"
 cc  = "*"
+
+[features]
+pls-generate = []

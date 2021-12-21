@@ -16,7 +16,7 @@ fn main() {
     let gnutls_path = match env::consts::OS {
         "linux" => "/usr/include",
         "macos" => "/opt/homebrew/include",
-        "windows" => "./gnutils",
+        "windows" => "/mingw64/include", // ?
         _ => panic!("Unsupported OS"),
     };
 

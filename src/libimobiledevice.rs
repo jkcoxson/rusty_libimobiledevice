@@ -4,6 +4,8 @@
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
+use std::{ffi::CString, ptr::null};
+
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 
@@ -233,6 +235,91 @@ pub fn debugserver_client_send_command(
     Some(response_str)
 }
 
+pub fn instproxy_client_options_new() -> plist_t {
+    plist_t::new(unsafe { unsafe_bindings::instproxy_client_options_new() })
+}
+
+pub fn instproxy_client_options_add(options: plist_t, key: String, value: String) {
+    let key_c_str = CString::new(key).unwrap();
+    let value_c_str = CString::new(value).unwrap();
+    let null_ptr: *mut CString = std::ptr::null_mut();
+
+    unsafe {
+        unsafe_bindings::instproxy_client_options_add(
+            options.plist,
+            key_c_str.as_ptr(),
+            value_c_str.as_ptr(),
+            null_ptr,
+        )
+    };
+}
+
+pub fn instproxy_client_options_set_return_attributes(options: plist_t, attribute: String) {
+    let attributes_c_str = CString::new(attribute).unwrap();
+    let null_ptr: *mut CString = std::ptr::null_mut();
+
+    unsafe {
+        unsafe_bindings::instproxy_client_options_set_return_attributes(
+            options.plist,
+            attributes_c_str.as_ptr(),
+            null_ptr,
+        )
+    };
+}
+
+pub fn instproxy_lookup(
+    client: instproxy_client_t,
+    appid: String,
+    client_opts: plist_t,
+) -> Option<plist_t> {
+    let mut apps: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+
+    let appid_c_str = CString::new(appid).unwrap();
+    let appid_c_str_ptr: *const std::os::raw::c_char = appid_c_str.as_ptr();
+    let appid_c_str_ptr_ptr = appid_c_str_ptr as *mut *const std::os::raw::c_char;
+
+    let results = unsafe {
+        unsafe_bindings::instproxy_lookup(
+            client.client,
+            appid_c_str_ptr_ptr,
+            client_opts.plist,
+            &mut apps,
+        )
+    };
+
+    if results < 0 {
+        return None;
+    }
+
+    Some(plist_t::new(apps))
+}
+
+pub fn instproxy_client_options_free(options: plist_t) {
+    unsafe { unsafe_bindings::instproxy_client_options_free(options.plist) };
+}
+
+pub fn plist_access_path(apps: plist_t, length: u32, appid: String) -> plist_t {
+    let appid_c_str = CString::new(appid).unwrap();
+    return unsafe {
+        plist_t::new(unsafe_bindings::plist_access_path(
+            apps.plist,
+            length,
+            appid_c_str,
+        ))
+    };
+}
+
+pub fn plist_dict_get_item(apps: plist_t, key: String) -> plist_t {
+    let key_c_str = CString::new(key).unwrap();
+    return unsafe {
+        plist_t::new(unsafe_bindings::plist_dict_get_item(
+            apps.plist,
+            key_c_str.as_ptr(),
+        ))
+    };
+}
+
+// Structs
 pub struct idevice_info {
     pub udid: String,
     pub conn_type: u32,
@@ -304,5 +391,15 @@ pub struct debugserver_command_t {
 impl debugserver_command_t {
     pub fn new(command: unsafe_bindings::debugserver_command_t) -> Self {
         debugserver_command_t { command }
+    }
+}
+
+pub struct plist_t {
+    plist: unsafe_bindings::plist_t,
+}
+
+impl plist_t {
+    pub fn new(plist: unsafe_bindings::plist_t) -> Self {
+        plist_t { plist }
     }
 }
