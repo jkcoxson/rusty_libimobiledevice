@@ -1,17 +1,8 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)] // These are because I want function names to be similar to their C counterparts.
-#![allow(non_snake_case)]
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
 
 use core::fmt;
-use std::{
-    ffi::CString,
-    fmt::Debug,
-    fmt::{Error, Formatter},
-    io::ErrorKind,
-    ptr::null_mut,
-};
+use std::{convert::TryInto, ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
@@ -88,111 +79,6 @@ pub fn get_devices() -> Vec<Device> {
 // Yucky Functions //
 // To be replaced  //
 /////////////////////
-
-pub fn instproxy_client_start_service(
-    device: idevice_t,
-    label: String,
-) -> Option<instproxy_client_t> {
-    let mut client: unsafe_bindings::instproxy_client_t = unsafe { std::mem::zeroed() };
-    let client_ptr: *mut unsafe_bindings::instproxy_client_t = &mut client;
-
-    let label_c_str = std::ffi::CString::new(label).unwrap();
-
-    let result = unsafe {
-        unsafe_bindings::instproxy_client_start_service(
-            device.device,
-            client_ptr,
-            label_c_str.as_ptr(),
-        )
-    };
-    if result < 0 {
-        return None;
-    }
-
-    Some(instproxy_client_t::new(client))
-}
-
-pub fn debugserver_client_start_service(
-    device: idevice_t,
-    label: String,
-) -> Option<debugserver_client_t> {
-    let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
-    let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
-
-    let label_c_str = std::ffi::CString::new(label).unwrap();
-
-    let result = unsafe {
-        unsafe_bindings::debugserver_client_start_service(
-            device.device,
-            client_ptr,
-            label_c_str.as_ptr(),
-        )
-    };
-    if result < 0 {
-        return None;
-    }
-
-    Some(debugserver_client_t::new(client))
-}
-
-pub fn debugserver_command_new(command: String, tok_number: i32) -> Option<debugserver_command_t> {
-    let mut command_ptr: unsafe_bindings::debugserver_command_t = unsafe { std::mem::zeroed() };
-    let command_ptr_ptr: *mut unsafe_bindings::debugserver_command_t = &mut command_ptr;
-
-    let command_c_str = std::ffi::CString::new(command).unwrap();
-
-    // Create C array
-    let mut to_fill: [std::os::raw::c_char; 8] = unsafe { std::mem::zeroed() };
-    // Create pointer to to_fill[0]
-    let mut to_fill_ptr: *mut std::os::raw::c_char = &mut to_fill[0];
-    let to_fill_ptr_ptr: *mut *mut std::os::raw::c_char = &mut to_fill_ptr;
-
-    let result = unsafe {
-        unsafe_bindings::debugserver_command_new(
-            command_c_str.as_ptr(),
-            tok_number,
-            to_fill_ptr_ptr,
-            command_ptr_ptr,
-        )
-    };
-    if result < 0 {
-        return None;
-    }
-
-    Some(debugserver_command_t::new(command_ptr))
-}
-
-pub fn debugserver_client_send_command(
-    client: debugserver_client_t,
-    command: debugserver_command_t,
-) -> Option<String> {
-    let mut response: std::os::raw::c_char = unsafe { std::mem::zeroed() };
-    let mut response_ptr: *mut std::os::raw::c_char = &mut response;
-    let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
-
-    let response_size = std::ptr::null_mut();
-
-    let result = unsafe {
-        unsafe_bindings::debugserver_client_send_command(
-            client.client,
-            command.command,
-            response_ptr_ptr,
-            response_size,
-        )
-    };
-    if result < 0 {
-        return None;
-    }
-
-    // Convert response to String
-    let response_str = unsafe {
-        std::ffi::CStr::from_ptr(response_ptr)
-            .to_string_lossy()
-            .to_string()
-    };
-
-    Some(response_str)
-}
 
 pub fn instproxy_client_options_new() -> plist_t {
     plist_t::new(unsafe { unsafe_bindings::instproxy_client_options_new() })
@@ -289,6 +175,7 @@ pub struct Device {
     device: *mut unsafe_bindings::idevice_private,
     lockdown_client: Option<unsafe_bindings::lockdownd_client_t>,
     proxy_client: Option<unsafe_bindings::instproxy_client_t>,
+    debug_server: Option<unsafe_bindings::debugserver_client_t>,
 }
 
 impl Device {
@@ -306,6 +193,7 @@ impl Device {
             device,
             lockdown_client: None,
             proxy_client: None,
+            debug_server: None,
         };
     }
     /// Starts the lockdown service for the device
@@ -377,6 +265,83 @@ impl Device {
 
         Ok(plist_xml_str)
     }
+
+    /// Starts the instproxy service for the device
+    pub fn start_instproxy_service(&mut self, label: String) -> Result<(), String> {
+        let mut client: unsafe_bindings::instproxy_client_t = unsafe { std::mem::zeroed() };
+        let client_ptr: *mut unsafe_bindings::instproxy_client_t = &mut client;
+
+        let label_c_str = std::ffi::CString::new(label).unwrap();
+
+        let result = unsafe {
+            unsafe_bindings::instproxy_client_start_service(
+                self.device,
+                client_ptr,
+                label_c_str.as_ptr(),
+            )
+        };
+        if result != 0 {
+            return Err(String::from("Failed to start instproxy service"));
+        }
+
+        self.proxy_client = Some(client);
+        Ok(())
+    }
+
+    /// Starts the debugserver service for the device
+    pub fn start_debug_server(&mut self, label: String) -> Result<(), String> {
+        let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
+        let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
+
+        let label_c_str = std::ffi::CString::new(label).unwrap();
+
+        let result = unsafe {
+            unsafe_bindings::debugserver_client_start_service(
+                self.device,
+                client_ptr,
+                label_c_str.as_ptr(),
+            )
+        };
+        if result != 0 {
+            return Err(String::from("Failed to start debug server"));
+        }
+
+        self.debug_server = Some(client);
+        Ok(())
+    }
+
+    /// Sends a DebugServerCommand to the device
+    pub fn send_command(&mut self, command: DebugServerCommand) -> Result<String, String> {
+        if self.debug_server.is_none() {
+            self.start_debug_server(String::from("com.apple.debugserver"))?;
+        }
+        let mut response: std::os::raw::c_char = unsafe { std::mem::zeroed() };
+        let mut response_ptr: *mut std::os::raw::c_char = &mut response;
+        let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
+
+        let response_size = std::ptr::null_mut();
+
+        let result = unsafe {
+            unsafe_bindings::debugserver_client_send_command(
+                self.debug_server.unwrap(),
+                command.command,
+                response_ptr_ptr,
+                response_size,
+            )
+        };
+        if result < 0 {
+            return Err(String::from("Failed to send command"));
+        }
+
+        // Convert response to String
+        let response_str = unsafe {
+            std::ffi::CStr::from_ptr(response_ptr)
+                .to_string_lossy()
+                .to_string()
+        };
+
+        Ok(response_str)
+    }
 }
 
 impl Debug for Device {
@@ -389,50 +354,60 @@ impl Debug for Device {
     }
 }
 
+pub struct DebugServerCommand {
+    command: unsafe_bindings::debugserver_command_t,
+}
+
+impl DebugServerCommand {
+    pub fn new(command: String, arguments: Vec<String>) -> Result<DebugServerCommand, String> {
+        let mut command_ptr: unsafe_bindings::debugserver_command_t = unsafe { std::mem::zeroed() };
+        let command_ptr_ptr: *mut unsafe_bindings::debugserver_command_t = &mut command_ptr;
+
+        let command_c_str = std::ffi::CString::new(command).unwrap();
+
+        // Create C array
+        let mut arguments_c_array: Vec<i8> = Vec::new();
+        for i in arguments.iter() {
+            let c_str = std::ffi::CString::new(i.clone()).unwrap();
+            arguments_c_array.push(c_str.as_bytes_with_nul()[0].try_into().unwrap());
+        }
+        // Create pointer to to_fill[0]
+        let mut c_array_ptr: *mut std::os::raw::c_char = arguments_c_array.as_mut_ptr();
+        let c_array_ptr_ptr: *mut *mut std::os::raw::c_char = &mut c_array_ptr;
+
+        let result = unsafe {
+            unsafe_bindings::debugserver_command_new(
+                command_c_str.as_ptr(),
+                arguments.len() as i32,
+                c_array_ptr_ptr,
+                command_ptr_ptr,
+            )
+        };
+        if result < 0 {
+            return Err(String::from("Failed to create command"));
+        }
+
+        Ok(DebugServerCommand {
+            command: command_ptr,
+        })
+    }
+}
+
+impl Into<DebugServerCommand> for String {
+    fn into(self) -> DebugServerCommand {
+        // Split string into command and arguments
+        let mut split = self.split_whitespace();
+        let command = split.next().unwrap().to_string();
+        let arguments: Vec<String> = split.map(|s| s.to_string()).collect();
+        DebugServerCommand::new(command, arguments).unwrap()
+    }
+}
+impl Into<DebugServerCommand> for &str {
+    fn into(self) -> DebugServerCommand {
+        self.to_string().into()
+    }
+}
 // Raw, bad structs
-pub struct idevice_info {
-    pub udid: String,
-    pub conn_type: u32,
-    pub conn_data: *mut std::os::raw::c_void, // What the heck is this?
-}
-
-impl idevice_info {
-    fn new(udid: String, conn_type: u32, conn_data: *mut std::os::raw::c_void) -> Self {
-        idevice_info {
-            udid,
-            conn_type,
-            conn_data,
-        }
-    }
-}
-
-pub struct idevice_t {
-    pub device: *mut unsafe_bindings::idevice_private,
-}
-
-impl idevice_t {
-    pub fn new(device: *mut unsafe_bindings::idevice_private) -> Self {
-        idevice_t { device }
-    }
-    pub fn get_udid(&self) -> String {
-        // Convert self.device.udid to String
-        unsafe {
-            std::ffi::CStr::from_ptr((*self.device).udid)
-                .to_string_lossy()
-                .to_string()
-        }
-    }
-}
-
-pub struct lockdownd_client_t {
-    client: unsafe_bindings::lockdownd_client_t,
-}
-
-impl lockdownd_client_t {
-    pub fn new(client: unsafe_bindings::lockdownd_client_t) -> Self {
-        lockdownd_client_t { client }
-    }
-}
 
 pub struct instproxy_client_t {
     pub client: unsafe_bindings::instproxy_client_t,

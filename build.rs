@@ -2,7 +2,7 @@
 
 extern crate bindgen;
 
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, fs::canonicalize };
 
 fn main() {
     // Tell cargo to invalidate the built crate whenever the wrapper changes
@@ -37,7 +37,7 @@ fn main() {
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
 
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
+    // // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
@@ -46,7 +46,7 @@ fn main() {
     // Check if folder ./override exists
     let override_path = PathBuf::from("./override");
     if override_path.exists() {
-        println!("cargo:rustc-link-search=native={}", override_path.display());
+        println!("cargo:rustc-link-search={}", canonicalize(override_path).unwrap().display());
     } else {
         ////////////////////////////
         // LIBIMOBILEDEVICE BUILD //
@@ -55,7 +55,9 @@ fn main() {
         // Change directory to libimobiledevice
         let _ = env::set_current_dir("./libimobiledevice");
         // Run ./autogen.sh
-        let _ = std::process::Command::new("sh").arg("autogen.sh").status();
+        let _ = std::process::Command::new("sh")
+            .arg("autogen.sh --make-static")
+            .status();
         // Run make
         let _ = std::process::Command::new("make").status();
 
@@ -73,7 +75,7 @@ fn main() {
         env::set_current_dir("../libplist").expect("Could not change directory to libplist");
         // Run ./autogen.sh
         let _ = std::process::Command::new("sh")
-            .arg("autogen.sh --without-cython")
+            .arg("autogen.sh --without-cython --make-static")
             .status();
         // Run make
         let _ = std::process::Command::new("make").status();
@@ -85,7 +87,20 @@ fn main() {
         println!("cargo:rustc-link-search={}", libs_path.display());
     }
 
-    println!("cargo:rustc-link-lib=dylib=imobiledevice-1.0");
+    // Link libi* deps
+    println!("cargo:rustc-link-lib=static=imobiledevice-1.0");
+    println!("cargo:rustc-link-lib=static=plist-2.0");
+    println!("cargo:rustc-link-lib=static=usbmuxd-2.0");
+    println!("cargo:rustc-link-lib=static=imobiledevice-glue-1.0");
 
-    println!("cargo:rustc-link-lib=dylib=plist-2.0");
+    // Link ancient tech deps
+    println!("cargo:rustc-link-lib=static=crypto");
+    println!("cargo:rustc-link-lib=static=ssl");
+    println!("cargo:rustc-link-lib=static=gnutls");
+
+    // Link to stupid openssl
+    match env::consts::OS {
+        "macos" => println!("cargo:rustc-link-search=/opt/homebrew/opt/openssl@3/lib"),
+        _ => panic!("Unsupported OS"),
+    };
 }

@@ -274,6 +274,7 @@ dependencies = [
  "bindgen",
  "cc",
  "libc",
+ "regex",
 ]
 
 [[package]]
