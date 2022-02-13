@@ -12,50 +12,43 @@ fn main() {
     //   BINDGEN GENERATION   //
     ////////////////////////////
 
-    // Get gnutls path per OS
-    let gnutls_path = match env::consts::OS {
-        "linux" => "/usr/include",
-        "macos" => "/opt/homebrew/include",
-        "windows" => "/mingw64/include", // ?
-        _ => panic!("Unsupported OS"),
-    };
+    if cfg!(feature = "pls-generate") {
+        // Get gnutls path per OS
+        let gnutls_path = match env::consts::OS {
+            "linux" => "/usr/include",
+            "macos" => "/opt/homebrew/include",
+            "windows" => "/mingw64/include", // ?
+            _ => panic!("Unsupported OS"),
+        };
 
-    let bindings = bindgen::Builder::default()
-        // The input header we would like to generate
-        // bindings for.
-        .header("wrapper.h")
-        // Include in clang build
-        .clang_arg("-I./submodules/libimobiledevice/include")
-        .clang_arg("-I./submodules/libplist/include")
-        .clang_arg("-I./submodules/libimobiledevice")
-        .clang_arg(format!("-I{}", gnutls_path))
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        // Finish the builder and generate the bindings.
-        .generate()
-        // Unwrap the Result and panic on failure.
-        .expect("Unable to generate bindings");
+        let bindings = bindgen::Builder::default()
+            // The input header we would like to generate
+            // bindings for.
+            .header("wrapper.h")
+            // Include in clang build
+            .clang_arg("-I./submodules/libimobiledevice/include")
+            .clang_arg("-I./submodules/libplist/include")
+            .clang_arg("-I./submodules/libimobiledevice")
+            .clang_arg(format!("-I{}", gnutls_path))
+            // Tell cargo to invalidate the built crate whenever any of the
+            // included header files changed.
+            .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+            // Finish the builder and generate the bindings.
+            .generate()
+            // Unwrap the Result and panic on failure.
+            .expect("Unable to generate bindings");
 
-    // // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+        // Write the bindings to the $OUT_DIR/bindings.rs file.
+        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+        bindings
+            .write_to_file(out_path.join("bindings.rs"))
+            .expect("Couldn't write bindings!");
+    }
 
     // Check if folder ./override exists
-    let override_path = PathBuf::from("./override");
+    let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());
     if override_path.exists() {
         println!("cargo:rustc-link-search={}", canonicalize(&override_path).unwrap().display());
-        // Search in every folder within override
-        for entry in override_path.read_dir().unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            if path.is_dir() {
-                println!("cargo:rustc-link-search={}", canonicalize(path).unwrap().display());
-            }
-        }
-
     } else {
         // Get the target triple
         let target_triple = env::var("TARGET").unwrap();
@@ -211,11 +204,6 @@ fn main() {
     println!("cargo:rustc-link-lib=static=ssl");
     println!("cargo:rustc-link-lib=static=gnutls");
 
-    // Link to stupid openssl
-    match env::consts::OS {
-        "macos" => println!("cargo:rustc-link-search=/opt/homebrew/opt/openssl@3/lib"),
-        _ => panic!("Unsupported OS"),
-    };
 }
 
 fn add_cflag(flag: &str) {

@@ -5,6 +5,7 @@
 #![allow(non_snake_case)]
 #![allow(deref_nullptr)]
 #![allow(unaligned_references)]
+#![allow(improper_ctypes)]
 
 // This was mostly done for rust-analyzer, but it's useful to have it here
 
