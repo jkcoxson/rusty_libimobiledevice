@@ -202,7 +202,21 @@ fn main() {
     // Link ancient tech deps
     println!("cargo:rustc-link-lib=static=crypto");
     println!("cargo:rustc-link-lib=static=ssl");
-    println!("cargo:rustc-link-lib=static=gnutls");
+
+    if env::var("TARGET").unwrap().contains("windows") {
+        println!("cargo:rustc-link-lib=dylib=unistring");
+        println!("cargo:rustc-link-lib=dylib=Iphlpapi");
+        println!("cargo:rustc-link-lib=static=intl");
+        println!("cargo:rustc-link-lib=static=iconv");
+        println!("cargo:rustc-link-lib=static=gmp");
+        println!("cargo:rustc-link-lib=static=gnutls");
+        println!("cargo:rustc-link-lib=static=tasn1");
+        println!("cargo:rustc-link-lib=static=idn2");
+        println!("cargo:rustc-link-lib=dylib=p11-kit");
+        println!("cargo:rustc-link-lib=static=hogweed");
+        println!("cargo:rustc-link-lib=static=nettle");
+    }
+    
 
 }
 
