@@ -14,16 +14,20 @@ use crate::bindings::idevice_info_t;
 /////////////////////
 
 /// Gets all devices detected by usbmuxd
-pub fn get_devices() -> Vec<Device> {
+pub fn get_devices() -> Result<Vec<Device>, i32> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
     let result = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
     };
 
-    // No devices are detected
     if result != 0 {
-        return vec![];
+        return Err(result);
+    }
+
+    // No devices are detected
+    if device_count != 0 {
+        return Ok(vec![]);
     }
 
     // Create slice of mutable references to idevice_info_t from device_list and device_count
@@ -72,7 +76,7 @@ pub fn get_devices() -> Vec<Device> {
         unsafe_bindings::idevice_device_list_free(device_list_ptr);
     }
 
-    to_return
+    Ok(to_return)
 }
 
 /////////////////////

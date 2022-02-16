@@ -1,0 +1,12 @@
+[package]
+name = "examples"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[dependencies]
+rusty_libimobiledevice = { version = "*", path = "../", features = ["static"] }
+
+[[example]]
+name = "idevice_id"
+path = "idevice_id.rs"
