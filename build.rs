@@ -76,6 +76,10 @@ fn main() {
     if env::var("TARGET").unwrap().contains("windows") {
         println!("cargo:rustc-link-lib=dylib=unistring"); // Couldn't find a static lib for this
         println!("cargo:rustc-link-lib=dylib=Iphlpapi"); // Microsoft doesn't supply static libs for this
+        println!("cargo:rustc-link-lib=dylib=crypt32"); // Microsoft doesn't supply static libs for this
+        println!("cargo:rustc-link-lib=dylib=ncrypt"); // Microsoft doesn't supply static libs for this
+        println!("cargo:rustc-link-lib=dylib=ole32"); // Microsoft doesn't supply static libs for this
+        println!("cargo:rustc-link-lib=dylib=shell32"); // Microsoft doesn't supply static libs for this
         println!("cargo:rustc-link-lib={}=intl", location_determinator);
         println!("cargo:rustc-link-lib={}=iconv", location_determinator);
         println!("cargo:rustc-link-lib={}=gmp", location_determinator);
