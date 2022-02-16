@@ -17,7 +17,9 @@ fn main() {
         let gnutls_path = match env::consts::OS {
             "linux" => "/usr/include",
             "macos" => "/opt/homebrew/include",
-            "windows" => "/mingw64/include", // ?
+            "windows" => {
+                panic!("Generating bindings on Windows is broken, pls remove the pls-generate feature.");
+            }
             _ => panic!("Unsupported OS"),
         };
 
@@ -51,29 +53,37 @@ fn main() {
         println!("cargo:rustc-link-search={}", canonicalize(&override_path).unwrap().display());
     } 
 
+    let location_determinator;
+    if cfg!(feature = "static") {
+        location_determinator = "static";
+    } else if cfg!(feature = "dynamic") {
+        location_determinator = "dylib";
+    } else {
+        panic!("No library type specified! Add 'static' or 'dynamic' to the features list.");
+    }
+        
     // Link libi* deps
-    println!("cargo:rustc-link-lib=static=imobiledevice-1.0");
-    println!("cargo:rustc-link-lib=static=plist-2.0");
-    println!("cargo:rustc-link-lib=static=usbmuxd-2.0");
-    println!("cargo:rustc-link-lib=static=imobiledevice-glue-1.0");
+    println!("cargo:rustc-link-lib={}=imobiledevice-1.0", location_determinator);
+    println!("cargo:rustc-link-lib={}=plist-2.0", location_determinator);
+    println!("cargo:rustc-link-lib={}=usbmuxd-2.0", location_determinator);
+    println!("cargo:rustc-link-lib={}=imobiledevice-glue-1.0", location_determinator);
 
     // Link ancient tech deps
-    println!("cargo:rustc-link-lib=static=crypto");
-    println!("cargo:rustc-link-lib=static=ssl");
+    println!("cargo:rustc-link-lib={}=crypto", location_determinator);
+    println!("cargo:rustc-link-lib={}=ssl", location_determinator);
 
+    // This is why we can't have nice things (switch to Mac)
     if env::var("TARGET").unwrap().contains("windows") {
-        println!("cargo:rustc-link-lib=dylib=unistring");
-        println!("cargo:rustc-link-lib=dylib=Iphlpapi");
-        println!("cargo:rustc-link-lib=static=intl");
-        println!("cargo:rustc-link-lib=static=iconv");
-        println!("cargo:rustc-link-lib=static=gmp");
-        println!("cargo:rustc-link-lib=static=gnutls");
-        println!("cargo:rustc-link-lib=static=tasn1");
-        println!("cargo:rustc-link-lib=static=idn2");
-        println!("cargo:rustc-link-lib=dylib=p11-kit");
-        println!("cargo:rustc-link-lib=static=hogweed");
-        println!("cargo:rustc-link-lib=static=nettle");
+        println!("cargo:rustc-link-lib=dylib=unistring"); // Couldn't find a static lib for this
+        println!("cargo:rustc-link-lib=dylib=Iphlpapi"); // Microsoft doesn't supply static libs for this
+        println!("cargo:rustc-link-lib={}=intl", location_determinator);
+        println!("cargo:rustc-link-lib={}=iconv", location_determinator);
+        println!("cargo:rustc-link-lib={}=gmp", location_determinator);
+        println!("cargo:rustc-link-lib={}=gnutls", location_determinator);
+        println!("cargo:rustc-link-lib={}=tasn1", location_determinator);
+        println!("cargo:rustc-link-lib={}=idn2", location_determinator);
+        println!("cargo:rustc-link-lib=dylib=p11-kit"); // https://github.com/p11-glue/p11-kit/issues/355
+        println!("cargo:rustc-link-lib={}=hogweed", location_determinator);
+        println!("cargo:rustc-link-lib={}=nettle", location_determinator);
     }
-    
-
 }

@@ -15,3 +15,5 @@ cc  = "*"
 
 [features]
 pls-generate = []
+dynamic = []
+static = []
