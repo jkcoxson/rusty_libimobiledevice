@@ -22,7 +22,7 @@ If you are on Windows, you will also need:
 - hogweed
 - nettle
 
-Either include these packages in a path where the linker can link them, or place them in ``./override/[arch]``.
+Either include these packages in a path where the linker can link them, or place them in ``./override/[platform-triple]``.
 
 **Note:** Package managers do not ship static libraries for some of these (I'm looking at you, libimobiledevice), 
 so you will need to build them yourself.
