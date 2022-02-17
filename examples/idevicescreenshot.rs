@@ -1,6 +1,7 @@
 // jkcoxson
 
 use rusty_libimobiledevice::libimobiledevice;
+use rusty_libimobiledevice::libimobiledevice::Device;
 
 fn main() {
     const VERSION: &str = "0.1.0";
@@ -38,7 +39,7 @@ fn main() {
         panic!("No device UDID specified");
     }
 
-    let devices = match libimobiledevice::get_devices() {
+    let mut devices = match libimobiledevice::get_devices() {
         Ok(devices) => devices,
         Err(e) => {
             println!("Error getting device list: {:?}", e);
@@ -46,10 +47,14 @@ fn main() {
         }
     };
     
-    let device = devices
-        .iter()
-        .find(|d| d.udid == udid)
-        .expect("Device not found with specified UDID");
+    let mut device = match find_device(udid, devices) {
+        Some(device) => device,
+        None => {
+            println!("Device not found");
+            return;
+        }
+    };
+    
 
     match device.start_lockdown_service("yeet".to_string()) {
         Ok(()) => {}
@@ -60,4 +65,13 @@ fn main() {
     }
 
     todo!();
+}
+
+fn find_device(udid: String, list: Vec<Device>) -> Option<Device> {
+    for dev in list {
+        if dev.udid == udid {
+            return Some(dev);
+        }
+    }
+    None
 }
