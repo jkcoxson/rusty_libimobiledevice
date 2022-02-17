@@ -7,6 +7,10 @@ edition = "2018"
 [dependencies]
 rusty_libimobiledevice = { version = "*", path = "../", features = ["static"] }
 
-[[example]]
+[[bin]]
 name = "idevice_id"
 path = "idevice_id.rs"
+
+[[bin]]
+name = "idevicescreenshot"
+path = "idevicescreenshot.rs"
