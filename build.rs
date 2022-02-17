@@ -74,6 +74,7 @@ fn main() {
 
     // This is why we can't have nice things (switch to Mac)
     if env::var("TARGET").unwrap().contains("windows") {
+        println!("cargo:rustc-link-search=/mysys64/mingw64/lib");
         println!("cargo:rustc-link-lib=dylib=unistring"); // Couldn't find a static lib for this
         println!("cargo:rustc-link-lib=dylib=Iphlpapi"); // Microsoft doesn't supply static libs for this
         println!("cargo:rustc-link-lib=dylib=crypt32"); // Microsoft doesn't supply static libs for this
