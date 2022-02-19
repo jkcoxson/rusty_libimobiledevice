@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::time::SystemTime;
+use std::{time::SystemTime, convert::TryInto};
 
 use crate::libimobiledevice::*;
 
@@ -197,6 +197,27 @@ impl Plist {
 impl From<unsafe_bindings::plist_t> for Plist {
     fn from(plist_t: unsafe_bindings::plist_t) -> Self {
         Plist { plist_t }
+    }
+}
+
+impl From<Plist> for String {
+    fn from(plist: Plist) -> Self {
+        let plist_t = plist.plist_t;
+        let mut plist_data = std::ptr::null_mut();
+        let mut plist_size = 0;
+        unsafe {
+            unsafe_bindings::plist_to_xml(
+                plist_t,
+                &mut plist_data,
+                &mut plist_size
+            );
+        }
+        let plist_data = unsafe {
+            std::slice::from_raw_parts(plist_data as *const u8, plist_size.try_into().unwrap())
+        };
+        let plist_data = std::str::from_utf8(plist_data).unwrap();
+        let plist_data = String::from(plist_data);
+        plist_data
     }
 }
 

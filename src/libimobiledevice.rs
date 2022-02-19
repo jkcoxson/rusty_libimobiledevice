@@ -233,8 +233,7 @@ impl Device {
     }
 
     /// Gets a plist value from the device
-    /// Temporarily returns a string until a better solution is developed
-    pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<String, String> {
+    pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<Plist, String> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()
@@ -257,33 +256,13 @@ impl Device {
             return Err(format!("Failed to get value: {}", result));
         }
 
-        // Convert plist to xml
-        let mut plist_xml: *mut std::os::raw::c_char = std::ptr::null_mut();
-        let plist_xml_ptr: *mut *mut std::os::raw::c_char = &mut plist_xml;
-        let mut plist_xml_len: u32 = 0;
-        let plist_xml_len_ptr: *mut u32 = &mut plist_xml_len;
-
-        unsafe {
-            unsafe_bindings::plist_to_xml(value, plist_xml_ptr, plist_xml_len_ptr);
-        }
-        // Convert plist_xml to String
-        let plist_xml_str = unsafe {
-            std::ffi::CStr::from_ptr(plist_xml)
-                .to_string_lossy()
-                .to_string()
-        };
-        // Free plist_xml
-        unsafe {
-            unsafe_bindings::plist_free(value);
-        }
-
-        Ok(plist_xml_str)
+        Ok(value.into())
     }
 
 
     /// Gets the preference plist from the lockdown service
     /// Temporarily returns a string until we can parse it
-    pub fn get_preference_plist(&mut self) -> Result<String, String> {
+    pub fn get_preference_plist(&mut self) -> Result<Plist, String> {
         if self.lockdown_client.is_none() {
             self.start_lockdownd_service(String::from("com.apple.mobile.lockdown"))?;
         }
@@ -304,27 +283,7 @@ impl Device {
             return Err(String::from("Failed to get preference plist"));
         }
 
-        // Variables to be filled by C. Honestly, who thought this was the correct way to do this?
-        let mut plist_xml: *mut std::os::raw::c_char = std::ptr::null_mut();
-        let plist_xml_ptr: *mut *mut std::os::raw::c_char = &mut plist_xml;
-        let mut plist_xml_len: u32 = 0;
-        let plist_xml_len_ptr: *mut u32 = &mut plist_xml_len;
-
-        unsafe {
-            unsafe_bindings::plist_to_xml(*plist_ptr, plist_xml_ptr, plist_xml_len_ptr);
-        }
-        // Convert plist_xml to String
-        let plist_xml_str = unsafe {
-            std::ffi::CStr::from_ptr(plist_xml)
-                .to_string_lossy()
-                .to_string()
-        };
-        // Free plist_xml
-        unsafe {
-            unsafe_bindings::plist_free(*plist_ptr);
-        }
-
-        Ok(plist_xml_str)
+        Ok(plist.into())
     }
 
     /// Starts the instproxy service for the device
