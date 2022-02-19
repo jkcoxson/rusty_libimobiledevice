@@ -56,7 +56,7 @@ fn main() {
     };
     
 
-    match device.start_lockdown_service("yeet".to_string()) {
+    match device.start_lockdownd_service("yeet".to_string()) {
         Ok(()) => {}
         Err(e) => {
             println!("Error starting lockdown service: {:?}", e);
