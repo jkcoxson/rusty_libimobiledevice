@@ -6,6 +6,7 @@ use std::{convert::TryInto, ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
+use crate::plist::Plist;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
@@ -91,18 +92,18 @@ pub fn get_device(udid: String) -> Option<Device> {
 // To be replaced  //
 /////////////////////
 
-pub fn instproxy_client_options_new() -> plist_t {
-    plist_t::new(unsafe { unsafe_bindings::instproxy_client_options_new() })
+pub fn instproxy_client_options_new() -> Plist {
+    unsafe { unsafe_bindings::instproxy_client_options_new() }.into()
 }
 
-pub fn instproxy_client_options_add(options: plist_t, key: String, value: String) {
+pub fn instproxy_client_options_add(options: Plist, key: String, value: String) {
     let key_c_str = CString::new(key).unwrap();
     let value_c_str = CString::new(value).unwrap();
     let null_ptr: *mut CString = std::ptr::null_mut();
 
     unsafe {
         unsafe_bindings::instproxy_client_options_add(
-            options.plist,
+            options.plist_t,
             key_c_str.as_ptr(),
             value_c_str.as_ptr(),
             null_ptr,
@@ -110,13 +111,13 @@ pub fn instproxy_client_options_add(options: plist_t, key: String, value: String
     };
 }
 
-pub fn instproxy_client_options_set_return_attributes(options: plist_t, attribute: String) {
+pub fn instproxy_client_options_set_return_attributes(options: Plist, attribute: String) {
     let attributes_c_str = CString::new(attribute).unwrap();
     let null_ptr: *mut CString = std::ptr::null_mut();
 
     unsafe {
         unsafe_bindings::instproxy_client_options_set_return_attributes(
-            options.plist,
+            options.plist_t,
             attributes_c_str.as_ptr(),
             null_ptr,
         )
@@ -126,8 +127,8 @@ pub fn instproxy_client_options_set_return_attributes(options: plist_t, attribut
 pub fn instproxy_lookup(
     client: instproxy_client_t,
     appid: String,
-    client_opts: plist_t,
-) -> Option<plist_t> {
+    client_opts: Plist,
+) -> Option<Plist> {
     let mut apps: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
     let appid_c_str = CString::new(appid).unwrap();
@@ -138,7 +139,7 @@ pub fn instproxy_lookup(
         unsafe_bindings::instproxy_lookup(
             client.client,
             appid_c_str_ptr_ptr,
-            client_opts.plist,
+            client_opts.plist_t,
             &mut apps,
         )
     };
@@ -147,31 +148,31 @@ pub fn instproxy_lookup(
         return None;
     }
 
-    Some(plist_t::new(apps))
+    Some(apps.into())
 }
 
-pub fn instproxy_client_options_free(options: plist_t) {
-    unsafe { unsafe_bindings::instproxy_client_options_free(options.plist) };
+pub fn instproxy_client_options_free(options: Plist) {
+    unsafe { unsafe_bindings::instproxy_client_options_free(options.plist_t) };
 }
 
-pub fn plist_access_path(apps: plist_t, length: u32, appid: String) -> plist_t {
+pub fn plist_access_path(apps: Plist, length: u32, appid: String) -> Plist {
     let appid_c_str = CString::new(appid).unwrap();
     return unsafe {
-        plist_t::new(unsafe_bindings::plist_access_path(
-            apps.plist,
+        (unsafe_bindings::plist_access_path(
+            apps.plist_t,
             length,
             appid_c_str,
-        ))
+        )).into()
     };
 }
 
-pub fn plist_dict_get_item(apps: plist_t, key: String) -> plist_t {
+pub fn plist_dict_get_item(apps: Plist, key: String) -> Plist {
     let key_c_str = CString::new(key).unwrap();
     return unsafe {
-        plist_t::new(unsafe_bindings::plist_dict_get_item(
-            apps.plist,
+        (unsafe_bindings::plist_dict_get_item(
+            apps.plist_t,
             key_c_str.as_ptr(),
-        ))
+        )).into()
     };
 }
 
@@ -231,7 +232,8 @@ impl Device {
         Ok(())
     }
 
-
+    /// Gets a plist value from the device
+    /// Temporarily returns a string until a better solution is developed
     pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<String, String> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
@@ -499,12 +501,3 @@ impl debugserver_command_t {
     }
 }
 
-pub struct plist_t {
-    plist: unsafe_bindings::plist_t,
-}
-
-impl plist_t {
-    pub fn new(plist: unsafe_bindings::plist_t) -> Self {
-        plist_t { plist }
-    }
-}
