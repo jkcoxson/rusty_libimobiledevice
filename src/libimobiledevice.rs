@@ -25,11 +25,6 @@ pub fn get_devices() -> Result<Vec<Device>, i32> {
         return Err(result);
     }
 
-    // No devices are detected
-    if device_count != 0 {
-        return Ok(vec![]);
-    }
-
     // Create slice of mutable references to idevice_info_t from device_list and device_count
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
