@@ -74,6 +74,18 @@ pub fn get_devices() -> Result<Vec<Device>, i32> {
     Ok(to_return)
 }
 
+pub fn get_device(udid: String) -> Option<Device> {
+    let devices = match get_devices() {
+        Ok(devices) => devices,
+        Err(_) => return None,
+    };
+    for device in devices {
+        if device.udid == udid {
+            return Some(device);
+        }
+    }
+    None
+}
 /////////////////////
 // Yucky Functions //
 // To be replaced  //
@@ -197,7 +209,7 @@ impl Device {
     }
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
-    pub fn start_lockdown_service(&mut self, label: String) -> Result<(), String> {
+    pub fn start_lockdownd_service(&mut self, label: String) -> Result<(), String> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
@@ -219,11 +231,59 @@ impl Device {
         Ok(())
     }
 
+
+    pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<String, String> {
+        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
+        let domain_c_str = if domain == "".to_string() {
+            std::ptr::null()
+        } else {
+            domain_c_str.as_ptr()
+        };
+        let key_c_str = std::ffi::CString::new(key).unwrap();
+        let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::lockdownd_get_value(
+                self.lockdown_client.unwrap(),
+                domain_c_str,
+                key_c_str.as_ptr(),
+                &mut value,
+            )
+        };
+
+        if result != 0 {
+            return Err(format!("Failed to get value: {}", result));
+        }
+
+        // Convert plist to xml
+        let mut plist_xml: *mut std::os::raw::c_char = std::ptr::null_mut();
+        let plist_xml_ptr: *mut *mut std::os::raw::c_char = &mut plist_xml;
+        let mut plist_xml_len: u32 = 0;
+        let plist_xml_len_ptr: *mut u32 = &mut plist_xml_len;
+
+        unsafe {
+            unsafe_bindings::plist_to_xml(value, plist_xml_ptr, plist_xml_len_ptr);
+        }
+        // Convert plist_xml to String
+        let plist_xml_str = unsafe {
+            std::ffi::CStr::from_ptr(plist_xml)
+                .to_string_lossy()
+                .to_string()
+        };
+        // Free plist_xml
+        unsafe {
+            unsafe_bindings::plist_free(value);
+        }
+
+        Ok(plist_xml_str)
+    }
+
+
     /// Gets the preference plist from the lockdown service
     /// Temporarily returns a string until we can parse it
     pub fn get_preference_plist(&mut self) -> Result<String, String> {
         if self.lockdown_client.is_none() {
-            self.start_lockdown_service(String::from("com.apple.mobile.lockdown"))?;
+            self.start_lockdownd_service(String::from("com.apple.mobile.lockdown"))?;
         }
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         let plist_ptr: *mut unsafe_bindings::plist_t = &mut plist;
@@ -341,6 +401,7 @@ impl Device {
 
         Ok(response_str)
     }
+
 }
 
 impl Debug for Device {

@@ -59,7 +59,7 @@ fn main() {
     } else if cfg!(feature = "dynamic") {
         location_determinator = "dylib";
     } else {
-        panic!("No library type specified! Add 'static' or 'dynamic' to the features list.");
+        location_determinator = "dylib";
     }
         
     // Link libi* deps
