@@ -74,10 +74,10 @@ fn main() {
 
     // This is why we can't have nice things (switch to Mac)
     if env::var("TARGET").unwrap().contains("windows") {
-        println!("cargo:rustc-link-lib=dylib=Iphlpapi"); // Microsoft doesn't supply static libs for this
-        println!("cargo:rustc-link-lib=dylib=crypt32"); // Microsoft doesn't supply static libs for this
-        println!("cargo:rustc-link-lib=dylib=ncrypt"); // Microsoft doesn't supply static libs for this
-        println!("cargo:rustc-link-lib=dylib=ole32"); // Microsoft doesn't supply static libs for this
-        println!("cargo:rustc-link-lib=dylib=shell32"); // Microsoft doesn't supply static libs for this
+        println!("cargo:rustc-link-lib=dylib=Iphlpapi");
+        println!("cargo:rustc-link-lib=dylib=crypt32"); 
+        println!("cargo:rustc-link-lib=dylib=ncrypt"); 
+        println!("cargo:rustc-link-lib=dylib=ole32"); 
+        println!("cargo:rustc-link-lib=dylib=shell32"); 
     }
 }
