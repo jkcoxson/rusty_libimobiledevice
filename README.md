@@ -10,18 +10,6 @@ Build or install the following packages:
 - gnutls
 - openssl
 
-If you are on Windows, you will also need:
-- unistring
-- Iphlpapi
-- libintl
-- libiconv
-- gmp
-- libtasn1
-- libidn2
-- p11-kit
-- hogweed
-- nettle
-
 Either include these packages in a path where the linker can link them, or place them in ``./override/[platform-triple]``.
 
 **Note:** Package managers do not ship static libraries for some of these (I'm looking at you, libimobiledevice), 
