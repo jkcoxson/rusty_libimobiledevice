@@ -1,5 +1,4 @@
-#![allow(deref_nullptr)]
-#![allow(unaligned_references)]
+// jkcoxson
 
 use core::fmt;
 use std::{convert::TryInto, ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_mut};
