@@ -34,7 +34,6 @@ pub enum PlistType {
 }
 
 impl Plist {
-    // New plist functions
     pub fn new_dict() -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_dict()
@@ -89,8 +88,6 @@ impl Plist {
         };
         Plist { plist_t }
     }
-
-    // Getters
     pub fn array_get_size(&self) -> u32 {
         unsafe {
             unsafe_bindings::plist_array_get_size(self.plist_t)
@@ -328,6 +325,33 @@ impl From<unsafe_bindings::plist_t> for Plist {
     }
 }
 
+impl From<Plist> for bool {
+    fn from(plist: Plist) -> Self {
+        match plist.get_node_type() {
+            PlistType::Boolean => plist.get_bool_val(),
+            _ => panic!("Expected boolean type"),
+        }
+    }
+}
+
+impl From<Plist> for u64 {
+    fn from(plist: Plist) -> Self {
+        match plist.get_node_type() {
+            PlistType::Integer => plist.get_uint_val(),
+            _ => panic!("Expected integer type"),
+        }
+    }
+}
+
+impl From<Plist> for f64 {
+    fn from(plist: Plist) -> Self {
+        match plist.get_node_type() {
+            PlistType::Real => plist.get_real_val(),
+            _ => panic!("Expected real type"),
+        }
+    }
+}
+
 impl From<Plist> for String {
     fn from(plist: Plist) -> Self {
         let plist_t = plist.plist_t;
@@ -339,7 +363,6 @@ impl From<Plist> for String {
                 &mut plist_data,
                 &mut plist_size
             );
-            unsafe_bindings::plist_mem_free(plist.plist_t);
         }
         let plist_data = unsafe {
             std::slice::from_raw_parts(plist_data as *const u8, plist_size.try_into().unwrap())
@@ -373,7 +396,6 @@ impl From<Plist> for Vec<u8> {
                 &mut plist_data,
                 &mut plist_size
             );
-            unsafe_bindings::plist_mem_free(plist.plist_t);
         }
         let plist_data = unsafe {
             std::slice::from_raw_parts(plist_data as *const u8, plist_size.try_into().unwrap())

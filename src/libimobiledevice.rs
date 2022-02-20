@@ -74,18 +74,19 @@ pub fn get_devices() -> Result<Vec<Device>, i32> {
     Ok(to_return)
 }
 
-pub fn get_device(udid: String) -> Option<Device> {
+pub fn get_device(udid: String) -> Result<Device, i32> {
     let devices = match get_devices() {
         Ok(devices) => devices,
-        Err(_) => return None,
+        Err(e) => return Err(e),
     };
     for device in devices {
         if device.udid == udid {
-            return Some(device);
+            return Ok(device);
         }
     }
-    None
+    Err(404)
 }
+
 /////////////////////
 // Yucky Functions //
 // To be replaced  //
@@ -256,6 +257,12 @@ impl Device {
         }
 
         Ok(value.into())
+    }
+
+    pub fn get_ios_version(&mut self) -> Result<String, String> {
+        let value = self.lockdownd_get_value("ProductVersion".to_string(), "".to_string())?;
+        let value = value.get_string_val();
+        Ok(value)
     }
 
 

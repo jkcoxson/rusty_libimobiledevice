@@ -65,9 +65,9 @@ fn main() {
 
     // Get the device
     let mut device = match libimobiledevice::get_device(udid.to_string()) {
-        Some(device) => device,
-        None => {
-            println!("Error: Could not find device");
+        Ok(device) => device,
+        Err(e) => {
+            println!("Error: Could not find device: {}", e);
             return;
         }
     };
@@ -81,8 +81,13 @@ fn main() {
         }
     }
 
-    println!("Product Version: {}", device.lockdownd_get_value("ProductVersion".to_string(), "".to_string()).unwrap());
-
+    let ios_version = match device.get_ios_version() {
+        Ok(ios_version) => ios_version,
+        Err(e) => {
+            println!("Error getting iOS version: {:?}", e);
+            return;
+        }
+    };
 
 }
 
