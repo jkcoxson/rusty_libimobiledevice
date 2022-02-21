@@ -5,6 +5,7 @@ use std::{convert::TryInto, ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
+use crate::error::{self, IdeviceError, LockdownError, InstProxyError, DebugServerError};
 use crate::plist::Plist;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
@@ -14,14 +15,14 @@ use crate::plist::Plist;
 /////////////////////
 
 /// Gets all devices detected by usbmuxd
-pub fn get_devices() -> Result<Vec<Device>, i32> {
+pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
-    let result = unsafe {
+    let result: error::IdeviceError = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
-    };
+    }.into();
 
-    if result != 0 {
+    if result != error::IdeviceError::Success {
         return Err(result);
     }
 
@@ -74,7 +75,7 @@ pub fn get_devices() -> Result<Vec<Device>, i32> {
     Ok(to_return)
 }
 
-pub fn get_device(udid: String) -> Result<Device, i32> {
+pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
     let devices = match get_devices() {
         Ok(devices) => devices,
         Err(e) => return Err(e),
@@ -84,7 +85,7 @@ pub fn get_device(udid: String) -> Result<Device, i32> {
             return Ok(device);
         }
     }
-    Err(404)
+    Err(error::IdeviceError::NoDevice)
 }
 
 /////////////////////
@@ -210,7 +211,7 @@ impl Device {
     }
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
-    pub fn start_lockdownd_service(&mut self, label: String) -> Result<(), String> {
+    pub fn start_lockdownd_service(&mut self, label: String) -> Result<(), LockdownError> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
@@ -222,10 +223,10 @@ impl Device {
                 client_ptr,
                 label_c_str.as_ptr(),
             )
-        };
+        }.into();
 
-        if result != 0 {
-            return Err(String::from("Failed to start Lockdown service"));
+        if result != LockdownError::Success {
+            return Err(result);
         }
 
         self.lockdown_client = Some(client);
@@ -233,7 +234,7 @@ impl Device {
     }
 
     /// Gets a plist value from the device
-    pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<Plist, String> {
+    pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<Plist, LockdownError> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()
@@ -250,10 +251,10 @@ impl Device {
                 key_c_str.as_ptr(),
                 &mut value,
             )
-        };
+        }.into();
 
-        if result != 0 {
-            return Err(format!("Failed to get value: {}", result));
+        if result != LockdownError::Success {
+            return Err(result);
         }
 
         Ok(value.into())
@@ -268,7 +269,7 @@ impl Device {
 
     /// Gets the preference plist from the lockdown service
     /// Temporarily returns a string until we can parse it
-    pub fn get_preference_plist(&mut self) -> Result<Plist, String> {
+    pub fn get_preference_plist(&mut self) -> Result<Plist, LockdownError> {
         if self.lockdown_client.is_none() {
             self.start_lockdownd_service(String::from("com.apple.mobile.lockdown"))?;
         }
@@ -284,16 +285,16 @@ impl Device {
                 key_ptr,
                 plist_ptr,
             )
-        };
-        if result != 0 {
-            return Err(String::from("Failed to get preference plist"));
+        }.into();
+        if result != LockdownError::Success {
+            return Err(result);
         }
 
         Ok(plist.into())
     }
 
     /// Starts the instproxy service for the device
-    pub fn start_instproxy_service(&mut self, label: String) -> Result<(), String> {
+    pub fn start_instproxy_service(&mut self, label: String) -> Result<(), InstProxyError> {
         let mut client: unsafe_bindings::instproxy_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::instproxy_client_t = &mut client;
 
@@ -305,9 +306,9 @@ impl Device {
                 client_ptr,
                 label_c_str.as_ptr(),
             )
-        };
-        if result != 0 {
-            return Err(String::from("Failed to start instproxy service"));
+        }.into();
+        if result != InstProxyError::Success {
+            return Err(result);
         }
 
         self.proxy_client = Some(client);
@@ -315,7 +316,7 @@ impl Device {
     }
 
     /// Starts the debugserver service for the device
-    pub fn start_debug_server(&mut self, label: String) -> Result<(), String> {
+    pub fn start_debug_server(&mut self, label: String) -> Result<(), DebugServerError> {
         let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
 
@@ -327,9 +328,9 @@ impl Device {
                 client_ptr,
                 label_c_str.as_ptr(),
             )
-        };
-        if result != 0 {
-            return Err(String::from("Failed to start debug server"));
+        }.into();
+        if result != DebugServerError::Success {
+            return Err(result);
         }
 
         self.debug_server = Some(client);
@@ -337,7 +338,7 @@ impl Device {
     }
 
     /// Sends a DebugServerCommand to the device
-    pub fn send_command(&mut self, command: DebugServerCommand) -> Result<String, String> {
+    pub fn send_command(&mut self, command: DebugServerCommand) -> Result<String, DebugServerError> {
         if self.debug_server.is_none() {
             self.start_debug_server(String::from("com.apple.debugserver"))?;
         }
@@ -354,9 +355,9 @@ impl Device {
                 response_ptr_ptr,
                 response_size,
             )
-        };
-        if result < 0 {
-            return Err(String::from("Failed to send command"));
+        }.into();
+        if result != DebugServerError::Success {
+            return Err(result);
         }
 
         // Convert response to String
