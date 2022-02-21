@@ -67,7 +67,7 @@ fn main() {
     let mut device = match libimobiledevice::get_device(udid.to_string()) {
         Ok(device) => device,
         Err(e) => {
-            println!("Error: Could not find device: {}", e);
+            println!("Error: Could not find device: {:?}", e);
             return;
         }
     };
