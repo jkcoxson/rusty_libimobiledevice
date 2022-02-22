@@ -19,6 +19,7 @@ pub struct PlistDictIter {
     plist: Plist,
 }
 
+#[derive(PartialEq)]
 pub enum PlistType {
     Boolean,
     Integer,
@@ -108,55 +109,89 @@ impl Plist {
         };
         Plist { plist_t, plist_type: PlistType::Uid }
     }
-    pub fn array_get_size(&self) -> u32 {
-        unsafe {
-            unsafe_bindings::plist_array_get_size(self.plist_t)
+    pub fn array_get_size(&self) -> Result<u32, ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
         }
+        Ok(unsafe {
+            unsafe_bindings::plist_array_get_size(self.plist_t)
+        })
     }
-    pub fn array_get_item(&self, index: u32) -> Plist {
+    pub fn array_get_item(&self, index: u32) -> Result<Plist, ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
+        }
         let plist_t = unsafe {
             unsafe_bindings::plist_array_get_item(self.plist_t, index)
         };
-        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
+        Ok(Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() })
     }
-    pub fn array_get_item_index(&self) -> u32 {
-        unsafe {
-            unsafe_bindings::plist_array_get_item_index(self.plist_t) // ???
+    pub fn array_get_item_index(&self) -> Result<u32, ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
         }
+        Ok(unsafe {
+            unsafe_bindings::plist_array_get_item_index(self.plist_t) // ???
+        })
     }
 
-    // Setters
-    pub fn array_set_item(&self, item: &Plist, index: u32) {
+    pub fn array_set_item(&self, item: &Plist, index: u32) -> Result<(), ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_array_set_item(self.plist_t, item.plist_t, index)
-        }
+        };
+        Ok(())
     }
-    pub fn array_append_item(&self, item: &Plist) {
+    pub fn array_append_item(&self, item: &Plist) -> Result<(), ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_array_append_item(self.plist_t, item.plist_t)
-        }
+        };
+        Ok(())
     }
-    pub fn array_insert_item(&self, item: &Plist, index: u32) {
+    pub fn array_insert_item(&self, item: &Plist, index: u32) -> Result<(), ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_array_insert_item(self.plist_t, item.plist_t, index)
         }
+        Ok(())
     }
-    pub fn array_remove_item(&self, index: u32) {
+    pub fn array_remove_item(&self, index: u32) -> Result<(), ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_array_remove_item(self.plist_t, index)
-        }
+        };
+        Ok(())
     }
-    pub fn array_item_remove(&self) {
+    pub fn array_item_remove(&self) -> Result<(), ()> {
+        if self.plist_type != PlistType::Array {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_array_item_remove(self.plist_t)
         }
+        Ok(())
     }
-    pub fn dict_get_size(&self) -> u32 {
-        unsafe {
-            unsafe_bindings::plist_dict_get_size(self.plist_t)
+    pub fn dict_get_size(&self) -> Result<u32, ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
         }
+        Ok(unsafe {
+            unsafe_bindings::plist_dict_get_size(self.plist_t)
+        })
     }
-    pub fn dict_get_item_key(&self) -> String {
+    pub fn dict_get_item_key(&self) -> Result<String, ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         let mut key = std::ptr::null_mut();
         unsafe {
             unsafe_bindings::plist_dict_get_item_key(self.plist_t, &mut key)
@@ -164,39 +199,61 @@ impl Plist {
         let key = unsafe {
             std::ffi::CStr::from_ptr(key).to_string_lossy().into_owned()
         };
-        key
+        Ok(key)
     }
-    pub fn dict_get_item(&self, key: &str) -> Plist {
+    pub fn dict_get_item(&self, key: &str) -> Result<Plist, ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         let plist_t = unsafe {
             unsafe_bindings::plist_dict_get_item(self.plist_t, key.as_ptr() as *const i8)
         };
-        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
+        Ok(Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() })
     }
-    pub fn dict_item_get_key(&self) -> Plist {
+    pub fn dict_item_get_key(&self) -> Result<Plist, ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         let plist_t = unsafe {
             unsafe_bindings::plist_dict_item_get_key(self.plist_t)
         };
-        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
+        Ok(Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() })
     }
-    pub fn dict_set_item(&self, key: &str, item: &Plist) {
+    pub fn dict_set_item(&self, key: &str, item: &Plist) -> Result<(), ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_dict_set_item(self.plist_t, key.as_ptr() as *const i8, item.plist_t)
         }
+        Ok(())
     }
-    pub fn dict_insert_item(&self, key: &str, item: &Plist) {
+    pub fn dict_insert_item(&self, key: &str, item: &Plist) -> Result<(), ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_dict_insert_item(self.plist_t, key.as_ptr() as *const i8, item.plist_t)
         }
+        Ok(())
     }
-    pub fn dict_remove_item(&self, key: &str) {
+    pub fn dict_remove_item(&self, key: &str) -> Result<(), ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_dict_remove_item(self.plist_t, key.as_ptr() as *const i8)
         }
+        Ok(())
     }
-    pub fn dict_merge(&mut self, dict: &Plist) {
+    pub fn dict_merge(&mut self, dict: &Plist) -> Result<(), ()> {
+        if self.plist_type != PlistType::Dictionary {
+            return Err(());
+        }
         unsafe {
             unsafe_bindings::plist_dict_merge(&mut self.plist_t, dict.plist_t)
         }
+        Ok(())
     }
     pub fn get_parent(&self) -> Plist {
         let plist_t = unsafe {
@@ -209,7 +266,10 @@ impl Plist {
             unsafe_bindings::plist_get_node_type(self.plist_t)
         }.into() // puts on sunglasses
     }
-    pub fn get_key_val(&self) -> String {
+    pub fn get_key_val(&self) -> Result<String, ()> {
+        if self.plist_type != PlistType::Key {
+            return Err(());
+        }
         let mut key = std::ptr::null_mut();
         unsafe {
             unsafe_bindings::plist_get_key_val(self.plist_t, &mut key)
@@ -217,9 +277,12 @@ impl Plist {
         let key = unsafe {
             std::ffi::CStr::from_ptr(key).to_string_lossy().into_owned()
         };
-        key
+        Ok(key)
     }
-    pub fn get_string_val(&self) -> String {
+    pub fn get_string_val(&self) -> Result<String, ()> {
+        if self.plist_type != PlistType::String {
+            return Err(());
+        }
         let mut val = std::ptr::null_mut();
         unsafe {
             unsafe_bindings::plist_get_string_val(self.plist_t, &mut val)
@@ -227,36 +290,43 @@ impl Plist {
         let val = unsafe {
             std::ffi::CStr::from_ptr(val).to_string_lossy().into_owned()
         };
-        val
+        Ok(val)
     }
+    /// Don't use this unless you want to shoot yourself in the foot
     pub unsafe fn get_string_ptr(&self) -> *const i8 {
         unsafe_bindings::plist_get_string_ptr(self.plist_t, std::ptr::null_mut())
     }
-    pub fn get_bool_val(&self) -> bool {
+    pub fn get_bool_val(&self) -> Result<bool, ()> {
+        if self.plist_type != PlistType::Boolean {
+            return Err(());
+        }
         let val = unsafe { std::mem::zeroed() };
-        unsafe {
+        Ok(unsafe {
             unsafe_bindings::plist_get_bool_val(self.plist_t, val);
             match *val {
                 0 => false,
                 _ => true,
             }
-        }
+        })
     }
-    pub fn get_uint_val(&self) -> u64 {
+    pub fn get_uint_val(&self) -> Result<u64, ()> {
+        if self.plist_type != PlistType::Integer {
+            return Err(());
+        }
         let val = unsafe { std::mem::zeroed() };
-        unsafe {
+        Ok(unsafe {
             unsafe_bindings::plist_get_uint_val(self.plist_t, val);
             *val
-        }
+        })
     }
-    pub fn get_real_val(&self) -> f64 {
+    pub fn get_real_val(&self) -> Result<f64, ()> {
         let val = unsafe { std::mem::zeroed() };
-        unsafe {
+        Ok(unsafe {
             unsafe_bindings::plist_get_real_val(self.plist_t, val);
             *val
-        }
+        })
     }
-    pub fn get_data_val(&self) -> Vec<i8> {
+    pub fn get_data_val(&self) -> Result<Vec<i8>, ()> {
         let mut val = std::ptr::null_mut();
         let mut size = 0;
         unsafe {
@@ -265,18 +335,21 @@ impl Plist {
         let val = unsafe {
             std::slice::from_raw_parts(val, size as usize)
         };
-        val.to_vec()
+        Ok(val.to_vec())
     }
     pub fn get_date_val(&self) {
         unimplemented!();
     }
-    pub fn get_uid_val(&self) -> u64 {
+    pub fn get_uid_val(&self) -> Result<u64, ()> {
         let mut val = unsafe { std::mem::zeroed() };
         unsafe {
             unsafe_bindings::plist_get_uid_val(self.plist_t, &mut val);
         }
-        val
+        Ok(val)
     }
+
+    // These don't need type checks because they set the type of the plist
+
     pub fn set_key_val(&self, key: &str) {
         unsafe {
             unsafe_bindings::plist_set_key_val(self.plist_t, key.as_ptr() as *const i8)
@@ -316,6 +389,7 @@ impl Plist {
             unsafe_bindings::plist_set_uid_val(self.plist_t, val)
         }
     }
+
     pub fn is_binary(&self) -> bool {
         let plist_data = unsafe {std::mem::zeroed() };
         let plist_len = unsafe {std::mem::zeroed() };
@@ -347,28 +421,19 @@ impl From<unsafe_bindings::plist_t> for Plist {
 
 impl From<Plist> for bool {
     fn from(plist: Plist) -> Self {
-        match plist.get_node_type() {
-            PlistType::Boolean => plist.get_bool_val(),
-            _ => panic!("Expected boolean type"),
-        }
+        plist.get_bool_val().expect("Expected boolean type")
     }
 }
 
 impl From<Plist> for u64 {
     fn from(plist: Plist) -> Self {
-        match plist.get_node_type() {
-            PlistType::Integer => plist.get_uint_val(),
-            _ => panic!("Expected integer type"),
-        }
+        plist.get_uint_val().expect("Expected integer type")
     }
 }
 
 impl From<Plist> for f64 {
     fn from(plist: Plist) -> Self {
-        match plist.get_node_type() {
-            PlistType::Real => plist.get_real_val(),
-            _ => panic!("Expected real type"),
-        }
+        plist.get_real_val().expect("Expected float type")
     }
 }
 
