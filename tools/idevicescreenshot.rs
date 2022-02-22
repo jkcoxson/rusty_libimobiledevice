@@ -39,21 +39,14 @@ fn main() {
         panic!("No device UDID specified");
     }
 
-    let mut devices = match libimobiledevice::get_devices() {
-        Ok(devices) => devices,
+    let mut device = match libimobiledevice::get_device(&udid) {
+        Ok(d) => d,
         Err(e) => {
-            println!("Error getting device list: {:?}", e);
+            println!("Error: {:?}", e);
             return;
         }
     };
-    
-    let mut device = match find_device(udid, devices) {
-        Some(device) => device,
-        None => {
-            println!("Device not found");
-            return;
-        }
-    };
+
     
 
     match device.start_lockdownd_service("yeet".to_string()) {
@@ -67,11 +60,3 @@ fn main() {
     todo!();
 }
 
-fn find_device(udid: String, list: Vec<Device>) -> Option<Device> {
-    for dev in list {
-        if dev.udid == udid {
-            return Some(dev);
-        }
-    }
-    None
-}

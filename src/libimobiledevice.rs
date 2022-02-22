@@ -5,7 +5,8 @@ use std::{convert::TryInto, ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
-use crate::error::{self, IdeviceError, LockdownError, InstProxyError, DebugServerError};
+use crate::error::{self, IdeviceError, LockdowndError, InstProxyError, DebugServerError};
+use crate::lockdownd::LockdowndClient;
 use crate::plist::Plist;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
@@ -183,10 +184,10 @@ pub struct Device {
     pub name: String,
     pub udid: String,
     pub network: bool,
+    pub lockdownd_clients: Vec<LockdowndClient>,
     // Raw properties
     conn_data: *mut std::os::raw::c_void,
-    device: *mut unsafe_bindings::idevice_private,
-    lockdown_client: Option<unsafe_bindings::lockdownd_client_t>,
+    pub device: *mut unsafe_bindings::idevice_private,
     proxy_client: Option<unsafe_bindings::instproxy_client_t>,
     debug_server: Option<unsafe_bindings::debugserver_client_t>,
 }
@@ -202,96 +203,26 @@ impl Device {
             name: String::new(),
             udid,
             network,
+            lockdownd_clients: Vec::new(),
             conn_data,
             device,
-            lockdown_client: None,
             proxy_client: None,
             debug_server: None,
         };
     }
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
-    pub fn start_lockdownd_service(&mut self, label: String) -> Result<(), LockdownError> {
-        let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
-        let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
-
-        let label_c_str = std::ffi::CString::new(label).unwrap();
-
-        let result = unsafe {
-            unsafe_bindings::lockdownd_client_new_with_handshake(
-                self.device,
-                client_ptr,
-                label_c_str.as_ptr(),
-            )
-        }.into();
-
-        if result != LockdownError::Success {
-            return Err(result);
-        }
-
-        self.lockdown_client = Some(client);
-        Ok(())
+    pub fn new_lockdownd_client(&mut self, label: String) -> Result<&LockdowndClient, LockdowndError> {
+        let client = LockdowndClient::new(self, label)?;
+        self.lockdownd_clients.push(client);
+        Ok(&self.lockdownd_clients[self.lockdownd_clients.len() - 1])
     }
 
-    /// Gets a plist value from the device
-    pub fn lockdownd_get_value(&mut self, key: String, domain: String) -> Result<Plist, LockdownError> {
-        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == "".to_string() {
-            std::ptr::null()
-        } else {
-            domain_c_str.as_ptr()
-        };
-        let key_c_str = std::ffi::CString::new(key).unwrap();
-        let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
-
-        let result = unsafe {
-            unsafe_bindings::lockdownd_get_value(
-                self.lockdown_client.unwrap(),
-                domain_c_str,
-                key_c_str.as_ptr(),
-                &mut value,
-            )
-        }.into();
-
-        if result != LockdownError::Success {
-            return Err(result);
-        }
-
-        Ok(value.into())
-    }
-
-    pub fn get_ios_version(&mut self) -> Result<String, String> {
-        let value = self.lockdownd_get_value("ProductVersion".to_string(), "".to_string())?;
-        let value = value.get_string_val();
-        Ok(value)
-    }
-
-
-    /// Gets the preference plist from the lockdown service
-    /// Temporarily returns a string until we can parse it
-    pub fn get_preference_plist(&mut self) -> Result<Plist, LockdownError> {
-        if self.lockdown_client.is_none() {
-            self.start_lockdownd_service(String::from("com.apple.mobile.lockdown"))?;
-        }
-        let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
-        let plist_ptr: *mut unsafe_bindings::plist_t = &mut plist;
-        let domain_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
-        let key_ptr: *mut std::os::raw::c_char = std::ptr::null_mut();
-        // Create domain variable
-        let result = unsafe {
-            unsafe_bindings::lockdownd_get_value(
-                self.lockdown_client.unwrap(),
-                domain_ptr,
-                key_ptr,
-                plist_ptr,
-            )
-        }.into();
-        if result != LockdownError::Success {
-            return Err(result);
-        }
-
-        Ok(plist.into())
-    }
+    // pub fn get_ios_version(&mut self) -> Result<String, String> {
+    //     let value = self.lockdownd_get_value("ProductVersion".to_string(), "".to_string())?;
+    //     let value = value.get_string_val();
+    //     Ok(value)
+    // }
 
     /// Starts the instproxy service for the device
     pub fn start_instproxy_service(&mut self, label: String) -> Result<(), InstProxyError> {

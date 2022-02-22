@@ -29,7 +29,7 @@ fn main() {
                 display_xml = true;
             }
             "-h" | "--help" => {
-                println!("Usage: ideviceimagemounter [options]");
+                println!("Usage: ideviceimagemounter <DMG Path> [options]");
                 println!("");
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
@@ -55,11 +55,11 @@ fn main() {
         i += 1;
     }
     if udid == "" {
-        println!("Error: No UDID specified");
+        println!("Error: No UDID specified. Use -u or --udid to specify a device.");
         return;
     }
     if dmg_path == "" {
-        println!("Error: No DMG specified");
+        println!("Error: No DMG specified. Use -h for help.");
         return;
     }
 
