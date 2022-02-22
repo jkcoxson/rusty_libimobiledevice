@@ -569,3 +569,894 @@ impl From<DebugServerError> for String {
         }
     }
 }
+
+#[derive(PartialEq, Debug)]
+pub enum WebInspectorError {
+    Succes,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    ReceiveTimeout,
+    NotEnoughData,
+    UnknownError
+}
+
+impl From<i32> for WebInspectorError {
+    fn from(value: i32) -> WebInspectorError {
+        match value {
+            0 => WebInspectorError::Succes,
+            -1 => WebInspectorError::InvalidArg,
+            -2 => WebInspectorError::PlistError,
+            -3 => WebInspectorError::MuxError,
+            -4 => WebInspectorError::SslError,
+            -5 => WebInspectorError::ReceiveTimeout,
+            -6 => WebInspectorError::NotEnoughData,
+            _ => WebInspectorError::UnknownError
+        }
+    }
+}
+
+impl From<WebInspectorError> for String {
+    fn from(value: WebInspectorError) -> String {
+        match value {
+            WebInspectorError::Succes => "Success".to_string(),
+            WebInspectorError::InvalidArg => "InvalidArg".to_string(),
+            WebInspectorError::PlistError => "PlistError".to_string(),
+            WebInspectorError::MuxError => "MuxError".to_string(),
+            WebInspectorError::SslError => "SslError".to_string(),
+            WebInspectorError::ReceiveTimeout => "ReceiveTimeout".to_string(),
+            WebInspectorError::NotEnoughData => "NotEnoughData".to_string(),
+            WebInspectorError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum SyslogRelayError {
+    Success,
+    InvalidArg,
+    MuxError,
+    SslError,
+    NotEnoughData,
+    Timeout,
+    UnknownError
+}
+
+impl From<i32> for SyslogRelayError {
+    fn from(value: i32) -> SyslogRelayError {
+        match value {
+            0 => SyslogRelayError::Success,
+            -1 => SyslogRelayError::InvalidArg,
+            -2 => SyslogRelayError::MuxError,
+            -3 => SyslogRelayError::SslError,
+            -4 => SyslogRelayError::NotEnoughData,
+            -5 => SyslogRelayError::Timeout,
+            _ => SyslogRelayError::UnknownError
+        }
+    }
+}
+
+impl From<SyslogRelayError> for String {
+    fn from(value: SyslogRelayError) -> String {
+        match value {
+            SyslogRelayError::Success => "Success".to_string(),
+            SyslogRelayError::InvalidArg => "InvalidArg".to_string(),
+            SyslogRelayError::MuxError => "MuxError".to_string(),
+            SyslogRelayError::SslError => "SslError".to_string(),
+            SyslogRelayError::NotEnoughData => "NotEnoughData".to_string(),
+            SyslogRelayError::Timeout => "Timeout".to_string(),
+            SyslogRelayError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum ScreenshotrError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    ReceiveTimeout,
+    BadVersion,
+    UnknownError
+}
+
+impl From<i32> for ScreenshotrError {
+    fn from(value: i32) -> ScreenshotrError {
+        match value {
+            0 => ScreenshotrError::Success,
+            -1 => ScreenshotrError::InvalidArg,
+            -2 => ScreenshotrError::PlistError,
+            -3 => ScreenshotrError::MuxError,
+            -4 => ScreenshotrError::SslError,
+            -5 => ScreenshotrError::ReceiveTimeout,
+            -6 => ScreenshotrError::BadVersion,
+            _ => ScreenshotrError::UnknownError
+        }
+    }
+}
+
+impl From<ScreenshotrError> for String {
+    fn from(value: ScreenshotrError) -> String {
+        match value {
+            ScreenshotrError::Success => "Success".to_string(),
+            ScreenshotrError::InvalidArg => "InvalidArg".to_string(),
+            ScreenshotrError::PlistError => "PlistError".to_string(),
+            ScreenshotrError::MuxError => "MuxError".to_string(),
+            ScreenshotrError::SslError => "SslError".to_string(),
+            ScreenshotrError::ReceiveTimeout => "ReceiveTimeout".to_string(),
+            ScreenshotrError::BadVersion => "BadVersion".to_string(),
+            ScreenshotrError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum SbservicesError {
+    Success,
+    InvalidArg,
+    PlistError,
+    ConnFailed,
+    UnknownError,
+}
+
+impl From<i32> for SbservicesError {
+    fn from(value: i32) -> SbservicesError {
+        match value {
+            0 => SbservicesError::Success,
+            -1 => SbservicesError::InvalidArg,
+            -2 => SbservicesError::PlistError,
+            -3 => SbservicesError::ConnFailed,
+            _ => SbservicesError::UnknownError
+        }
+    }
+}
+
+impl From<SbservicesError> for String {
+    fn from(value: SbservicesError) -> String {
+        match value {
+            SbservicesError::Success => "Success".to_string(),
+            SbservicesError::InvalidArg => "InvalidArg".to_string(),
+            SbservicesError::PlistError => "PlistError".to_string(),
+            SbservicesError::ConnFailed => "ConnFailed".to_string(),
+            SbservicesError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum ReverseProxyError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    NotEnoughData,
+    Timeout,
+    UnknownError
+}
+
+impl From<i32> for ReverseProxyError {
+    fn from(value: i32) -> ReverseProxyError {
+        match value {
+            0 => ReverseProxyError::Success,
+            -1 => ReverseProxyError::InvalidArg,
+            -2 => ReverseProxyError::PlistError,
+            -3 => ReverseProxyError::MuxError,
+            -4 => ReverseProxyError::SslError,
+            -5 => ReverseProxyError::NotEnoughData,
+            -6 => ReverseProxyError::Timeout,
+            _ => ReverseProxyError::UnknownError
+        }
+    }
+}
+
+impl From<ReverseProxyError> for String {
+    fn from(value: ReverseProxyError) -> String {
+        match value {
+            ReverseProxyError::Success => "Success".to_string(),
+            ReverseProxyError::InvalidArg => "InvalidArg".to_string(),
+            ReverseProxyError::PlistError => "PlistError".to_string(),
+            ReverseProxyError::MuxError => "MuxError".to_string(),
+            ReverseProxyError::SslError => "SslError".to_string(),
+            ReverseProxyError::NotEnoughData => "NotEnoughData".to_string(),
+            ReverseProxyError::Timeout => "Timeout".to_string(),
+            ReverseProxyError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum RestoreError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    NotEnoughData,
+    RecieveTimeout,
+    UnknownError
+}
+
+impl From<i32> for RestoreError {
+    fn from(value: i32) -> RestoreError {
+        match value {
+            0 => RestoreError::Success,
+            -1 => RestoreError::InvalidArg,
+            -2 => RestoreError::PlistError,
+            -3 => RestoreError::MuxError,
+            -4 => RestoreError::NotEnoughData,
+            -5 => RestoreError::RecieveTimeout,
+            _ => RestoreError::UnknownError
+        }
+    }
+}
+
+impl From<RestoreError> for String {
+    fn from(value: RestoreError) -> String {
+        match value {
+            RestoreError::Success => "Success".to_string(),
+            RestoreError::InvalidArg => "InvalidArg".to_string(),
+            RestoreError::PlistError => "PlistError".to_string(),
+            RestoreError::MuxError => "MuxError".to_string(),
+            RestoreError::NotEnoughData => "NotEnoughData".to_string(),
+            RestoreError::RecieveTimeout => "RecieveTimeout".to_string(),
+            RestoreError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum PreboardError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    NotEnoughData,
+    Timeout,
+    OpInProgress,
+    UnknownError,
+}
+
+impl From<i32> for PreboardError {
+    fn from(value: i32) -> PreboardError {
+        match value {
+            0 => PreboardError::Success,
+            -1 => PreboardError::InvalidArg,
+            -2 => PreboardError::PlistError,
+            -3 => PreboardError::MuxError,
+            -4 => PreboardError::SslError,
+            -5 => PreboardError::NotEnoughData,
+            -6 => PreboardError::Timeout,
+            -10 => PreboardError::OpInProgress,
+            _ => PreboardError::UnknownError
+        }
+    }
+}
+
+impl From<PreboardError> for String {
+    fn from(value: PreboardError) -> String {
+        match value {
+            PreboardError::Success => "Success".to_string(),
+            PreboardError::InvalidArg => "InvalidArg".to_string(),
+            PreboardError::PlistError => "PlistError".to_string(),
+            PreboardError::MuxError => "MuxError".to_string(),
+            PreboardError::SslError => "SslError".to_string(),
+            PreboardError::NotEnoughData => "NotEnoughData".to_string(),
+            PreboardError::Timeout => "Timeout".to_string(),
+            PreboardError::OpInProgress => "OpInProgress".to_string(),
+            PreboardError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum NpError {
+    Success,
+    InvalidArg,
+    PlistError,
+    ConnFailed,
+    UnknownError,
+}
+
+impl From<i32> for NpError {
+    fn from(value: i32) -> NpError {
+        match value {
+            0 => NpError::Success,
+            -1 => NpError::InvalidArg,
+            -2 => NpError::PlistError,
+            -3 => NpError::ConnFailed,
+            _ => NpError::UnknownError
+        }
+    }
+}
+
+impl From<NpError> for String {
+    fn from(value: NpError) -> String {
+        match value {
+            NpError::Success => "Success".to_string(),
+            NpError::InvalidArg => "InvalidArg".to_string(),
+            NpError::PlistError => "PlistError".to_string(),
+            NpError::ConnFailed => "ConnFailed".to_string(),
+            NpError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum MobileSyncError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    ReceiveTimeout,
+    BadVersion,
+    SyncRefused,
+    Cancelled,
+    WrongDirection,
+    NotReady,
+    UnknownError,
+}
+
+impl From<i32> for MobileSyncError {
+    fn from(value: i32) -> MobileSyncError {
+        match value {
+            0 => MobileSyncError::Success,
+            -1 => MobileSyncError::InvalidArg,
+            -2 => MobileSyncError::PlistError,
+            -3 => MobileSyncError::MuxError,
+            -4 => MobileSyncError::SslError,
+            -5 => MobileSyncError::ReceiveTimeout,
+            -6 => MobileSyncError::BadVersion,
+            -7 => MobileSyncError::SyncRefused,
+            -8 => MobileSyncError::Cancelled,
+            -9 => MobileSyncError::WrongDirection,
+            -10 => MobileSyncError::NotReady,
+            _ => MobileSyncError::UnknownError
+        }
+    }
+}
+
+impl From<MobileSyncError> for String {
+    fn from(value: MobileSyncError) -> String {
+        match value {
+            MobileSyncError::Success => "Success".to_string(),
+            MobileSyncError::InvalidArg => "InvalidArg".to_string(),
+            MobileSyncError::PlistError => "PlistError".to_string(),
+            MobileSyncError::MuxError => "MuxError".to_string(),
+            MobileSyncError::SslError => "SslError".to_string(),
+            MobileSyncError::ReceiveTimeout => "ReceiveTimeout".to_string(),
+            MobileSyncError::BadVersion => "BadVersion".to_string(),
+            MobileSyncError::SyncRefused => "SyncRefused".to_string(),
+            MobileSyncError::Cancelled => "Cancelled".to_string(),
+            MobileSyncError::WrongDirection => "WrongDirection".to_string(),
+            MobileSyncError::NotReady => "NotReady".to_string(),
+            MobileSyncError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum MobileBackup2Error {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    RecieveTimeout,
+    BadVersion,
+    ReplyNotOk,
+    NoCommonVersion,
+    UnknownError,
+}
+
+impl From<i32> for MobileBackup2Error {
+    fn from(value: i32) -> MobileBackup2Error {
+        match value {
+            0 => MobileBackup2Error::Success,
+            -1 => MobileBackup2Error::InvalidArg,
+            -2 => MobileBackup2Error::PlistError,
+            -3 => MobileBackup2Error::MuxError,
+            -4 => MobileBackup2Error::SslError,
+            -5 => MobileBackup2Error::RecieveTimeout,
+            -6 => MobileBackup2Error::BadVersion,
+            -7 => MobileBackup2Error::ReplyNotOk,
+            -8 => MobileBackup2Error::NoCommonVersion,
+            _ => MobileBackup2Error::UnknownError
+        }
+    }
+}
+
+impl From<MobileBackup2Error> for String {
+    fn from(value: MobileBackup2Error) -> String {
+        match value {
+            MobileBackup2Error::Success => "Success".to_string(),
+            MobileBackup2Error::InvalidArg => "InvalidArg".to_string(),
+            MobileBackup2Error::PlistError => "PlistError".to_string(),
+            MobileBackup2Error::MuxError => "MuxError".to_string(),
+            MobileBackup2Error::SslError => "SslError".to_string(),
+            MobileBackup2Error::RecieveTimeout => "RecieveTimeout".to_string(),
+            MobileBackup2Error::BadVersion => "BadVersion".to_string(),
+            MobileBackup2Error::ReplyNotOk => "ReplyNotOk".to_string(),
+            MobileBackup2Error::NoCommonVersion => "NoCommonVersion".to_string(),
+            MobileBackup2Error::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum MobileBackupError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    ReceiveTimeout,
+    BadVersion,
+    ReplyNotOk,
+    UnknownError,
+}
+
+impl From<i32> for MobileBackupError {
+    fn from(value: i32) -> MobileBackupError {
+        match value {
+            0 => MobileBackupError::Success,
+            -1 => MobileBackupError::InvalidArg,
+            -2 => MobileBackupError::PlistError,
+            -3 => MobileBackupError::MuxError,
+            -4 => MobileBackupError::SslError,
+            -5 => MobileBackupError::ReceiveTimeout,
+            -6 => MobileBackupError::BadVersion,
+            -7 => MobileBackupError::ReplyNotOk,
+            _ => MobileBackupError::UnknownError
+        }
+    }
+}
+
+impl From<MobileBackupError> for String {
+    fn from(value: MobileBackupError) -> String {
+        match value {
+            MobileBackupError::Success => "Success".to_string(),
+            MobileBackupError::InvalidArg => "InvalidArg".to_string(),
+            MobileBackupError::PlistError => "PlistError".to_string(),
+            MobileBackupError::MuxError => "MuxError".to_string(),
+            MobileBackupError::SslError => "SslError".to_string(),
+            MobileBackupError::ReceiveTimeout => "ReceiveTimeout".to_string(),
+            MobileBackupError::BadVersion => "BadVersion".to_string(),
+            MobileBackupError::ReplyNotOk => "ReplyNotOk".to_string(),
+            MobileBackupError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum MobileActivationError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    UnknownRequest,
+    RequestFailed,
+    UnknownError,
+}
+
+impl From<i32> for MobileActivationError {
+    fn from(value: i32) -> MobileActivationError {
+        match value {
+            0 => MobileActivationError::Success,
+            -1 => MobileActivationError::InvalidArg,
+            -2 => MobileActivationError::PlistError,
+            -3 => MobileActivationError::MuxError,
+            -4 => MobileActivationError::UnknownRequest,
+            -5 => MobileActivationError::RequestFailed,
+            _ => MobileActivationError::UnknownError
+        }
+    }
+}
+
+impl From<MobileActivationError> for String {
+    fn from(value: MobileActivationError) -> String {
+        match value {
+            MobileActivationError::Success => "Success".to_string(),
+            MobileActivationError::InvalidArg => "InvalidArg".to_string(),
+            MobileActivationError::PlistError => "PlistError".to_string(),
+            MobileActivationError::MuxError => "MuxError".to_string(),
+            MobileActivationError::UnknownRequest => "UnknownRequest".to_string(),
+            MobileActivationError::RequestFailed => "RequestFailed".to_string(),
+            MobileActivationError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum MobileImageMounterError {
+    Success,
+    InvalidArg,
+    PlistError,
+    ConnFailed,
+    CommandFailed,
+    DeviceLocked,
+    UnknownError,
+}
+
+impl From<i32> for MobileImageMounterError {
+    fn from(value: i32) -> MobileImageMounterError {
+        match value {
+            0 => MobileImageMounterError::Success,
+            -1 => MobileImageMounterError::InvalidArg,
+            -2 => MobileImageMounterError::PlistError,
+            -3 => MobileImageMounterError::ConnFailed,
+            -4 => MobileImageMounterError::CommandFailed,
+            -5 => MobileImageMounterError::DeviceLocked,
+            _ => MobileImageMounterError::UnknownError
+        }
+    }
+}
+
+impl From<MobileImageMounterError> for String {
+    fn from(value: MobileImageMounterError) -> String {
+        match value {
+            MobileImageMounterError::Success => "Success".to_string(),
+            MobileImageMounterError::InvalidArg => "InvalidArg".to_string(),
+            MobileImageMounterError::PlistError => "PlistError".to_string(),
+            MobileImageMounterError::ConnFailed => "ConnFailed".to_string(),
+            MobileImageMounterError::CommandFailed => "CommandFailed".to_string(),
+            MobileImageMounterError::DeviceLocked => "DeviceLocked".to_string(),
+            MobileImageMounterError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum MisagentError {
+    Success,
+    InvalidArg,
+    PlistError,
+    ConnFailed,
+    RequestFailed,
+    UnknownError,
+}
+
+impl From<i32> for MisagentError {
+    fn from(value: i32) -> MisagentError {
+        match value {
+            0 => MisagentError::Success,
+            -1 => MisagentError::InvalidArg,
+            -2 => MisagentError::PlistError,
+            -3 => MisagentError::ConnFailed,
+            -4 => MisagentError::RequestFailed,
+            _ => MisagentError::UnknownError
+        }
+    }
+}
+
+impl From<MisagentError> for String {
+    fn from(value: MisagentError) -> String {
+        match value {
+            MisagentError::Success => "Success".to_string(),
+            MisagentError::InvalidArg => "InvalidArg".to_string(),
+            MisagentError::PlistError => "PlistError".to_string(),
+            MisagentError::ConnFailed => "ConnFailed".to_string(),
+            MisagentError::RequestFailed => "RequestFailed".to_string(),
+            MisagentError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum HouseArrestError {
+    Success,
+    InvalidArg,
+    PlistError,
+    ConnFailed,
+    InvalidMode,
+    UnknownError,
+}
+
+impl From<i32> for HouseArrestError {
+    fn from(value: i32) -> HouseArrestError {
+        match value {
+            0 => HouseArrestError::Success,
+            -1 => HouseArrestError::InvalidArg,
+            -2 => HouseArrestError::PlistError,
+            -3 => HouseArrestError::ConnFailed,
+            -4 => HouseArrestError::InvalidMode,
+            _ => HouseArrestError::UnknownError
+        }
+    }
+}
+
+impl From<HouseArrestError> for String {
+    fn from(value: HouseArrestError) -> String {
+        match value {
+            HouseArrestError::Success => "Success".to_string(),
+            HouseArrestError::InvalidArg => "InvalidArg".to_string(),
+            HouseArrestError::PlistError => "PlistError".to_string(),
+            HouseArrestError::ConnFailed => "ConnFailed".to_string(),
+            HouseArrestError::InvalidMode => "InvalidMode".to_string(),
+            HouseArrestError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum HeartbeatError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    NotEnoughData,
+    Timeout,
+    UnknownError,
+}
+
+impl From<i32> for HeartbeatError {
+    fn from(value: i32) -> HeartbeatError {
+        match value {
+            0 => HeartbeatError::Success,
+            -1 => HeartbeatError::InvalidArg,
+            -2 => HeartbeatError::PlistError,
+            -3 => HeartbeatError::MuxError,
+            -4 => HeartbeatError::SslError,
+            -5 => HeartbeatError::NotEnoughData,
+            -6 => HeartbeatError::Timeout,
+            _ => HeartbeatError::UnknownError
+        }
+    }
+}
+
+impl From<HeartbeatError> for String {
+    fn from(value: HeartbeatError) -> String {
+        match value {
+            HeartbeatError::Success => "Success".to_string(),
+            HeartbeatError::InvalidArg => "InvalidArg".to_string(),
+            HeartbeatError::PlistError => "PlistError".to_string(),
+            HeartbeatError::MuxError => "MuxError".to_string(),
+            HeartbeatError::SslError => "SslError".to_string(),
+            HeartbeatError::NotEnoughData => "NotEnoughData".to_string(),
+            HeartbeatError::Timeout => "Timeout".to_string(),
+            HeartbeatError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum FileRelayError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    InvalidSource,
+    StagingEmpty,
+    PermissionDenied,
+    UnknownError,
+}
+
+impl From<i32> for FileRelayError {
+    fn from(value: i32) -> FileRelayError {
+        match value {
+            0 => FileRelayError::Success,
+            -1 => FileRelayError::InvalidArg,
+            -2 => FileRelayError::PlistError,
+            -3 => FileRelayError::MuxError,
+            -4 => FileRelayError::InvalidSource,
+            -5 => FileRelayError::StagingEmpty,
+            -6 => FileRelayError::PermissionDenied,
+            _ => FileRelayError::UnknownError
+        }
+    }
+}
+
+impl From<FileRelayError> for String {
+    fn from(value: FileRelayError) -> String {
+        match value {
+            FileRelayError::Success => "Success".to_string(),
+            FileRelayError::InvalidArg => "InvalidArg".to_string(),
+            FileRelayError::PlistError => "PlistError".to_string(),
+            FileRelayError::MuxError => "MuxError".to_string(),
+            FileRelayError::InvalidSource => "InvalidSource".to_string(),
+            FileRelayError::StagingEmpty => "StagingEmpty".to_string(),
+            FileRelayError::PermissionDenied => "PermissionDenied".to_string(),
+            FileRelayError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum DiagnosticsRelayError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    UnknownRequest,
+    UnknownError,
+}
+
+impl From<i32> for DiagnosticsRelayError {
+    fn from(value: i32) -> DiagnosticsRelayError {
+        match value {
+            0 => DiagnosticsRelayError::Success,
+            -1 => DiagnosticsRelayError::InvalidArg,
+            -2 => DiagnosticsRelayError::PlistError,
+            -3 => DiagnosticsRelayError::MuxError,
+            -4 => DiagnosticsRelayError::UnknownRequest,
+            _ => DiagnosticsRelayError::UnknownError
+        }
+    }
+}
+
+impl From<DiagnosticsRelayError> for String {
+    fn from(value: DiagnosticsRelayError) -> String {
+        match value {
+            DiagnosticsRelayError::Success => "Success".to_string(),
+            DiagnosticsRelayError::InvalidArg => "InvalidArg".to_string(),
+            DiagnosticsRelayError::PlistError => "PlistError".to_string(),
+            DiagnosticsRelayError::MuxError => "MuxError".to_string(),
+            DiagnosticsRelayError::UnknownRequest => "UnknownRequest".to_string(),
+            DiagnosticsRelayError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum CompanionProxyError {
+    Success,
+    InvalidArg,
+    PlistError,
+    MuxError,
+    SslError,
+    NotEnoughData,
+    Timeout,
+    OpInProgress,
+    NoDevices,
+    UnsupportedKey,
+    TimeoutReply,
+    UnknownError,
+}
+
+impl From<i32> for CompanionProxyError {
+    fn from(value: i32) -> CompanionProxyError {
+        match value {
+            0 => CompanionProxyError::Success,
+            -1 => CompanionProxyError::InvalidArg,
+            -2 => CompanionProxyError::PlistError,
+            -3 => CompanionProxyError::MuxError,
+            -4 => CompanionProxyError::SslError,
+            -5 => CompanionProxyError::NotEnoughData,
+            -6 => CompanionProxyError::Timeout,
+            -7 => CompanionProxyError::OpInProgress,
+            -100 => CompanionProxyError::NoDevices,
+            -101 => CompanionProxyError::UnsupportedKey,
+            -102 => CompanionProxyError::TimeoutReply,
+            _ => CompanionProxyError::UnknownError
+        }
+    }
+}
+
+impl From<CompanionProxyError> for String {
+    fn from(value: CompanionProxyError) -> String {
+        match value {
+            CompanionProxyError::Success => "Success".to_string(),
+            CompanionProxyError::InvalidArg => "InvalidArg".to_string(),
+            CompanionProxyError::PlistError => "PlistError".to_string(),
+            CompanionProxyError::MuxError => "MuxError".to_string(),
+            CompanionProxyError::SslError => "SslError".to_string(),
+            CompanionProxyError::NotEnoughData => "NotEnoughData".to_string(),
+            CompanionProxyError::Timeout => "Timeout".to_string(),
+            CompanionProxyError::OpInProgress => "OpInProgress".to_string(),
+            CompanionProxyError::NoDevices => "NoDevices".to_string(),
+            CompanionProxyError::UnsupportedKey => "UnsupportedKey".to_string(),
+            CompanionProxyError::TimeoutReply => "TimeoutReply".to_string(),
+            CompanionProxyError::UnknownError => "UnknownError".to_string(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum AfcError {
+    Success,
+    UnknownError,
+    OpHeaderInvalid,
+    NoResources,
+    ReadError,
+    WriteError,
+    UnknownPacketType,
+    InvalidArg,
+    ObjectNotFound,
+    ObjectIsDir,
+    PermDenied,
+    ServiceNotConnected,
+    OpTimeout,
+    TooMuchData,
+    EndOfData,
+    OpNotSupported,
+    ObjectExists,
+    ObjectBusy,
+    NoSpaceLeft,
+    OpWouldBlock,
+    IoError,
+    OpInterrupted,
+    OpInProgress,
+    InternalError,
+    MuxError,
+    NoMem,
+    NotEnoughData,
+    DirNotEmpty,
+    ForceSignedType,
+}
+
+impl From<i32> for AfcError {
+    fn from(value: i32) -> AfcError {
+        match value {
+            0 => AfcError::Success,
+            1 => AfcError::UnknownError,
+            2 => AfcError::OpHeaderInvalid,
+            3 => AfcError::NoResources,
+            4 => AfcError::ReadError,
+            5 => AfcError::WriteError,
+            6 => AfcError::UnknownPacketType,
+            7 => AfcError::InvalidArg,
+            8 => AfcError::ObjectNotFound,
+            9 => AfcError::ObjectIsDir,
+            10 => AfcError::PermDenied,
+            11 => AfcError::ServiceNotConnected,
+            12 => AfcError::OpTimeout,
+            13 => AfcError::TooMuchData,
+            14 => AfcError::EndOfData,
+            15 => AfcError::OpNotSupported,
+            16 => AfcError::ObjectExists,
+            17 => AfcError::ObjectBusy,
+            18 => AfcError::NoSpaceLeft,
+            19 => AfcError::OpWouldBlock,
+            20 => AfcError::IoError,
+            21 => AfcError::OpInterrupted,
+            22 => AfcError::OpInProgress,
+            23 => AfcError::InternalError,
+            30 => AfcError::MuxError,
+            31 => AfcError::NoMem,
+            32 => AfcError::NotEnoughData,
+            33 => AfcError::DirNotEmpty,
+            _ => AfcError::ForceSignedType,
+        }
+    }
+}
+
+impl From<AfcError> for String {
+    fn from(value: AfcError) -> String {
+        match value {
+            AfcError::Success => "Success".to_string(),
+            AfcError::UnknownError => "UnknownError".to_string(),
+            AfcError::OpHeaderInvalid => "OpHeaderInvalid".to_string(),
+            AfcError::NoResources => "NoResources".to_string(),
+            AfcError::ReadError => "ReadError".to_string(),
+            AfcError::WriteError => "WriteError".to_string(),
+            AfcError::UnknownPacketType => "UnknownPacketType".to_string(),
+            AfcError::InvalidArg => "InvalidArg".to_string(),
+            AfcError::ObjectNotFound => "ObjectNotFound".to_string(),
+            AfcError::ObjectIsDir => "ObjectIsDir".to_string(),
+            AfcError::PermDenied => "PermDenied".to_string(),
+            AfcError::ServiceNotConnected => "ServiceNotConnected".to_string(),
+            AfcError::OpTimeout => "OpTimeout".to_string(),
+            AfcError::TooMuchData => "TooMuchData".to_string(),
+            AfcError::EndOfData => "EndOfData".to_string(),
+            AfcError::OpNotSupported => "OpNotSupported".to_string(),
+            AfcError::ObjectExists => "ObjectExists".to_string(),
+            AfcError::ObjectBusy => "ObjectBusy".to_string(),
+            AfcError::NoSpaceLeft => "NoSpaceLeft".to_string(),
+            AfcError::OpWouldBlock => "OpWouldBlock".to_string(),
+            AfcError::IoError => "IoError".to_string(),
+            AfcError::OpInterrupted => "OpInterrupted".to_string(),
+            AfcError::OpInProgress => "OpInProgress".to_string(),
+            AfcError::InternalError => "InternalError".to_string(),
+            AfcError::MuxError => "MuxError".to_string(),
+            AfcError::NoMem => "NoMem".to_string(),
+            AfcError::NotEnoughData => "NotEnoughData".to_string(),
+            AfcError::DirNotEmpty => "DirNotEmpty".to_string(),
+            AfcError::ForceSignedType => "ForceSignedType".to_string(),
+        }
+    }
+}
