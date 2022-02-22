@@ -72,22 +72,28 @@ fn main() {
         }
     };
 
-    // Start the lockdownd service
-    match device.start_lockdownd_service("ideviceimagemounter".to_string()) {
-        Ok(()) => {}
+    let mut lockdown_client = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
+        Ok(lckd) => {
+            println!("Successfully connected to lockdownd.");
+            lckd
+        }
         Err(e) => {
             println!("Error starting lockdown service: {:?}", e);
             return;
         }
-    }
+    };
 
-    let ios_version = match device.get_ios_version() {
-        Ok(ios_version) => ios_version,
+    let ios_version = match lockdown_client.get_value("ProductVersion".to_string(), "".to_string()) {
+        Ok(ios_version) => {
+            ios_version.get_string_val()
+        }
         Err(e) => {
             println!("Error getting iOS version: {:?}", e);
             return;
         }
     };
+
+    println!("iOS version: {}", ios_version);
 
 }
 

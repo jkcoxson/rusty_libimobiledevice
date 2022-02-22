@@ -32,7 +32,7 @@ impl LockdowndClient {
         Ok(LockdowndClient { pointer: client, label: label })
     }
 
-    pub fn get_value(&mut self, key: String, domain: String) -> Result<Plist, LockdowndError> {
+    pub fn get_value(&self, key: String, domain: String) -> Result<Plist, LockdowndError> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()

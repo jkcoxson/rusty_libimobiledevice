@@ -313,6 +313,14 @@ impl Debug for Device {
     }
 }
 
+impl Drop for Device {
+    fn drop(&mut self) {
+        unsafe {
+            unsafe_bindings::idevice_free(self.device);
+        }
+    }
+}
+
 pub struct DebugServerCommand {
     command: unsafe_bindings::debugserver_command_t,
 }

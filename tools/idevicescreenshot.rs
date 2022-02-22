@@ -39,7 +39,7 @@ fn main() {
         panic!("No device UDID specified");
     }
 
-    let mut device = match libimobiledevice::get_device(&udid) {
+    let mut device = match libimobiledevice::get_device(udid) {
         Ok(d) => d,
         Err(e) => {
             println!("Error: {:?}", e);
@@ -49,8 +49,8 @@ fn main() {
 
     
 
-    match device.start_lockdownd_service("yeet".to_string()) {
-        Ok(()) => {}
+    match device.new_lockdownd_client("yeet".to_string()) {
+        Ok(_) => {}
         Err(e) => {
             println!("Error starting lockdown service: {:?}", e);
             return;
