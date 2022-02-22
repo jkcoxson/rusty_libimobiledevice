@@ -7,6 +7,7 @@
 #include "submodules/libimobiledevice/include/libimobiledevice/heartbeat.h"
 #include "submodules/libimobiledevice/include/libimobiledevice/house_arrest.h"
 #include "submodules/libimobiledevice/include/libimobiledevice/installation_proxy.h"
+#include "submodules/libimobiledevice/include/libimobiledevice/libimobiledevice.h"
 #include "submodules/libimobiledevice/include/libimobiledevice/lockdown.h"
 #include "submodules/libimobiledevice/include/libimobiledevice/misagent.h"
 #include "submodules/libimobiledevice/include/libimobiledevice/mobile_image_mounter.h"

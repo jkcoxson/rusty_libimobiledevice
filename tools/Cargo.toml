@@ -18,3 +18,7 @@ path = "idevicescreenshot.rs"
 [[bin]]
 name = "ideviceimagemounter"
 path = "ideviceimagemounter.rs"
+
+[[bin]]
+name = "ideviceinfo"
+path = "ideviceinfo.rs"

@@ -6,6 +6,7 @@ use crate::libimobiledevice::*;
 
 pub struct Plist {
     pub plist_t: unsafe_bindings::plist_t,
+    pub plist_type: PlistType
 }
 
 pub struct PlistArrayIter {
@@ -33,24 +34,43 @@ pub enum PlistType {
     None,
 }
 
+impl From<PlistType> for String {
+    fn from(plist_type: PlistType) -> String {
+        match plist_type {
+            PlistType::Boolean => "Boolean".to_string(),
+            PlistType::Integer => "Integer".to_string(),
+            PlistType::Real => "Real".to_string(),
+            PlistType::Date => "Date".to_string(),
+            PlistType::Data => "Data".to_string(),
+            PlistType::String => "String".to_string(),
+            PlistType::Array => "Array".to_string(),
+            PlistType::Dictionary => "Dictionary".to_string(),
+            PlistType::Unknown => "Unknown".to_string(),
+            PlistType::Key => "Key".to_string(),
+            PlistType::Uid => "Uid".to_string(),
+            PlistType::None => "None".to_string(),
+        }
+    }
+}
+
 impl Plist {
     pub fn new_dict() -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_dict()
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Dictionary }
     }
     pub fn new_array() -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_array()
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Array }
     }
     pub fn new_string(string: &str) -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_string(string.as_ptr() as *const i8)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::String }
     }
     pub fn new_bool(bool: bool) -> Plist {
         let plist_t = unsafe {
@@ -59,25 +79,25 @@ impl Plist {
                 false => 0,
             })
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Boolean }
     }
     pub fn new_uint(uint: u64) -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_uint(uint)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Integer }
     }
     pub fn new_real(real: f64) -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_real(real)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Real }
     }
     pub fn new_data(data: &[u8]) -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_data(data.as_ptr() as *const i8, std::convert::TryInto::try_into(data.len()).unwrap())
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Data }
     }
     pub fn new_date(_date: SystemTime) -> Plist {
         unimplemented!() // I am too tired to implement this right now
@@ -86,7 +106,7 @@ impl Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_new_uid(uid)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: PlistType::Uid }
     }
     pub fn array_get_size(&self) -> u32 {
         unsafe {
@@ -97,7 +117,7 @@ impl Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_array_get_item(self.plist_t, index)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
     pub fn array_get_item_index(&self) -> u32 {
         unsafe {
@@ -150,13 +170,13 @@ impl Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_dict_get_item(self.plist_t, key.as_ptr() as *const i8)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
     pub fn dict_item_get_key(&self) -> Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_dict_item_get_key(self.plist_t)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
     pub fn dict_set_item(&self, key: &str, item: &Plist) {
         unsafe {
@@ -182,7 +202,7 @@ impl Plist {
         let plist_t = unsafe {
             unsafe_bindings::plist_get_parent(self.plist_t)
         };
-        Plist { plist_t }
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
     pub fn get_node_type(&self) -> PlistType {
         unsafe {
@@ -314,14 +334,14 @@ impl Plist {
         unsafe {
             unsafe_bindings::plist_access_path(self.plist_t, len, &mut plist_t);
         }
-        Plist { plist_t }
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
 
 }
 
 impl From<unsafe_bindings::plist_t> for Plist {
     fn from(plist_t: unsafe_bindings::plist_t) -> Self {
-        Plist { plist_t }
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
 }
 
@@ -381,7 +401,7 @@ impl From<String> for Plist {
         unsafe {
             unsafe_bindings::plist_from_xml(plist_data, len as u32, plist_t)
         };
-        Plist { plist_t: unsafe {*plist_t} }
+        Plist { plist_t: unsafe {*plist_t}, plist_type: unsafe { unsafe_bindings::plist_get_node_type(*plist_t) }.into() }
     }
 }
 
@@ -413,7 +433,7 @@ impl From<Vec<u8>> for Plist {
         unsafe {
             unsafe_bindings::plist_from_bin(plist_data, len as u32, plist_t)
         };
-        Plist { plist_t: unsafe {*plist_t} }
+        Plist { plist_t: unsafe {*plist_t}, plist_type: unsafe { unsafe_bindings::plist_get_node_type(*plist_t) }.into() }
     }
 }
 
@@ -434,7 +454,7 @@ impl PlistArrayIter {
         if to_fill.is_null() {
             None
         } else {
-            Some(Plist { plist_t: unsafe { *to_fill } }) // yeet
+            Some(Plist { plist_t: unsafe { *to_fill }, plist_type: unsafe { unsafe_bindings::plist_get_node_type(*to_fill)}.into() }) // yeet
         }
     }
 }
@@ -464,7 +484,7 @@ impl PlistDictIter {
             let key_str = unsafe {
                 std::ffi::CStr::from_ptr(*key).to_string_lossy().into_owned()
             };
-            Some((key_str, Plist { plist_t: unsafe { *to_fill } }))
+            Some((key_str, Plist { plist_t: unsafe { *to_fill }, plist_type: unsafe { unsafe_bindings::plist_get_node_type(*to_fill)}.into() })) // yeet
         }
     }
 }

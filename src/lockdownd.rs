@@ -39,14 +39,20 @@ impl LockdowndClient {
         } else {
             domain_c_str.as_ptr()
         };
-        let key_c_str = std::ffi::CString::new(key).unwrap();
+        let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
+        let key_c_str = if key == "".to_string() {
+            std::ptr::null()
+        } else {
+            key_c_str.as_ptr()
+        };
+        
         let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::lockdownd_get_value(
                 self.pointer,
                 domain_c_str,
-                key_c_str.as_ptr(),
+                key_c_str,
                 &mut value,
             )
         }.into();

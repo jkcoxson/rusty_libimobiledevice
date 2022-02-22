@@ -181,7 +181,6 @@ pub fn plist_dict_get_item(apps: Plist, key: String) -> Plist {
 // Structs
 pub struct Device {
     // Front facing properties
-    pub name: String,
     pub udid: String,
     pub network: bool,
     pub lockdownd_clients: Vec<LockdowndClient>,
@@ -200,7 +199,6 @@ impl Device {
         device: *mut unsafe_bindings::idevice_private,
     ) -> Device {
         return Device {
-            name: String::new(),
             udid,
             network,
             lockdownd_clients: Vec::new(),
@@ -307,8 +305,8 @@ impl Debug for Device {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "Device {{ name: {}, udid: {}, network: {} }}",
-            self.name, self.udid, self.network
+            "Device {{ udid: {}, network: {}, lockdownd_clients: {}  }}",
+            self.udid, self.network, self.lockdownd_clients.len()
         )
     }
 }
