@@ -85,7 +85,7 @@ fn main() {
 
     let ios_version = match lockdown_client.get_value("ProductVersion".to_string(), "".to_string()) {
         Ok(ios_version) => {
-            ios_version.get_string_val()
+            ios_version.get_string_val().unwrap()
         }
         Err(e) => {
             println!("Error getting iOS version: {:?}", e);
@@ -93,9 +93,33 @@ fn main() {
         }
     };
 
-    println!("iOS version: {}", ios_version);
+    let ios_major_version = ios_version.split('.').next().unwrap().parse::<u32>().unwrap();
+    if ios_major_version < 8 {
+        println!("Error: old versions of iOS are not supported atm because lazy.");
+        return;
+    }
 
-    
+    let mut service = match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
+        Ok(service) => {
+            println!("Successfully started com.apple.mobile.mobile_image_mounter.");
+            service
+        }
+        Err(e) => {
+            println!("Error starting com.apple.mobile.mobile_image_mounter: {:?}", e);
+            return;
+        }
+    };
+
+    let mim = match device.new_mobile_image_mounter(service) {
+        Ok(mim) => {
+            println!("Successfully started mobile_image_mounter.");
+            mim
+        }
+        Err(e) => {
+            println!("Error starting mobile_image_mounter: {:?}", e);
+            return;
+        }
+    };
 
 }
 
