@@ -121,12 +121,33 @@ impl LockdowndClient {
 
 impl Drop for LockdowndClient {
     fn drop(&mut self) {
-        unsafe {
-            unsafe_bindings::lockdownd_client_free(match self.pointer.check() {
-                Ok(ptr) => ptr,
-                Err(_) => return,
-            });
+        if let Ok(ptr) = self.pointer.check() {
+            unsafe {
+                unsafe_bindings::lockdownd_client_free(ptr);
+            }
+        }        
+        self.pointer.invalidate();
+    }
+}
+
+impl Drop for LockdowndService {
+    fn drop(&mut self) {
+        if let Ok(ptr) = self.pointer.check() {
+            unsafe {
+                unsafe_bindings::lockdownd_service_descriptor_free(ptr);
+            }
         }
         self.pointer.invalidate();
+    }
+}
+
+impl Drop for MobileImageMounter {
+    fn drop(&mut self) {
+        if let Ok(ptr) = self.pointer.check() {
+            unsafe {
+                unsafe_bindings::mobile_image_mounter_free(ptr);
+            }
+        }
+        self.pointer.invalidate()
     }
 }
