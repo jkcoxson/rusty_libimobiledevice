@@ -124,8 +124,12 @@ impl LockdowndClient {
 
 #[cfg(target_os = "windows")]
 type ImageMounterPointerSize = u32;
+#[cfg(target_os = "windows")]
+type ImageMounterReturnType = i32;
 #[cfg(not(target_os = "windows"))]
 type ImageMounterPointerSize = u64;
+#[cfg(not(target_os = "windows"))]
+type ImageMounterReturnType = i64;
 
 impl MobileImageMounter {
     /// Uploads an image from a path to the device
@@ -237,7 +241,7 @@ impl MobileImageMounter {
 
 }
 
-extern "C" fn image_mounter_callback(_a: *mut c_void, _b: ImageMounterPointerSize, _c: *mut c_void ) -> i64 {
+extern "C" fn image_mounter_callback(_a: *mut c_void, _b: ImageMounterPointerSize, _c: *mut c_void ) -> ImageMounterReturnType {
     0
 }
 
