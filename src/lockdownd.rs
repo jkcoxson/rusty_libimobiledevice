@@ -122,6 +122,11 @@ impl LockdowndClient {
 
 }
 
+#[cfg(target_os = "windows")]
+type ImageMounterPointerSize = u32;
+#[cfg(not(target_os = "windows"))]
+type ImageMounterPointerSize = u64;
+
 impl MobileImageMounter {
     /// Uploads an image from a path to the device
     pub fn upload_image(&self, image_path: String, image_type: String, signature_path: String) -> Result<(), MobileImageMounterError> {
@@ -161,7 +166,7 @@ impl MobileImageMounter {
                     Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
                 },
                 image_type_c_str,
-                image_buffer.len() as u64,
+                image_buffer.len() as ImageMounterPointerSize,
                 signature_buffer.as_ptr() as *const i8,
                 signature_buffer.len() as u16,
                 Some(image_mounter_callback),
@@ -232,7 +237,7 @@ impl MobileImageMounter {
 
 }
 
-extern "C" fn image_mounter_callback(_a: *mut c_void, _b: u64, _c: *mut c_void ) -> i64 {
+extern "C" fn image_mounter_callback(_a: *mut c_void, _b: ImageMounterPointerSize, _c: *mut c_void ) -> i64 {
     0
 }
 
