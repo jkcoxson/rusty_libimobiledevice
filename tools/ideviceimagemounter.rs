@@ -110,7 +110,7 @@ fn main() {
         }
     };
 
-    let mim = match device.new_mobile_image_mounter(service) {
+    let mim = match device.new_mobile_image_mounter(&service) {
         Ok(mim) => {
             println!("Successfully started mobile_image_mounter.");
             mim

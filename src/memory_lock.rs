@@ -12,27 +12,25 @@
 use std::sync::{Mutex, Arc};
 
 use crate::bindings as unsafe_bindings;
-use unsafe_bindings::{ idevice_private, idevice_t, lockdownd_client_private, lockdownd_client_t, lockdownd_service_descriptor, lockdownd_service_descriptor_t, mobile_image_mounter_client_t, mobile_image_mounter_client_private };
+use unsafe_bindings::{ idevice_t, lockdownd_client_t, lockdownd_service_descriptor_t, mobile_image_mounter_client_t };
 
 pub struct IdeviceMemoryLock {
-    pub pointer: Arc<Mutex<Option<idevice_private>>>,
+    pub pointer: Arc<Mutex<Option<idevice_t>>>,
 }
 
 impl IdeviceMemoryLock {
     pub fn new(pointer: unsafe_bindings::idevice_t) -> Self {
-        unsafe { 
-            IdeviceMemoryLock {
-                pointer: Arc::new(Mutex::new(Some(*pointer))) 
-            }
+        IdeviceMemoryLock {
+            pointer: Arc::new(Mutex::new(Some(pointer))) 
         }
         
     }
 
-    pub fn check(&self) -> Result<idevice_t, ()> {
+    pub fn check(&mut self) -> Result<idevice_t, ()> {
         match self.pointer.lock() {
             Ok(lock) => {
                 match *lock {
-                    Some(lock) => Ok(&mut lock.clone()),
+                    Some(lock) => Ok(lock),
                     None => Err(()),
                 }
             },
@@ -49,17 +47,15 @@ impl IdeviceMemoryLock {
 
 /// Lockdownd Clients rely on devices
 pub struct LockdowndClientLock {
-    pub pointer: Arc<Mutex<Option<lockdownd_client_private>>>,
-    pub idevice_pointer: Arc<Mutex<Option<idevice_private>>>
+    pub pointer: Arc<Mutex<Option<lockdownd_client_t>>>,
+    pub idevice_pointer: Arc<Mutex<Option<idevice_t>>>
 }
 
 impl LockdowndClientLock {
-    pub fn new(pointer: lockdownd_client_t, idevice_pointer: Arc<Mutex<Option<idevice_private>>>) -> Self {
-        unsafe { 
-            LockdowndClientLock {
-                pointer: Arc::new(Mutex::new(Some(*pointer))),
-                idevice_pointer,
-            }
+    pub fn new(pointer: lockdownd_client_t, idevice_pointer: Arc<Mutex<Option<idevice_t>>>) -> Self {
+        LockdowndClientLock {
+            pointer: Arc::new(Mutex::new(Some(pointer))),
+            idevice_pointer,
         }
         
     }
@@ -80,7 +76,7 @@ impl LockdowndClientLock {
         match self.pointer.lock() {
             Ok(lock) => {
                 match *lock {
-                    Some(lock) => Ok(&mut lock.clone()),
+                    Some(lock) => Ok(lock.clone()),
                     None => Err(()),
                 }
             },
@@ -96,17 +92,15 @@ impl LockdowndClientLock {
 }
 
 pub struct LockdowndServiceLock {
-    pub pointer: Arc<Mutex<Option<lockdownd_service_descriptor>>>,
-    pub lockdownd_client_pointer: Arc<Mutex<Option<lockdownd_client_private>>>
+    pub pointer: Arc<Mutex<Option<lockdownd_service_descriptor_t>>>,
+    pub lockdownd_client_pointer: Arc<Mutex<Option<lockdownd_client_t>>>
 }
 
 impl LockdowndServiceLock {
-    pub fn new(pointer: lockdownd_service_descriptor_t, lockdownd_client_pointer: Arc<Mutex<Option<lockdownd_client_private>>>) -> Self {
-        unsafe { 
-            LockdowndServiceLock {
-                pointer: Arc::new(Mutex::new(Some(*pointer))),
-                lockdownd_client_pointer,
-            }
+    pub fn new(pointer: lockdownd_service_descriptor_t, lockdownd_client_pointer: Arc<Mutex<Option<lockdownd_client_t>>>) -> Self {
+        LockdowndServiceLock {
+            pointer: Arc::new(Mutex::new(Some(pointer))),
+            lockdownd_client_pointer,
         }
         
     }
@@ -127,7 +121,7 @@ impl LockdowndServiceLock {
         match self.pointer.lock() {
             Ok(lock) => {
                 match *lock {
-                    Some(lock) => Ok(&mut lock.clone()),
+                    Some(lock) => Ok(lock.clone()),
                     None => Err(()),
                 }
             },
@@ -143,17 +137,15 @@ impl LockdowndServiceLock {
 }
 
 pub struct MobileImageMounterLock {
-    pub pointer: Arc<Mutex<Option<mobile_image_mounter_client_private>>>,
-    pub service_pointer: Arc<Mutex<Option<lockdownd_service_descriptor>>>,
+    pub pointer: Arc<Mutex<Option<mobile_image_mounter_client_t>>>,
+    pub service_pointer: Arc<Mutex<Option<lockdownd_service_descriptor_t>>>,
 }
 
 impl MobileImageMounterLock {
     pub fn new(pointer: mobile_image_mounter_client_t, service_pointer: lockdownd_service_descriptor_t) -> Self {
-        unsafe { 
-            MobileImageMounterLock {
-                pointer: Arc::new(Mutex::new(Some(*pointer))),
-                service_pointer: Arc::new(Mutex::new(Some(*service_pointer))),
-            }
+        MobileImageMounterLock {
+            pointer: Arc::new(Mutex::new(Some(pointer))),
+            service_pointer: Arc::new(Mutex::new(Some(service_pointer))),
         }
         
     }
@@ -174,7 +166,7 @@ impl MobileImageMounterLock {
         match self.pointer.lock() {
             Ok(lock) => {
                 match *lock {
-                    Some(lock) => Ok(&mut lock.clone()),
+                    Some(lock) => Ok(lock.clone()),
                     None => Err(()),
                 }
             },

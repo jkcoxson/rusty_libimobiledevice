@@ -34,6 +34,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 
     let mut to_return = vec![];
     for i in device_list_slice.iter_mut() {
+        // Print pointer address
         let udid = unsafe {
             std::ffi::CStr::from_ptr((*(*i)).udid)
                 .to_string_lossy()
@@ -63,7 +64,6 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
         if result != 0 {
             continue;
         }
-
         let to_push = Device::new(udid, network, unsafe { (*(*i)).conn_data }, device_info);
         to_return.push(to_push);
     }
@@ -133,7 +133,6 @@ pub fn instproxy_lookup(
     client_opts: Plist,
 ) -> Option<Plist> {
     let mut apps: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
-
     let appid_c_str = CString::new(appid).unwrap();
     let appid_c_str_ptr: *const std::os::raw::c_char = appid_c_str.as_ptr();
     let appid_c_str_ptr_ptr = appid_c_str_ptr as *mut *const std::os::raw::c_char;
@@ -196,7 +195,7 @@ impl Device {
         udid: String,
         network: bool,
         conn_data: *mut std::os::raw::c_void,
-        device: *mut unsafe_bindings::idevice_private,
+        device: unsafe_bindings::idevice_t,
     ) -> Device {
         return Device {
             udid,
@@ -332,11 +331,10 @@ impl Debug for Device {
 
 impl Drop for Device {
     fn drop(&mut self) {
-        unsafe {
-            unsafe_bindings::idevice_free( match self.pointer.check() {
-                Ok(device) => device,
-                Err(_) => return,
-            });
+        if let Ok(device) = self.pointer.check() {
+            unsafe {
+                unsafe_bindings::idevice_free(device);
+            }
         }
         self.pointer.invalidate();
     }

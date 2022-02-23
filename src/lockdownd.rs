@@ -12,10 +12,9 @@ pub struct LockdowndClient {
 }
 
 pub struct LockdowndService {
-    pub pointer: LockdowndServiceLock,
+    pub(crate) pointer: LockdowndServiceLock,
     pub label: String,
     pub port: u32,
-    pub mobile_image_mounters: Vec<MobileImageMounter>,
 }
 
 pub struct MobileImageMounter {
@@ -23,7 +22,7 @@ pub struct MobileImageMounter {
 }
 
 impl LockdowndClient {
-    pub fn new(device: &Device, label: String) -> Result<Self, LockdowndError> {
+    pub fn new(device: &mut Device, label: String) -> Result<Self, LockdowndError> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
@@ -112,7 +111,6 @@ impl LockdowndClient {
             pointer: LockdowndServiceLock::new(service, self.pointer.pointer.clone()),
             label: label,
             port: 0,
-            mobile_image_mounters: vec![],
         })
     }
 
