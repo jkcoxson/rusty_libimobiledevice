@@ -177,8 +177,57 @@ impl MobileImageMounter {
     }
 
     /// Mounts the image on the device
-    pub fn mount_image(&self, name: String, image_path: String, image_type: String, signature_path: String) -> Result<Plist, MobileImageMounterError> {
-        todo!()
+    pub fn mount_image(&self, image_path: String, image_type: String, signature_path: String) -> Result<Plist, MobileImageMounterError> {
+        // Read the image into a buffer
+        let mut image_buffer = Vec::new();
+        let file = match std::fs::File::open(image_path.clone()) {
+            Ok(file) => file,
+            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
+        };
+        let mut reader = std::io::BufReader::new(file);
+        match reader.read_to_end(&mut image_buffer) {
+            Ok(_) => (),
+            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
+        };
+        // Read the signature into a buffer
+        let mut signature_buffer = Vec::new();
+        let file = match std::fs::File::open(signature_path) {
+            Ok(file) => file,
+            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
+        };
+        let mut reader = std::io::BufReader::new(file);
+        match reader.read_to_end(&mut signature_buffer) {
+            Ok(_) => (),
+            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
+        };
+        let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
+        let image_type_c_str = if image_type == "".to_string() {
+            std::ptr::null()
+        } else {
+            image_type_c_str.as_ptr()
+        };
+
+        let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::mobile_image_mounter_mount_image(
+                match self.pointer.check() {
+                    Ok(pointer) => pointer,
+                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
+                },
+                image_path.as_ptr() as *const i8,
+                signature_buffer.as_ptr() as *const i8,
+                signature_buffer.len() as u16,
+                image_type_c_str,
+                &mut plist,
+
+            )
+        }.into();
+
+        if result != MobileImageMounterError::Success {
+            return Err(result);
+        }
+        Ok(plist.into())
     }
 
 }

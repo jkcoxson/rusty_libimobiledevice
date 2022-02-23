@@ -128,12 +128,21 @@ fn main() {
     if list_mode {
         todo!();
     } else {
-        match mim.upload_image(dmg_path.clone(), image_type, format!("{}.signature", dmg_path).to_string()) {
+        match mim.upload_image(dmg_path.clone(), image_type.clone(), format!("{}.signature", dmg_path.clone()).to_string()) {
             Ok(_) => {
                 println!("Successfully uploaded image");
             }
             Err(e) => {
                 println!("Error uploading image: {:?}", e);
+                return;
+            }
+        }
+        match mim.mount_image(dmg_path.clone(), image_type, format!("{}.signature", dmg_path.clone()).to_string()) {
+            Ok(_) => {
+                println!("Successfully mounted image");
+            }
+            Err(e) => {
+                println!("Error mounting image: {:?}", e);
                 return;
             }
         }
