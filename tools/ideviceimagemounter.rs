@@ -9,6 +9,7 @@ fn main() {
     let mut dmg_path = "".to_string();
     let mut image_type = "Developer".to_string();
     let mut display_xml = false;
+    let mut list_mode = false;
 
     // Parse arguments
     let mut args: Vec<String> = std::env::args().collect();
@@ -18,23 +19,25 @@ fn main() {
         match args[i].as_str() {
             "-u" | "--udid" => {
                 udid = args[i + 1].clone();
+                i += 1;
             }
             "-l" | "--list" => {
-                todo!();
+                list_mode = true;
             }
             "-t" | "--imagetype" => {
                 image_type = args[i + 1].clone();
+                i += 1;
             }
             "-x" | "--xml" => {
                 display_xml = true;
             }
             "-h" | "--help" => {
-                println!("Usage: ideviceimagemounter <DMG Path> [options]");
+                println!("Usage: ideviceimagemounter [options] <DMG Path>");
                 println!("");
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
                 println!("  -l, --list           : list all devices");
-                println!("  -t, --imagetype <type> : image type to mount (Developer, Distribution, or Recovery)");
+                println!("  -t, --imagetype <type> : image type to mount, the default is Developer");
                 println!("  -x, --xml            : display xml plist");
                 println!("  -h, --help           : display this help message");
                 println!("  -v, --version        : display version");
@@ -58,10 +61,11 @@ fn main() {
         println!("Error: No UDID specified. Use -u or --udid to specify a device.");
         return;
     }
-    if dmg_path == "" {
+    if dmg_path == "" && !list_mode {
         println!("Error: No DMG specified. Use -h for help.");
         return;
     }
+    println!("{}", dmg_path);
 
     // Get the device
     let mut device = match libimobiledevice::get_device(udid.to_string()) {
@@ -74,7 +78,7 @@ fn main() {
 
     let mut lockdown_client = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
         Ok(lckd) => {
-            println!("Successfully connected to lockdownd.");
+            println!("Successfully connected to lockdownd");
             lckd
         }
         Err(e) => {
@@ -95,13 +99,13 @@ fn main() {
 
     let ios_major_version = ios_version.split('.').next().unwrap().parse::<u32>().unwrap();
     if ios_major_version < 8 {
-        println!("Error: old versions of iOS are not supported atm because lazy.");
+        println!("Error: old versions of iOS are not supported atm because lazy");
         return;
     }
 
     let mut service = match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
         Ok(service) => {
-            println!("Successfully started com.apple.mobile.mobile_image_mounter.");
+            println!("Successfully started com.apple.mobile.mobile_image_mounter");
             service
         }
         Err(e) => {
@@ -112,7 +116,7 @@ fn main() {
 
     let mim = match device.new_mobile_image_mounter(&service) {
         Ok(mim) => {
-            println!("Successfully started mobile_image_mounter.");
+            println!("Successfully started mobile_image_mounter");
             mim
         }
         Err(e) => {
@@ -121,5 +125,19 @@ fn main() {
         }
     };
 
+    if list_mode {
+        todo!();
+    } else {
+        match mim.upload_image(dmg_path.clone(), image_type, format!("{}.signature", dmg_path).to_string()) {
+            Ok(_) => {
+                println!("Successfully uploaded image");
+            }
+            Err(e) => {
+                println!("Error uploading image: {:?}", e);
+                return;
+            }
+        }
+        
+    }
 }
 

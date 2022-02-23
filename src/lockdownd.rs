@@ -1,7 +1,11 @@
 // jkcoxson
 
+use std::io::Read;
+
+use libc::c_void;
+
 pub use crate::bindings as unsafe_bindings;
-use crate::error::{LockdowndError};
+use crate::error::{LockdowndError, MobileImageMounterError};
 use crate::libimobiledevice::Device;
 use crate::memory_lock::{LockdowndClientLock, LockdowndServiceLock, MobileImageMounterLock};
 use crate::plist::Plist;
@@ -32,7 +36,7 @@ impl LockdowndClient {
             unsafe_bindings::lockdownd_client_new_with_handshake(
                 match device.pointer.check() {
                     Ok(pointer) => pointer,
-                    Err(_) => return Err(LockdowndError::UnknownError),
+                    Err(_) => return Err(LockdowndError::MissingObjectDepenency),
                 },
                 client_ptr,
                 label_c_str.as_ptr(),
@@ -43,7 +47,7 @@ impl LockdowndClient {
             return Err(result);
         }
 
-        Ok(LockdowndClient { pointer: LockdowndClientLock::new(unsafe {*client_ptr}, device.pointer.pointer.clone()), label: label })
+        Ok(LockdowndClient { pointer: LockdowndClientLock::new(unsafe {*client_ptr}, device.pointer.clone()), label: label })
     }
 
     /// Gets a value from the device
@@ -67,7 +71,7 @@ impl LockdowndClient {
             unsafe_bindings::lockdownd_get_value(
                 match self.pointer.check() {
                     Ok(pointer) => pointer,
-                    Err(_) => return Err(LockdowndError::UnknownError),
+                    Err(_) => return Err(LockdowndError::MissingObjectDepenency),
                 },
                 domain_c_str,
                 key_c_str,
@@ -96,7 +100,7 @@ impl LockdowndClient {
             unsafe_bindings::lockdownd_start_service(
                 match self.pointer.check() {
                     Ok(pointer) => pointer,
-                    Err(_) => return Err(LockdowndError::UnknownError),
+                    Err(_) => return Err(LockdowndError::MissingObjectDepenency),
                 },
                 label_c_str,
                 &mut service,
@@ -108,7 +112,7 @@ impl LockdowndClient {
         }
 
         Ok(LockdowndService {
-            pointer: LockdowndServiceLock::new(service, self.pointer.pointer.clone()),
+            pointer: LockdowndServiceLock::new(service, self.pointer.clone()),
             label: label,
             port: 0,
         })
@@ -118,6 +122,70 @@ impl LockdowndClient {
 
 }
 
+impl MobileImageMounter {
+    /// Uploads an image from a path to the device
+    pub fn upload_image(&self, image_path: String, image_type: String, signature_path: String) -> Result<(), MobileImageMounterError> {
+        // Read the image into a buffer
+        let mut image_buffer = Vec::new();
+        let file = match std::fs::File::open(image_path) {
+            Ok(file) => file,
+            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
+        };
+        let mut reader = std::io::BufReader::new(file);
+        match reader.read_to_end(&mut image_buffer) {
+            Ok(_) => (),
+            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
+        };
+        // Read the signature into a buffer
+        let mut signature_buffer = Vec::new();
+        let file = match std::fs::File::open(signature_path) {
+            Ok(file) => file,
+            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
+        };
+        let mut reader = std::io::BufReader::new(file);
+        match reader.read_to_end(&mut signature_buffer) {
+            Ok(_) => (),
+            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
+        };
+        let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
+        let image_type_c_str = if image_type == "".to_string() {
+            std::ptr::null()
+        } else {
+            image_type_c_str.as_ptr()
+        };
+
+        let result = unsafe {
+            unsafe_bindings::mobile_image_mounter_upload_image(
+                match self.pointer.check() {
+                    Ok(pointer) => pointer,
+                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
+                },
+                image_type_c_str,
+                image_buffer.len() as u64,
+                signature_buffer.as_ptr() as *const i8,
+                signature_buffer.len() as u16,
+                Some(image_mounter_callback),
+                image_buffer.as_ptr() as *mut c_void,
+            )
+        }.into();
+
+        if result != MobileImageMounterError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    /// Mounts the image on the device
+    pub fn mount_image(&self, name: String, image_path: String, image_type: String, signature_path: String) -> Result<Plist, MobileImageMounterError> {
+        todo!()
+    }
+
+}
+
+extern "C" fn image_mounter_callback(_a: *mut c_void, _b: u64, _c: *mut c_void ) -> i64 {
+    0
+}
 
 impl Drop for LockdowndClient {
     fn drop(&mut self) {

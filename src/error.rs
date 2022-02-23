@@ -44,6 +44,8 @@ pub enum LockdowndError {
     McProtected,
     McChallengeRequired,
     UnknownError,
+    // Internal errors
+    MissingObjectDepenency,
 }
 
 impl From<i32> for LockdowndError {
@@ -89,6 +91,7 @@ impl From<i32> for LockdowndError {
             -37 => LockdowndError::FmipProtected,
             -38 => LockdowndError::McProtected,
             -39 => LockdowndError::McChallengeRequired,
+            -100 => LockdowndError::MissingObjectDepenency,
             _ => LockdowndError::UnknownError,
         }
     }
@@ -142,6 +145,7 @@ impl From<LockdowndError> for String {
             LockdowndError::McProtected => "McProtected".to_string(),
             LockdowndError::McChallengeRequired => "McChallengeRequired".to_string(),
             LockdowndError::UnknownError => "UnknownError".to_string(),
+            LockdowndError::MissingObjectDepenency => "MissingObjectDepenency".to_string(),
         }
     }
 }
@@ -1080,6 +1084,10 @@ pub enum MobileImageMounterError {
     CommandFailed,
     DeviceLocked,
     UnknownError,
+    // Internal errors
+    DmgNotFound,
+    SignatureNotFound,
+    MissingObjectDepenency,
 }
 
 impl From<i32> for MobileImageMounterError {
@@ -1091,6 +1099,9 @@ impl From<i32> for MobileImageMounterError {
             -3 => MobileImageMounterError::ConnFailed,
             -4 => MobileImageMounterError::CommandFailed,
             -5 => MobileImageMounterError::DeviceLocked,
+            -100 => MobileImageMounterError::DmgNotFound,
+            -101 => MobileImageMounterError::SignatureNotFound,
+            -102 => MobileImageMounterError::MissingObjectDepenency,
             _ => MobileImageMounterError::UnknownError
         }
     }
@@ -1105,6 +1116,9 @@ impl From<MobileImageMounterError> for String {
             MobileImageMounterError::ConnFailed => "ConnFailed".to_string(),
             MobileImageMounterError::CommandFailed => "CommandFailed".to_string(),
             MobileImageMounterError::DeviceLocked => "DeviceLocked".to_string(),
+            MobileImageMounterError::DmgNotFound => "DmgNotFound".to_string(),
+            MobileImageMounterError::SignatureNotFound => "SignatureNotFound".to_string(),
+            MobileImageMounterError::MissingObjectDepenency => "MissingObjectDepenency".to_string(),
             MobileImageMounterError::UnknownError => "UnknownError".to_string(),
         }
     }

@@ -26,7 +26,7 @@ impl IdeviceMemoryLock {
         
     }
 
-    pub fn check(&mut self) -> Result<idevice_t, ()> {
+    pub fn check(&self) -> Result<idevice_t, ()> {
         match self.pointer.lock() {
             Ok(lock) => {
                 match *lock {
@@ -45,14 +45,22 @@ impl IdeviceMemoryLock {
     }
 }
 
+impl Clone for IdeviceMemoryLock {
+    fn clone(&self) -> Self {
+        IdeviceMemoryLock {
+            pointer: self.pointer.clone(),
+        }
+    }
+}
+
 /// Lockdownd Clients rely on devices
 pub struct LockdowndClientLock {
     pub pointer: Arc<Mutex<Option<lockdownd_client_t>>>,
-    pub idevice_pointer: Arc<Mutex<Option<idevice_t>>>
+    pub idevice_pointer: IdeviceMemoryLock
 }
 
 impl LockdowndClientLock {
-    pub fn new(pointer: lockdownd_client_t, idevice_pointer: Arc<Mutex<Option<idevice_t>>>) -> Self {
+    pub fn new(pointer: lockdownd_client_t, idevice_pointer: IdeviceMemoryLock) -> Self {
         LockdowndClientLock {
             pointer: Arc::new(Mutex::new(Some(pointer))),
             idevice_pointer,
@@ -62,13 +70,8 @@ impl LockdowndClientLock {
 
     /// Returns a pointer to the object if all dependencies are satisfied
     pub fn check(&self) -> Result<unsafe_bindings::lockdownd_client_t, ()> {
-        match self.idevice_pointer.lock() {
-            Ok(lock) => {
-                match *lock {
-                    Some(_) => {},
-                    None => { return Err(()); },
-                }
-            },
+        match self.idevice_pointer.check() {
+            Ok(_) => {},
             Err(_) => {
                 return Err(());
             }
@@ -91,13 +94,22 @@ impl LockdowndClientLock {
     }
 }
 
+impl Clone for LockdowndClientLock {
+    fn clone(&self) -> Self {
+        LockdowndClientLock {
+            pointer: self.pointer.clone(),
+            idevice_pointer: self.idevice_pointer.clone(),
+        }
+    }
+}
+
 pub struct LockdowndServiceLock {
     pub pointer: Arc<Mutex<Option<lockdownd_service_descriptor_t>>>,
-    pub lockdownd_client_pointer: Arc<Mutex<Option<lockdownd_client_t>>>
+    pub lockdownd_client_pointer: LockdowndClientLock,
 }
 
 impl LockdowndServiceLock {
-    pub fn new(pointer: lockdownd_service_descriptor_t, lockdownd_client_pointer: Arc<Mutex<Option<lockdownd_client_t>>>) -> Self {
+    pub fn new(pointer: lockdownd_service_descriptor_t, lockdownd_client_pointer: LockdowndClientLock) -> Self {
         LockdowndServiceLock {
             pointer: Arc::new(Mutex::new(Some(pointer))),
             lockdownd_client_pointer,
@@ -107,13 +119,8 @@ impl LockdowndServiceLock {
 
     /// Returns a pointer to the object if all dependencies are satisfied
     pub fn check(&self) -> Result<unsafe_bindings::lockdownd_service_descriptor_t, ()> {
-        match self.lockdownd_client_pointer.lock() {
-            Ok(lock) => {
-                match *lock {
-                    Some(_) => {},
-                    None => { return Err(()); },
-                }
-            },
+        match self.lockdownd_client_pointer.check() {
+            Ok(_) => {},
             Err(_) => {
                 return Err(());
             }
@@ -136,29 +143,33 @@ impl LockdowndServiceLock {
     }
 }
 
+impl Clone for LockdowndServiceLock {
+    fn clone(&self) -> Self {
+        LockdowndServiceLock {
+            pointer: self.pointer.clone(),
+            lockdownd_client_pointer: self.lockdownd_client_pointer.clone(),
+        }
+    }
+}
+
 pub struct MobileImageMounterLock {
     pub pointer: Arc<Mutex<Option<mobile_image_mounter_client_t>>>,
-    pub service_pointer: Arc<Mutex<Option<lockdownd_service_descriptor_t>>>,
+    pub service_pointer: LockdowndServiceLock,
 }
 
 impl MobileImageMounterLock {
-    pub fn new(pointer: mobile_image_mounter_client_t, service_pointer: lockdownd_service_descriptor_t) -> Self {
+    pub fn new(pointer: mobile_image_mounter_client_t, service_pointer: LockdowndServiceLock) -> Self {
         MobileImageMounterLock {
             pointer: Arc::new(Mutex::new(Some(pointer))),
-            service_pointer: Arc::new(Mutex::new(Some(service_pointer))),
+            service_pointer,
         }
         
     }
 
     /// Returns a pointer to the object if all dependencies are satisfied
     pub fn check(&self) -> Result<mobile_image_mounter_client_t, ()> {
-        match self.service_pointer.lock() {
-            Ok(lock) => {
-                match *lock {
-                    Some(_) => {},
-                    None => { return Err(()); },
-                }
-            },
+        match self.service_pointer.check() {
+            Ok(_) => {},
             Err(_) => {
                 return Err(());
             }
@@ -178,5 +189,14 @@ impl MobileImageMounterLock {
 
     pub fn invalidate(&mut self) {
         self.pointer.lock().unwrap().take();
+    }
+}
+
+impl Clone for MobileImageMounterLock {
+    fn clone(&self) -> Self {
+        MobileImageMounterLock {
+            pointer: self.pointer.clone(),
+            service_pointer: self.service_pointer.clone(),
+        }
     }
 }

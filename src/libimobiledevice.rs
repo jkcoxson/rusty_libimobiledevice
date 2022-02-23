@@ -296,11 +296,11 @@ impl Device {
             unsafe_bindings::mobile_image_mounter_new(
                 match self.pointer.check() {
                     Ok(device) => device,
-                    Err(_) => return Err(MobileImageMounterError::UnknownError),
+                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
                 },
                 match service.pointer.check() {
                     Ok(service) => service,
-                    Err(_) => return Err(MobileImageMounterError::UnknownError),
+                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
                 },
                 &mut mobile_image_mounter,
             )
@@ -311,7 +311,7 @@ impl Device {
         }
 
         let mobile_image_mounter = MobileImageMounter {
-            pointer: memory_lock::MobileImageMounterLock::new(mobile_image_mounter, service.pointer.check().unwrap()),
+            pointer: memory_lock::MobileImageMounterLock::new(mobile_image_mounter, service.pointer.clone()),
         };
 
         Ok(mobile_image_mounter)        
