@@ -2,7 +2,7 @@
 
 use std::io::Read;
 
-use libc::c_void;
+use libc::{c_void};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::error::{LockdowndError, MobileImageMounterError};
@@ -134,47 +134,50 @@ type ImageMounterReturnType = i64;
 impl MobileImageMounter {
     /// Uploads an image from a path to the device
     pub fn upload_image(&self, image_path: String, image_type: String, signature_path: String) -> Result<(), MobileImageMounterError> {
+        // Determine if files exist
+        let dmg_size = match std::fs::File::open(image_path.clone()) {
+            Ok(mut file) => {
+                let mut temp_buf = vec![];
+                file.read_to_end(&mut temp_buf).unwrap();
+                temp_buf.len()
+            },
+            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
+        };
+        let signature_size = match std::fs::File::open(signature_path.clone()) {
+            Ok(mut file) => {
+                let mut temp_buf = vec![];
+                file.read_to_end(&mut temp_buf).unwrap();
+                temp_buf.len()
+            },
+            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
+        };
         // Read the image into a buffer
-        let mut image_buffer = Vec::new();
-        let file = match std::fs::File::open(image_path) {
-            Ok(file) => file,
-            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
-        };
-        let mut reader = std::io::BufReader::new(file);
-        match reader.read_to_end(&mut image_buffer) {
-            Ok(_) => (),
-            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
-        };
+        let image_path_c_str = &mut std::ffi::CString::new(image_path.clone()).unwrap();
+        let mode_c_str = &mut std::ffi::CString::new("rb").unwrap();
+        let image_buffer = unsafe { libc::fopen(image_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
         // Read the signature into a buffer
-        let mut signature_buffer = Vec::new();
-        let file = match std::fs::File::open(signature_path) {
-            Ok(file) => file,
-            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
-        };
-        let mut reader = std::io::BufReader::new(file);
-        match reader.read_to_end(&mut signature_buffer) {
-            Ok(_) => (),
-            Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
-        };
+        let signature_path_c_str = &mut std::ffi::CString::new(signature_path.clone()).unwrap();
+        let signature_buffer = unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
+        
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
         let image_type_c_str = if image_type == "".to_string() {
             std::ptr::null()
         } else {
             image_type_c_str.as_ptr()
         };
-
+        
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 match self.pointer.check() {
                     Ok(pointer) => pointer,
-                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
+                    Err(_) => { println!("crap"); return Err(MobileImageMounterError::MissingObjectDepenency) },
                 },
                 image_type_c_str,
-                image_buffer.len() as ImageMounterPointerSize,
-                signature_buffer.as_ptr() as *const i8,
-                signature_buffer.len() as u16,
+                dmg_size as ImageMounterPointerSize,
+                signature_buffer as *const i8,
+                signature_size as u16,
                 Some(image_mounter_callback),
-                image_buffer.as_ptr() as *mut c_void,
+                image_buffer as *mut c_void,
             )
         }.into();
 
@@ -241,8 +244,8 @@ impl MobileImageMounter {
 
 }
 
-extern "C" fn image_mounter_callback(_a: *mut c_void, _b: ImageMounterPointerSize, _c: *mut c_void ) -> ImageMounterReturnType {
-    0
+extern "C" fn image_mounter_callback(a: *mut c_void, b: ImageMounterPointerSize, c: *mut c_void ) -> ImageMounterReturnType {
+    return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) } as ImageMounterReturnType; 
 }
 
 impl Drop for LockdowndClient {
