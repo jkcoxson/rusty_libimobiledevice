@@ -126,7 +126,15 @@ fn main() {
     };
 
     if list_mode {
-        todo!();
+        match mim.lookup_image(image_type.to_string()) {
+            Ok(plist) => {
+                println!("{:?}", plist.to_string());
+            }
+            Err(e) => {
+                println!("Error listing images: {:?}", e);
+                return;
+            }
+        }
     } else {
         match mim.upload_image(dmg_path.clone(), image_type.clone(), format!("{}.signature", dmg_path.clone()).to_string()) {
             Ok(_) => {

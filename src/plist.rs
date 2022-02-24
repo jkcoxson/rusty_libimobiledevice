@@ -458,6 +458,27 @@ impl From<Plist> for String {
     }
 }
 
+impl ToString for Plist {
+    fn to_string(&self) -> String {
+        let plist_t = self.plist_t;
+        let mut plist_data = std::ptr::null_mut();
+        let mut plist_size = 0;
+        unsafe {
+            unsafe_bindings::plist_to_xml(
+                plist_t,
+                &mut plist_data,
+                &mut plist_size
+            );
+        }
+        let plist_data = unsafe {
+            std::slice::from_raw_parts(plist_data as *const u8, plist_size.try_into().unwrap())
+        };
+        let plist_data = std::str::from_utf8(plist_data).unwrap();
+        let plist_data = String::from(plist_data);
+        plist_data
+    }
+}
+
 impl From<String> for Plist {
     fn from(plist_data: String) -> Self {
         let len = plist_data.len();

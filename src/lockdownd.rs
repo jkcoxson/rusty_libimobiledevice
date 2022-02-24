@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::io::Read;
+use std::io::{Read};
 
 use libc::{c_void};
 
@@ -242,6 +242,32 @@ impl MobileImageMounter {
         Ok(plist.into())
     }
 
+    pub fn lookup_image(&self, image_type: String) -> Result<Plist, MobileImageMounterError> {
+        let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
+        let image_type_c_str = if image_type == "".to_string() {
+            std::ptr::null()
+        } else {
+            image_type_c_str.as_ptr()
+        };
+
+        let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::mobile_image_mounter_lookup_image(
+                match self.pointer.check() {
+                    Ok(pointer) => pointer,
+                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
+                },
+                image_type_c_str,
+                &mut plist,
+            )
+        }.into();
+
+        if result != MobileImageMounterError::Success {
+            return Err(result);
+        }
+        Ok(plist.into())
+    }
 }
 
 extern "C" fn image_mounter_callback(a: *mut c_void, b: ImageMounterPointerSize, c: *mut c_void ) -> ImageMounterReturnType {
