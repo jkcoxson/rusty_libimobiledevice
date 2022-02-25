@@ -200,3 +200,52 @@ impl Clone for MobileImageMounterLock {
         }
     }
 }
+
+pub struct InstProxyLock {
+    pub pointer: Arc<Mutex<Option<unsafe_bindings::instproxy_client_t>>>,
+    pub idevice_pointer: IdeviceMemoryLock,
+}
+
+impl InstProxyLock {
+    pub fn new(pointer: unsafe_bindings::instproxy_client_t, idevice_pointer: IdeviceMemoryLock) -> Self {
+        InstProxyLock {
+            pointer: Arc::new(Mutex::new(Some(pointer))),
+            idevice_pointer,
+        }
+        
+    }
+
+    /// Returns a pointer to the object if all dependencies are satisfied
+    pub fn check(&self) -> Result<unsafe_bindings::instproxy_client_t, ()> {
+        match self.idevice_pointer.check() {
+            Ok(_) => {},
+            Err(_) => {
+                return Err(());
+            }
+        }
+        match self.pointer.lock() {
+            Ok(lock) => {
+                match *lock {
+                    Some(lock) => Ok(lock.clone()),
+                    None => Err(()),
+                }
+            },
+            Err(_) => {
+                Err(())
+            }
+        }
+    }
+
+    pub fn invalidate(&mut self) {
+        self.pointer.lock().unwrap().take();
+    }
+}
+
+impl Clone for InstProxyLock {
+    fn clone(&self) -> Self {
+        InstProxyLock {
+            pointer: self.pointer.clone(),
+            idevice_pointer: self.idevice_pointer.clone(),
+        }
+    }
+}

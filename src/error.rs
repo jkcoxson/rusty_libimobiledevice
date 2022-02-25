@@ -386,6 +386,8 @@ pub enum InstProxyError {
     UninstallProhibited,
     MissingBundleVersion,
     UnknownError,
+    // Internal 
+    MissingObjectDepenency
 }
 
 impl From<i32> for InstProxyError {
@@ -456,6 +458,7 @@ impl From<i32> for InstProxyError {
             -62 => InstProxyError::InstallProhibited,
             -63 => InstProxyError::UninstallProhibited,
             -64 => InstProxyError::MissingBundleVersion,
+            -100 => InstProxyError::MissingObjectDepenency,
             _ => InstProxyError::UnknownError,
         }
     }
@@ -531,6 +534,7 @@ impl From<InstProxyError> for String {
             InstProxyError::LookupFailed => "LookupFailed".to_string(),
             InstProxyError::DictCreationFailed => "DictCreationFailed".to_string(),
             InstProxyError::InstallProhibited => "InstallProhibited".to_string(),
+            InstProxyError::MissingObjectDepenency => "MissingObjectDependency".to_string(),
         }
     }
 }

@@ -157,34 +157,13 @@ pub fn instproxy_client_options_free(options: Plist) {
     unsafe { unsafe_bindings::instproxy_client_options_free(options.plist_t) };
 }
 
-pub fn plist_access_path(apps: Plist, length: u32, appid: String) -> Plist {
-    let appid_c_str = CString::new(appid).unwrap();
-    return unsafe {
-        (unsafe_bindings::plist_access_path(
-            apps.plist_t,
-            length,
-            appid_c_str,
-        )).into()
-    };
-}
-
-pub fn plist_dict_get_item(apps: Plist, key: String) -> Plist {
-    let key_c_str = CString::new(key).unwrap();
-    return unsafe {
-        (unsafe_bindings::plist_dict_get_item(
-            apps.plist_t,
-            key_c_str.as_ptr(),
-        )).into()
-    };
-}
-
 // Structs
 pub struct Device {
     // Front facing properties
     pub udid: String,
     pub network: bool,
     // Raw properties
-    conn_data: *mut std::os::raw::c_void,
+    conn_data: *mut std::os::raw::c_void, // tbh what the heck is this
     pub(crate) pointer: memory_lock::IdeviceMemoryLock,
     proxy_client: Option<unsafe_bindings::instproxy_client_t>,
     debug_server: Option<unsafe_bindings::debugserver_client_t>,
@@ -315,6 +294,10 @@ impl Device {
         };
 
         Ok(mobile_image_mounter)        
+    }
+
+    pub fn new_instproxy_client(&self, label: String) -> Result<crate::instproxy::InstProxyClient, InstProxyError> {
+        crate::instproxy::InstProxyClient::new(self, label)
     }
 
 }

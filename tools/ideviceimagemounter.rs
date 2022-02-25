@@ -103,7 +103,7 @@ fn main() {
         return;
     }
 
-    let mut service = match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
+    let service = match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
         Ok(service) => {
             println!("Successfully started com.apple.mobile.mobile_image_mounter");
             service

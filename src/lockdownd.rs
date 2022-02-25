@@ -22,7 +22,7 @@ pub struct LockdowndService {
 }
 
 pub struct MobileImageMounter {
-    pub pointer: MobileImageMounterLock,
+    pub(crate) pointer: MobileImageMounterLock,
 }
 
 impl LockdowndClient {

@@ -22,3 +22,7 @@ path = "ideviceimagemounter.rs"
 [[bin]]
 name = "ideviceinfo"
 path = "ideviceinfo.rs"
+
+[[bin]]
+name = "idevicedebug"
+path = "idevicedebug.rs"
