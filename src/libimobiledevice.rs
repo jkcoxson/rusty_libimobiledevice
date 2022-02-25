@@ -1,14 +1,13 @@
 // jkcoxson
 
 use core::fmt;
-use std::{convert::TryInto, ffi::CString, fmt::Debug, fmt::Formatter, ptr::null_mut};
+use std::{convert::TryInto, fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::error::{self, IdeviceError, LockdowndError, InstProxyError, DebugServerError, MobileImageMounterError};
 use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
 use crate::memory_lock;
-use crate::plist::Plist;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
@@ -88,73 +87,6 @@ pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
         }
     }
     Err(error::IdeviceError::NoDevice)
-}
-
-/////////////////////
-// Yucky Functions //
-// To be replaced  //
-/////////////////////
-
-pub fn instproxy_client_options_new() -> Plist {
-    unsafe { unsafe_bindings::instproxy_client_options_new() }.into()
-}
-
-pub fn instproxy_client_options_add(options: Plist, key: String, value: String) {
-    let key_c_str = CString::new(key).unwrap();
-    let value_c_str = CString::new(value).unwrap();
-    let null_ptr: *mut CString = std::ptr::null_mut();
-
-    unsafe {
-        unsafe_bindings::instproxy_client_options_add(
-            options.plist_t,
-            key_c_str.as_ptr(),
-            value_c_str.as_ptr(),
-            null_ptr,
-        )
-    };
-}
-
-pub fn instproxy_client_options_set_return_attributes(options: Plist, attribute: String) {
-    let attributes_c_str = CString::new(attribute).unwrap();
-    let null_ptr: *mut CString = std::ptr::null_mut();
-
-    unsafe {
-        unsafe_bindings::instproxy_client_options_set_return_attributes(
-            options.plist_t,
-            attributes_c_str.as_ptr(),
-            null_ptr,
-        )
-    };
-}
-
-pub fn instproxy_lookup(
-    client: instproxy_client_t,
-    appid: String,
-    client_opts: Plist,
-) -> Option<Plist> {
-    let mut apps: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
-    let appid_c_str = CString::new(appid).unwrap();
-    let appid_c_str_ptr: *const std::os::raw::c_char = appid_c_str.as_ptr();
-    let appid_c_str_ptr_ptr = appid_c_str_ptr as *mut *const std::os::raw::c_char;
-
-    let results = unsafe {
-        unsafe_bindings::instproxy_lookup(
-            client.client,
-            appid_c_str_ptr_ptr,
-            client_opts.plist_t,
-            &mut apps,
-        )
-    };
-
-    if results < 0 {
-        return None;
-    }
-
-    Some(apps.into())
-}
-
-pub fn instproxy_client_options_free(options: Plist) {
-    unsafe { unsafe_bindings::instproxy_client_options_free(options.plist_t) };
 }
 
 // Structs
@@ -374,16 +306,5 @@ impl Into<DebugServerCommand> for String {
 impl Into<DebugServerCommand> for &str {
     fn into(self) -> DebugServerCommand {
         self.to_string().into()
-    }
-}
-// Raw, bad structs
-
-pub struct instproxy_client_t {
-    pub client: unsafe_bindings::instproxy_client_t,
-}
-
-impl instproxy_client_t {
-    pub fn new(client: unsafe_bindings::instproxy_client_t) -> Self {
-        instproxy_client_t { client }
     }
 }
