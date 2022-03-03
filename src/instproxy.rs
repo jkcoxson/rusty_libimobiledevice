@@ -1,5 +1,7 @@
 // jkcoxson
 
+use std::{ffi::CString, ptr::null};
+
 use crate::{bindings as unsafe_bindings, libimobiledevice::Device, error::InstProxyError, memory_lock::InstProxyLock, plist::Plist};
 
 pub struct InstProxyClient {
@@ -40,8 +42,11 @@ impl InstProxyClient {
     /// Rust doesn't support function overloading...
     pub fn options_add(options: &Plist, args: Vec<(String, Plist)>){
         for (key, value) in args {
+            println!("key: {}\n\n", key);
+            println!("value: {}\n\n", value.to_string());
             options.dict_set_item(&key, &value).unwrap();
         }
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
 
     /// A rough translation of what I think the C library does.
@@ -49,35 +54,62 @@ impl InstProxyClient {
     pub fn options_set_return_attributes(options: &Plist, args: Vec<String>) {
         let return_attributes = Plist::new_array();
         for i in args {
-            return_attributes.array_append_item(&i.into()).unwrap();
+            let t = &Plist::new_string(&i);
+            println!("Pushing {:?}\n\n", t.to_string());
+            return_attributes.array_append_item(t).unwrap();
         }
-        options.dict_set_item("ReturnAttributes", &return_attributes).unwrap();
+        match options.dict_insert_item("ReturnAttributes", &return_attributes) {
+            Ok(_) => {},
+            Err(_) => panic!("It's brokey!"),
+        };
     }
 
     pub fn lookup(&self, app_ids: Vec<String>, client_options: Plist) -> Result<Plist, InstProxyError> {
         if let Ok(pointer) = self.pointer.check() {
-            let mut plist = unsafe { std::mem::zeroed() };
-            let mut raw_app_ids = vec![];
-            let mut id_pointers = vec![];
-            for i in app_ids {
-                let raw = std::ffi::CString::new(i).unwrap();
-                let ptr = raw.as_ptr();
-                raw_app_ids.push(raw);
-                id_pointers.push(ptr);
-            }
+            // Convert vector of strings to a slice
+            let cstrings = app_ids.iter().map(|s| std::ffi::CString::new(s.clone()).unwrap()).collect::<Vec<_>>();
+            let mut cstring_pointers = cstrings.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
+            cstring_pointers.push(std::ptr::null());
+            let cstring_pointers_ptr = cstring_pointers.as_mut_ptr();
+
+            let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
             let result = unsafe {
-                unsafe_bindings::instproxy_lookup(pointer, id_pointers.as_mut_ptr(), client_options.plist_t, &mut plist)
+                unsafe_bindings::instproxy_lookup(pointer, &mut null(), client_options.plist_t, &mut res_plist)
             }.into();
 
             if result != InstProxyError::Success {
-                return Err(result)
+                return Err(result);
             }
-            return Ok(plist.into())
+
+            Ok(res_plist.into())
+        } else {
+            return Err(InstProxyError::MissingObjectDepenency);
+        }
+    }
+
+    pub fn get_path_for_bundle_identifier(&self, bundle_identifier: String) -> Result<String, InstProxyError> {
+        if let Ok(pointer) = self.pointer.check() {
+            let bundle_id = std::ffi::CString::new(bundle_identifier).unwrap();
+            // This is kinda horrifying, could use a refractor
+            let to_fill = CString::new("").unwrap();   
+            let mut to_fill_bytes = to_fill.into_raw();
+            let to_fill_ptr = &mut to_fill_bytes;
+
+            let result = unsafe {
+                unsafe_bindings::instproxy_client_get_path_for_bundle_identifier(pointer, bundle_id.as_ptr(), to_fill_ptr)
+            }.into();
+
+            if result != InstProxyError::Success {
+                return Err(result);
+            }
+
+            Ok(unsafe { CString::from_raw(to_fill_bytes).into_string().unwrap() })
         } else {
             return Err(InstProxyError::MissingObjectDepenency);
         }
     }
 }
+
 
 impl Drop for InstProxyClient {
     fn drop(&mut self) {

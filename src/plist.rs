@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::{time::SystemTime, convert::TryInto};
+use std::{time::SystemTime, convert::TryInto, ffi::{CStr, CString}};
 
 use crate::libimobiledevice::*;
 
@@ -19,7 +19,7 @@ pub struct PlistDictIter {
     plist: Plist,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum PlistType {
     Boolean,
     Integer,
@@ -68,6 +68,10 @@ impl Plist {
         Plist { plist_t, plist_type: PlistType::Array }
     }
     pub fn new_string(string: &str) -> Plist {
+        let string = match CString::new(string) {
+            Ok(s) => s,
+            Err(_) => panic!("AHH FRICK IT DIDN'T WORK PLS STOP RUNNING SO I STOP GETTING SEGFAULTS")
+        };
         let plist_t = unsafe {
             unsafe_bindings::plist_new_string(string.as_ptr() as *const i8)
         };
@@ -205,8 +209,9 @@ impl Plist {
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
+        let key_c_string = CString::new(key).unwrap();
         let plist_t = unsafe {
-            unsafe_bindings::plist_dict_get_item(self.plist_t, key.as_ptr() as *const i8)
+            unsafe_bindings::plist_dict_get_item(self.plist_t, key_c_string.as_ptr())
         };
         Ok(Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() })
     }
@@ -220,15 +225,17 @@ impl Plist {
         Ok(Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() })
     }
     pub fn dict_set_item(&self, key: &str, item: &Plist) -> Result<(), ()> {
+        let key = CString::new(key).unwrap();
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
         unsafe {
-            unsafe_bindings::plist_dict_set_item(self.plist_t, key.as_ptr() as *const i8, item.plist_t)
+            unsafe_bindings::plist_dict_set_item(self.plist_t, key.as_ptr(), item.plist_t)
         }
         Ok(())
     }
     pub fn dict_insert_item(&self, key: &str, item: &Plist) -> Result<(), ()> {
+        let key = CString::new(key).unwrap();
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
@@ -238,6 +245,7 @@ impl Plist {
         Ok(())
     }
     pub fn dict_remove_item(&self, key: &str) -> Result<(), ()> {
+        let key = CString::new(key).unwrap();
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
@@ -351,11 +359,13 @@ impl Plist {
     // These don't need type checks because they set the type of the plist
 
     pub fn set_key_val(&self, key: &str) {
+        let key = CString::new(key).unwrap();
         unsafe {
             unsafe_bindings::plist_set_key_val(self.plist_t, key.as_ptr() as *const i8)
         }
     }
     pub fn set_string_val(&self, val: &str) {
+        let val = CString::new(val).unwrap();
         unsafe {
             unsafe_bindings::plist_set_string_val(self.plist_t, val.as_ptr() as *const i8)
         }
@@ -403,12 +413,32 @@ impl Plist {
             _ => true,
         }
     }
-    pub fn access_path(&self, len: u32) -> Plist {
-        let mut plist_t = std::ptr::null_mut();
-        unsafe {
-            unsafe_bindings::plist_access_path(self.plist_t, len, &mut plist_t);
+
+    /// Reimplimented from the C function because function overloading is evil
+    pub fn access_path(self, plists: Vec<String> ) -> Result<Plist, ()> {
+        let mut current = self;
+        let mut i = 0;
+        while i < plists.len() {
+            match current.plist_type {
+                PlistType::Array => {
+                    current = match current.array_get_item(i as u32) {
+                        Ok(item) => item,
+                        Err(_) => return Err(()),
+                    };
+                }
+                PlistType::Dictionary => {
+                    current = match current.dict_get_item(&plists[i]) {
+                        Ok(item) => item,
+                        Err(_) => return Err(()),
+                    };
+                }
+                _ => {
+                    return Err(());
+                }
+            }
+            i += 1;
         }
-        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
+        Ok(current.plist_t.into()) // Probably really stupid
     }
 
 }
@@ -481,13 +511,20 @@ impl ToString for Plist {
 
 impl From<String> for Plist {
     fn from(plist_data: String) -> Self {
-        let len = plist_data.len();
-        let plist_data = plist_data.as_ptr() as *const i8;
-        let plist_t = unsafe { std::mem::zeroed() };
-        unsafe {
-            unsafe_bindings::plist_from_xml(plist_data, len as u32, plist_t)
-        };
-        Plist { plist_t: unsafe {*plist_t}, plist_type: unsafe { unsafe_bindings::plist_get_node_type(*plist_t) }.into() }
+        let s = Plist::new_string(&plist_data);
+        s
+    }
+}
+
+impl From<&String> for Plist {
+    fn from(plist_data: &String) -> Self {
+        Plist::new_string(plist_data)
+    }
+}
+
+impl From<&str> for Plist {
+    fn from(plist_data: &str) -> Self {
+        Plist::new_string(plist_data)
     }
 }
 
@@ -520,6 +557,15 @@ impl From<Vec<u8>> for Plist {
             unsafe_bindings::plist_from_bin(plist_data, len as u32, plist_t)
         };
         Plist { plist_t: unsafe {*plist_t}, plist_type: unsafe { unsafe_bindings::plist_get_node_type(*plist_t) }.into() }
+    }
+}
+
+impl Clone for Plist {
+    fn clone(&self) -> Self {
+        let plist_t = unsafe {
+            unsafe_bindings::plist_copy(self.plist_t)
+        };
+        Plist { plist_t, plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into() }
     }
 }
 
