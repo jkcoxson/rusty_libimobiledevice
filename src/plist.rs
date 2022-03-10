@@ -219,7 +219,7 @@ impl Plist {
         let key = unsafe { std::ffi::CStr::from_ptr(key).to_string_lossy().into_owned() };
         Ok(key)
     }
-    pub fn dict_get_item(self, key: &str) -> Result<Plist, ()> {
+    pub fn dict_get_item(&self, key: &str) -> Result<Plist, ()> {
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
