@@ -48,9 +48,7 @@ impl InstProxyClient {
     pub fn options_add(options: &mut Plist, args: Vec<(String, Plist)>) {
         for (key, value) in args {
             options.dict_set_item(&key, value).unwrap();
-            // println!("In for loop {}", options.to_string());
         }
-        println!("Before return {}", options.to_string());
     }
 
     /// A rough translation of what I think the C library does.
@@ -101,10 +99,8 @@ impl InstProxyClient {
 
             // todo make this not a hack (which means it'll never happen)
             // This is because when the default plist impl drop fires, it will segfault on this specific plist type
-            // We are using the specific free for this plist, then setting the pointer to something random to drop
             unsafe { unsafe_bindings::instproxy_client_options_free(client_options.plist_t) };
-            let hacks = unsafe { unsafe_bindings::plist_new_uint(0) };
-            client_options.plist_t = hacks;
+            std::mem::forget(client_options);
 
             Ok(res_plist.into())
         } else {

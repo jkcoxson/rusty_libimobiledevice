@@ -79,26 +79,19 @@ fn main() {
     };
 
     let mut client_opts = InstProxyClient::options_new();
-    println!("Client options: {}", client_opts.to_string());
     InstProxyClient::options_add(
         &mut client_opts,
         vec![("ApplicationType".to_string(), Plist::new_string("Any"))],
-    );
-    println!(
-        "Successfully created client options: {}",
-        client_opts.clone().to_string()
     );
     InstProxyClient::options_set_return_attributes(
         &mut client_opts,
         vec![
             "CFBundleIdentifier".to_string(),
             "CFBundleExecutable".to_string(),
+            "Container".to_string(),
         ],
     );
-    println!("Successfully set return attributes");
-    println!("client opts: {:?}", client_opts.to_string());
-
-    let apps =
+    let lookup_results =
         match instproxy_client.lookup(vec!["com.google.ios.youtube".to_string()], client_opts) {
             Ok(apps) => {
                 println!("Successfully looked up apps");
@@ -109,18 +102,22 @@ fn main() {
                 return;
             }
         };
-    println!("apps: {:?}", apps.to_string());
-    println!("apps type: {:?}", apps.plist_type);
+    let lookup_results = lookup_results
+        .dict_get_item("com.google.ios.youtube")
+        .unwrap();
 
-    let app_found = match apps.dict_get_item("Container") {
+    let working_directory = match lookup_results.dict_get_item("Container") {
         Ok(p) => p,
         Err(_) => {
             println!("App not found");
             return;
         }
     };
-    println!("app_found: {:?}", app_found.to_string());
-    println!("app_found type: {:?}", app_found.plist_type);
+
+    println!(
+        "Working Directory: {:?}",
+        working_directory.get_string_val().unwrap()
+    );
 
     let bundle_path = match instproxy_client
         .get_path_for_bundle_identifier("com.google.ios.youtube".to_string())
@@ -135,14 +132,5 @@ fn main() {
         }
     };
 
-    println!("app type: {:?}", app_found.plist_type);
-
-    let object = match app_found.dict_get_item("Container") {
-        Ok(o) => o,
-        Err(e) => {
-            println!("Error getting object: {:?}", e);
-            return;
-        }
-    };
-    let working_directory = object.get_string_val().unwrap();
+    println!("Bundle Path: {}", bundle_path);
 }

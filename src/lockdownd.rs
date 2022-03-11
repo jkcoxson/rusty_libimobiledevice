@@ -1,8 +1,8 @@
 // jkcoxson
 
-use std::io::{Read};
+use std::io::Read;
 
-use libc::{c_void};
+use libc::c_void;
 
 pub use crate::bindings as unsafe_bindings;
 use crate::error::{LockdowndError, MobileImageMounterError};
@@ -41,13 +41,17 @@ impl LockdowndClient {
                 client_ptr,
                 label_c_str.as_ptr(),
             )
-        }.into();
+        }
+        .into();
 
         if result != LockdowndError::Success {
             return Err(result);
         }
 
-        Ok(LockdowndClient { pointer: LockdowndClientLock::new(unsafe {*client_ptr}, device.pointer.clone()), label: label })
+        Ok(LockdowndClient {
+            pointer: LockdowndClientLock::new(unsafe { *client_ptr }, device.pointer.clone()),
+            label: label,
+        })
     }
 
     /// Gets a value from the device
@@ -64,7 +68,7 @@ impl LockdowndClient {
         } else {
             key_c_str.as_ptr()
         };
-        
+
         let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
@@ -77,7 +81,8 @@ impl LockdowndClient {
                 key_c_str,
                 &mut value,
             )
-        }.into();
+        }
+        .into();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -94,7 +99,8 @@ impl LockdowndClient {
             label_c_str.as_ptr()
         };
 
-        let mut service: unsafe_bindings::lockdownd_service_descriptor_t = unsafe { std::mem::zeroed() };
+        let mut service: unsafe_bindings::lockdownd_service_descriptor_t =
+            unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::lockdownd_start_service(
@@ -105,7 +111,8 @@ impl LockdowndClient {
                 label_c_str,
                 &mut service,
             )
-        }.into();
+        }
+        .into();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -117,9 +124,6 @@ impl LockdowndClient {
             port: 0,
         })
     }
-
-
-
 }
 
 #[cfg(target_os = "windows")]
@@ -133,14 +137,19 @@ type ImageMounterReturnType = i64;
 
 impl MobileImageMounter {
     /// Uploads an image from a path to the device
-    pub fn upload_image(&self, image_path: String, image_type: String, signature_path: String) -> Result<(), MobileImageMounterError> {
+    pub fn upload_image(
+        &self,
+        image_path: String,
+        image_type: String,
+        signature_path: String,
+    ) -> Result<(), MobileImageMounterError> {
         // Determine if files exist
         let dmg_size = match std::fs::File::open(image_path.clone()) {
             Ok(mut file) => {
                 let mut temp_buf = vec![];
                 file.read_to_end(&mut temp_buf).unwrap();
                 temp_buf.len()
-            },
+            }
             Err(_) => return Err(MobileImageMounterError::DmgNotFound),
         };
         let signature_size = match std::fs::File::open(signature_path.clone()) {
@@ -148,7 +157,7 @@ impl MobileImageMounter {
                 let mut temp_buf = vec![];
                 file.read_to_end(&mut temp_buf).unwrap();
                 temp_buf.len()
-            },
+            }
             Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
         };
         // Read the image into a buffer
@@ -157,20 +166,21 @@ impl MobileImageMounter {
         let image_buffer = unsafe { libc::fopen(image_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
         // Read the signature into a buffer
         let signature_path_c_str = &mut std::ffi::CString::new(signature_path.clone()).unwrap();
-        let signature_buffer = unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
-        
+        let signature_buffer =
+            unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
+
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
         let image_type_c_str = if image_type == "".to_string() {
             std::ptr::null()
         } else {
             image_type_c_str.as_ptr()
         };
-        
+
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 match self.pointer.check() {
                     Ok(pointer) => pointer,
-                    Err(_) => { println!("crap"); return Err(MobileImageMounterError::MissingObjectDepenency) },
+                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
                 },
                 image_type_c_str,
                 dmg_size as ImageMounterPointerSize,
@@ -179,7 +189,8 @@ impl MobileImageMounter {
                 Some(image_mounter_callback),
                 image_buffer as *mut c_void,
             )
-        }.into();
+        }
+        .into();
 
         if result != MobileImageMounterError::Success {
             return Err(result);
@@ -189,7 +200,12 @@ impl MobileImageMounter {
     }
 
     /// Mounts the image on the device
-    pub fn mount_image(&self, image_path: String, image_type: String, signature_path: String) -> Result<Plist, MobileImageMounterError> {
+    pub fn mount_image(
+        &self,
+        image_path: String,
+        image_type: String,
+        signature_path: String,
+    ) -> Result<Plist, MobileImageMounterError> {
         // Read the image into a buffer
         let mut image_buffer = Vec::new();
         let file = match std::fs::File::open(image_path.clone()) {
@@ -232,9 +248,9 @@ impl MobileImageMounter {
                 signature_buffer.len() as u16,
                 image_type_c_str,
                 &mut plist,
-
             )
-        }.into();
+        }
+        .into();
 
         if result != MobileImageMounterError::Success {
             return Err(result);
@@ -261,7 +277,8 @@ impl MobileImageMounter {
                 image_type_c_str,
                 &mut plist,
             )
-        }.into();
+        }
+        .into();
 
         if result != MobileImageMounterError::Success {
             return Err(result);
@@ -270,8 +287,13 @@ impl MobileImageMounter {
     }
 }
 
-extern "C" fn image_mounter_callback(a: *mut c_void, b: ImageMounterPointerSize, c: *mut c_void ) -> ImageMounterReturnType {
-    return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) } as ImageMounterReturnType; 
+extern "C" fn image_mounter_callback(
+    a: *mut c_void,
+    b: ImageMounterPointerSize,
+    c: *mut c_void,
+) -> ImageMounterReturnType {
+    return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) }
+        as ImageMounterReturnType;
 }
 
 impl Drop for LockdowndClient {
@@ -280,7 +302,7 @@ impl Drop for LockdowndClient {
             unsafe {
                 unsafe_bindings::lockdownd_client_free(ptr);
             }
-        }        
+        }
         self.pointer.invalidate();
     }
 }

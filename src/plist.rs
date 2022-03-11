@@ -453,7 +453,6 @@ impl Plist {
 
 impl From<unsafe_bindings::plist_t> for Plist {
     fn from(plist_t: unsafe_bindings::plist_t) -> Self {
-        println!("Starting conversion");
         Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
