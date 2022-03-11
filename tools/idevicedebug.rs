@@ -1,8 +1,8 @@
 // jkcoxson
 
-use rusty_libimobiledevice::libimobiledevice;
-use rusty_libimobiledevice::instproxy::InstProxyClient;
 use rusty_libimobiledevice::error::InstProxyError;
+use rusty_libimobiledevice::instproxy::InstProxyClient;
+use rusty_libimobiledevice::libimobiledevice;
 use rusty_libimobiledevice::plist::Plist;
 
 fn main() {
@@ -78,23 +78,37 @@ fn main() {
         }
     };
 
-    let client_opts = InstProxyClient::options_new();
-    InstProxyClient::options_add(&client_opts, vec![("ApplicationType".to_string(), Plist::new_string("Any"))]);
-    println!("Successfully created client options");
-    InstProxyClient::options_set_return_attributes(&client_opts, vec!["CFBundleIdentifier".to_string(), "CFBundleExecutable".to_string()]);
+    let mut client_opts = InstProxyClient::options_new();
+    println!("Client options: {}", client_opts.to_string());
+    InstProxyClient::options_add(
+        &mut client_opts,
+        vec![("ApplicationType".to_string(), Plist::new_string("Any"))],
+    );
+    println!(
+        "Successfully created client options: {}",
+        client_opts.clone().to_string()
+    );
+    InstProxyClient::options_set_return_attributes(
+        &mut client_opts,
+        vec![
+            "CFBundleIdentifier".to_string(),
+            "CFBundleExecutable".to_string(),
+        ],
+    );
     println!("Successfully set return attributes");
     println!("client opts: {:?}", client_opts.to_string());
 
-    let apps = match instproxy_client.lookup(vec!["com.jkcoxson.DolphiniOS".to_string()], client_opts) {
-        Ok(apps) => {
-            println!("Successfully looked up apps");
-            apps
-        }
-        Err(e) => {
-            println!("Error looking up apps: {:?}", e);
-            return;
-        }
-    };
+    let apps =
+        match instproxy_client.lookup(vec!["com.google.ios.youtube".to_string()], client_opts) {
+            Ok(apps) => {
+                println!("Successfully looked up apps");
+                apps
+            }
+            Err(e) => {
+                println!("Error looking up apps: {:?}", e);
+                return;
+            }
+        };
     println!("apps: {:?}", apps.to_string());
     println!("apps type: {:?}", apps.plist_type);
 
@@ -107,12 +121,14 @@ fn main() {
     };
     println!("app_found: {:?}", app_found.to_string());
     println!("app_found type: {:?}", app_found.plist_type);
-    
-    let bundle_path = match instproxy_client.get_path_for_bundle_identifier("com.jkcoxson.DolphiniOS".to_string()) {
+
+    let bundle_path = match instproxy_client
+        .get_path_for_bundle_identifier("com.google.ios.youtube".to_string())
+    {
         Ok(p) => {
             println!("Successfully found bundle path");
             p
-        },
+        }
         Err(e) => {
             println!("Error getting path for bundle identifier: {:?}", e);
             return;
@@ -130,4 +146,3 @@ fn main() {
     };
     let working_directory = object.get_string_val().unwrap();
 }
-

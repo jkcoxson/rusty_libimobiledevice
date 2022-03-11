@@ -5,8 +5,9 @@ use std::{convert::TryInto, ffi::CString, time::SystemTime};
 use crate::libimobiledevice::*;
 
 pub struct Plist {
-    pub plist_t: unsafe_bindings::plist_t,
+    pub(crate) plist_t: unsafe_bindings::plist_t,
     pub plist_type: PlistType,
+    pub(crate) dependent_plists: Vec<Plist>,
 }
 
 pub struct PlistArrayIter {
@@ -60,6 +61,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Dictionary,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_array() -> Plist {
@@ -67,6 +69,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Array,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_string(string: &str) -> Plist {
@@ -80,6 +83,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::String,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_bool(bool: bool) -> Plist {
@@ -92,6 +96,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Boolean,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_uint(uint: u64) -> Plist {
@@ -99,6 +104,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Integer,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_real(real: f64) -> Plist {
@@ -106,6 +112,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Real,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_data(data: &[u8]) -> Plist {
@@ -118,6 +125,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Data,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn new_date(_date: SystemTime) -> Plist {
@@ -128,6 +136,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: PlistType::Uid,
+            dependent_plists: Vec::new(),
         }
     }
     pub fn from_xml(xml: String) -> Result<Plist, ()> {
@@ -158,6 +167,7 @@ impl Plist {
         Ok(Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
+            dependent_plists: Vec::new(),
         })
     }
     pub fn array_get_item_index(&self) -> Result<u32, ()> {
@@ -169,25 +179,28 @@ impl Plist {
         })
     }
 
-    pub fn array_set_item(&self, item: &Plist, index: u32) -> Result<(), ()> {
+    pub fn array_set_item(&mut self, item: Plist, index: u32) -> Result<(), ()> {
         if self.plist_type != PlistType::Array {
             return Err(());
         }
         unsafe { unsafe_bindings::plist_array_set_item(self.plist_t, item.plist_t, index) };
+        self.dependent_plists.push(item);
         Ok(())
     }
-    pub fn array_append_item(&self, item: &Plist) -> Result<(), ()> {
+    pub fn array_append_item(&mut self, item: Plist) -> Result<(), ()> {
         if self.plist_type != PlistType::Array {
             return Err(());
         }
         unsafe { unsafe_bindings::plist_array_append_item(self.plist_t, item.plist_t) };
+        self.dependent_plists.push(item);
         Ok(())
     }
-    pub fn array_insert_item(&self, item: &Plist, index: u32) -> Result<(), ()> {
+    pub fn array_insert_item(&mut self, item: Plist, index: u32) -> Result<(), ()> {
         if self.plist_type != PlistType::Array {
             return Err(());
         }
         unsafe { unsafe_bindings::plist_array_insert_item(self.plist_t, item.plist_t, index) }
+        self.dependent_plists.push(item);
         Ok(())
     }
     pub fn array_remove_item(&self, index: u32) -> Result<(), ()> {
@@ -229,6 +242,7 @@ impl Plist {
         Ok(Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
+            dependent_plists: Vec::new(),
         })
     }
     pub fn dict_item_get_key(&self) -> Result<Plist, ()> {
@@ -239,17 +253,19 @@ impl Plist {
         Ok(Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
+            dependent_plists: Vec::new(),
         })
     }
-    pub fn dict_set_item(&self, key: &str, item: &Plist) -> Result<(), ()> {
+    pub fn dict_set_item(&mut self, key: &str, item: Plist) -> Result<(), ()> {
         let key = CString::new(key).unwrap();
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
         unsafe { unsafe_bindings::plist_dict_set_item(self.plist_t, key.as_ptr(), item.plist_t) }
+        self.dependent_plists.push(item);
         Ok(())
     }
-    pub fn dict_insert_item(&self, key: &str, item: &Plist) -> Result<(), ()> {
+    pub fn dict_insert_item(&mut self, key: &str, item: Plist) -> Result<(), ()> {
         let key = CString::new(key).unwrap();
         if self.plist_type != PlistType::Dictionary {
             return Err(());
@@ -261,6 +277,7 @@ impl Plist {
                 item.plist_t,
             )
         }
+        self.dependent_plists.push(item);
         Ok(())
     }
     pub fn dict_remove_item(&self, key: &str) -> Result<(), ()> {
@@ -271,11 +288,12 @@ impl Plist {
         unsafe { unsafe_bindings::plist_dict_remove_item(self.plist_t, key.as_ptr() as *const i8) }
         Ok(())
     }
-    pub fn dict_merge(&mut self, dict: &Plist) -> Result<(), ()> {
+    pub fn dict_merge(&mut self, dict: Plist) -> Result<(), ()> {
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
         unsafe { unsafe_bindings::plist_dict_merge(&mut self.plist_t, dict.plist_t) }
+        self.dependent_plists.push(dict);
         Ok(())
     }
     pub fn get_parent(&self) -> Plist {
@@ -283,6 +301,7 @@ impl Plist {
         Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
+            dependent_plists: Vec::new(),
         }
     }
     pub fn get_node_type(&self) -> PlistType {
@@ -434,9 +453,11 @@ impl Plist {
 
 impl From<unsafe_bindings::plist_t> for Plist {
     fn from(plist_t: unsafe_bindings::plist_t) -> Self {
+        println!("Starting conversion");
         Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
+            dependent_plists: Vec::new(),
         }
     }
 }
@@ -537,6 +558,7 @@ impl From<Vec<u8>> for Plist {
         Plist {
             plist_t: unsafe { *plist_t },
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(*plist_t) }.into(),
+            dependent_plists: Vec::new(),
         }
     }
 }
@@ -544,15 +566,18 @@ impl From<Vec<u8>> for Plist {
 impl Clone for Plist {
     fn clone(&self) -> Self {
         let plist_t = unsafe { unsafe_bindings::plist_copy(self.plist_t) };
+        let dependent_plists = self.dependent_plists.clone();
         Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
+            dependent_plists,
         }
     }
 }
 
 impl Drop for Plist {
     fn drop(&mut self) {
+        // Dependent plists should be freed automatically because this object is being dropped, right?
         unsafe { unsafe_bindings::plist_free(self.plist_t) }
     }
 }
@@ -573,6 +598,7 @@ impl PlistArrayIter {
             Some(Plist {
                 plist_t: unsafe { *to_fill },
                 plist_type: unsafe { unsafe_bindings::plist_get_node_type(*to_fill) }.into(),
+                dependent_plists: Vec::new(),
             }) // yeet
         }
     }
@@ -614,6 +640,7 @@ impl PlistDictIter {
                 Plist {
                     plist_t: unsafe { *to_fill },
                     plist_type: unsafe { unsafe_bindings::plist_get_node_type(*to_fill) }.into(),
+                    dependent_plists: Vec::new(),
                 },
             )) // yeet
         }
