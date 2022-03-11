@@ -5,9 +5,10 @@ use std::{convert::TryInto, fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
-use crate::error::{self, IdeviceError, LockdowndError, InstProxyError, DebugServerError, MobileImageMounterError};
+use crate::error::{
+    self, DebugServerError, IdeviceError, InstProxyError, LockdowndError, MobileImageMounterError,
+};
 use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
-use crate::memory_lock;
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
@@ -21,7 +22,8 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let mut device_count: i32 = 0;
     let result: error::IdeviceError = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
-    }.into();
+    }
+    .into();
 
     if result != error::IdeviceError::Success {
         return Err(result);
@@ -96,7 +98,7 @@ pub struct Device {
     pub network: bool,
     // Raw properties
     conn_data: *mut std::os::raw::c_void, // tbh what the heck is this
-    pub(crate) pointer: memory_lock::IdeviceMemoryLock,
+    pub(crate) pointer: unsafe_bindings::idevice_t,
     proxy_client: Option<unsafe_bindings::instproxy_client_t>,
     debug_server: Option<unsafe_bindings::debugserver_client_t>,
 }
@@ -112,14 +114,14 @@ impl Device {
             udid,
             network,
             conn_data,
-            pointer: memory_lock::IdeviceMemoryLock::new(device),
+            pointer: device,
             proxy_client: None,
             debug_server: None,
         };
     }
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
-    pub fn new_lockdownd_client(&mut self, label: String) -> Result<LockdowndClient, LockdowndError> {
+    pub fn new_lockdownd_client(&self, label: String) -> Result<LockdowndClient, LockdowndError> {
         Ok(LockdowndClient::new(self, label)?)
     }
 
@@ -132,11 +134,12 @@ impl Device {
 
         let result = unsafe {
             unsafe_bindings::instproxy_client_start_service(
-                self.pointer.check().unwrap(),
+                self.pointer,
                 client_ptr,
                 label_c_str.as_ptr(),
             )
-        }.into();
+        }
+        .into();
         if result != InstProxyError::Success {
             return Err(result);
         }
@@ -154,11 +157,12 @@ impl Device {
 
         let result = unsafe {
             unsafe_bindings::debugserver_client_start_service(
-                self.pointer.check().unwrap(),
+                self.pointer,
                 client_ptr,
                 label_c_str.as_ptr(),
             )
-        }.into();
+        }
+        .into();
         if result != DebugServerError::Success {
             return Err(result);
         }
@@ -168,7 +172,10 @@ impl Device {
     }
 
     /// Sends a DebugServerCommand to the device
-    pub fn send_command(&mut self, command: DebugServerCommand) -> Result<String, DebugServerError> {
+    pub fn send_command(
+        &mut self,
+        command: DebugServerCommand,
+    ) -> Result<String, DebugServerError> {
         if self.debug_server.is_none() {
             self.start_debug_server(String::from("com.apple.debugserver"))?;
         }
@@ -185,7 +192,8 @@ impl Device {
                 response_ptr_ptr,
                 response_size,
             )
-        }.into();
+        }
+        .into();
         if result != DebugServerError::Success {
             return Err(result);
         }
@@ -200,38 +208,40 @@ impl Device {
         Ok(response_str)
     }
 
-    pub fn new_mobile_image_mounter(&mut self, service: &LockdowndService) -> Result<MobileImageMounter, MobileImageMounterError> {
-        let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t = unsafe { std::mem::zeroed() };
+    pub fn new_mobile_image_mounter(
+        &self,
+        service: &LockdowndService,
+    ) -> Result<MobileImageMounter, MobileImageMounterError> {
+        let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t =
+            unsafe { std::mem::zeroed() };
 
         let error = unsafe {
             unsafe_bindings::mobile_image_mounter_new(
-                match self.pointer.check() {
-                    Ok(device) => device,
-                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
-                },
-                match service.pointer.check() {
-                    Ok(service) => service,
-                    Err(_) => return Err(MobileImageMounterError::MissingObjectDepenency),
-                },
+                self.pointer,
+                service.pointer,
                 &mut mobile_image_mounter,
             )
-        }.into();
+        }
+        .into();
 
         if error != MobileImageMounterError::Success {
             return Err(error);
         }
 
         let mobile_image_mounter = MobileImageMounter {
-            pointer: memory_lock::MobileImageMounterLock::new(mobile_image_mounter, service.pointer.clone()),
+            pointer: mobile_image_mounter,
+            phantom: std::marker::PhantomData,
         };
 
-        Ok(mobile_image_mounter)        
+        Ok(mobile_image_mounter)
     }
 
-    pub fn new_instproxy_client(&self, label: String) -> Result<crate::instproxy::InstProxyClient, InstProxyError> {
+    pub fn new_instproxy_client(
+        &self,
+        label: String,
+    ) -> Result<crate::instproxy::InstProxyClient, InstProxyError> {
         crate::instproxy::InstProxyClient::new(self, label)
     }
-
 }
 
 impl Debug for Device {
@@ -246,12 +256,9 @@ impl Debug for Device {
 
 impl Drop for Device {
     fn drop(&mut self) {
-        if let Ok(device) = self.pointer.check() {
-            unsafe {
-                unsafe_bindings::idevice_free(device);
-            }
+        unsafe {
+            unsafe_bindings::idevice_free(self.pointer);
         }
-        self.pointer.invalidate();
     }
 }
 
