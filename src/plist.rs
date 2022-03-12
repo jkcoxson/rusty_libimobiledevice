@@ -18,6 +18,9 @@ pub struct PlistArrayIter {
     plist: Plist,
 }
 
+unsafe impl Send for PlistDictIter {}
+unsafe impl Sync for PlistDictIter {}
+
 pub struct PlistDictIter {
     plist_dict_iter: unsafe_bindings::plist_dict_iter,
     plist: Plist,
