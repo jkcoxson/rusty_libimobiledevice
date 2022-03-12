@@ -616,29 +616,25 @@ impl From<Plist> for PlistArrayIter {
 
 impl PlistDictIter {
     pub fn next_item(&mut self) -> Option<(String, Plist)> {
-        let key = unsafe { std::mem::zeroed() };
-        let to_fill = unsafe { std::mem::zeroed() };
+        let mut key = unsafe { std::mem::zeroed() };
+        let mut to_fill = unsafe { std::mem::zeroed() };
         unsafe {
             unsafe_bindings::plist_dict_next_item(
                 self.plist.plist_t,
                 self.plist_dict_iter,
-                key,
-                to_fill,
+                &mut key,
+                &mut to_fill,
             )
         };
         if to_fill.is_null() {
             None
         } else {
-            let key_str = unsafe {
-                std::ffi::CStr::from_ptr(*key)
-                    .to_string_lossy()
-                    .into_owned()
-            };
+            let key_str = unsafe { std::ffi::CStr::from_ptr(key).to_string_lossy().into_owned() };
             Some((
                 key_str,
                 Plist {
-                    plist_t: unsafe { *to_fill },
-                    plist_type: unsafe { unsafe_bindings::plist_get_node_type(*to_fill) }.into(),
+                    plist_t: to_fill,
+                    plist_type: unsafe { unsafe_bindings::plist_get_node_type(to_fill) }.into(),
                     dependent_plists: Vec::new(),
                 },
             )) // yeet
