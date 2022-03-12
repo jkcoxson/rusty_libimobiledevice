@@ -40,7 +40,7 @@ fn main() {
     }
 
     if udid == "" {
-        let mut devices = match libimobiledevice::get_devices() {
+        let devices = match libimobiledevice::get_devices() {
             Ok(devices) => devices,
             Err(e) => {
                 println!("Error: {:?}", e);
@@ -68,7 +68,7 @@ fn main() {
         let output: String = output.into();
         println!("{}", output);
     } else {
-        let mut device = match libimobiledevice::get_device(udid.to_string()) {
+        let device = match libimobiledevice::get_device(udid.to_string()) {
             Ok(device) => device,
             Err(e) => {
                 println!("Error: {:?}", e);

@@ -1,7 +1,6 @@
 // jkcoxson
 // This one isn't an official tool, but something I think is necessary
 
-use rusty_libimobiledevice::error::InstProxyError;
 use rusty_libimobiledevice::instproxy::InstProxyClient;
 use rusty_libimobiledevice::libimobiledevice;
 use rusty_libimobiledevice::plist::Plist;
@@ -10,10 +9,6 @@ fn main() {
     const VERSION: &str = "0.1.0";
 
     let mut udid = "".to_string();
-    let mut dmg_path = "".to_string();
-    let mut image_type = "Developer".to_string();
-    let mut display_xml = false;
-    let mut list_mode = false;
 
     // Parse arguments
     let mut args: Vec<String> = std::env::args().collect();
@@ -43,7 +38,6 @@ fn main() {
                     println!("Unknown flag: {}", args[i]);
                     return;
                 }
-                dmg_path = args[i].clone();
             }
         }
         i += 1;
@@ -54,21 +48,10 @@ fn main() {
     }
 
     // Get the device
-    let mut device = match libimobiledevice::get_device(udid.to_string()) {
+    let device = match libimobiledevice::get_device(udid.to_string()) {
         Ok(device) => device,
         Err(e) => {
             println!("Error: Could not find device: {:?}", e);
-            return;
-        }
-    };
-
-    let mut lockdown_client = match device.new_lockdownd_client("idevicelistapps".to_string()) {
-        Ok(lckd) => {
-            println!("Successfully connected to lockdownd");
-            lckd
-        }
-        Err(e) => {
-            println!("Error starting lockdown service: {:?}", e);
             return;
         }
     };

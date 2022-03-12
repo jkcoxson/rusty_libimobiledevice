@@ -8,7 +8,6 @@ fn main() {
     let mut udid = "".to_string();
     let mut dmg_path = "".to_string();
     let mut image_type = "Developer".to_string();
-    let mut display_xml = false;
     let mut list_mode = false;
 
     // Parse arguments
@@ -28,17 +27,15 @@ fn main() {
                 image_type = args[i + 1].clone();
                 i += 1;
             }
-            "-x" | "--xml" => {
-                display_xml = true;
-            }
             "-h" | "--help" => {
                 println!("Usage: ideviceimagemounter [options] <DMG Path>");
                 println!("");
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
                 println!("  -l, --list           : list all devices");
-                println!("  -t, --imagetype <type> : image type to mount, the default is Developer");
-                println!("  -x, --xml            : display xml plist");
+                println!(
+                    "  -t, --imagetype <type> : image type to mount, the default is Developer"
+                );
                 println!("  -h, --help           : display this help message");
                 println!("  -v, --version        : display version");
                 return;
@@ -68,7 +65,7 @@ fn main() {
     println!("{}", dmg_path);
 
     // Get the device
-    let mut device = match libimobiledevice::get_device(udid.to_string()) {
+    let device = match libimobiledevice::get_device(udid.to_string()) {
         Ok(device) => device,
         Err(e) => {
             println!("Error: Could not find device: {:?}", e);
@@ -87,32 +84,40 @@ fn main() {
         }
     };
 
-    let ios_version = match lockdown_client.get_value("ProductVersion".to_string(), "".to_string()) {
-        Ok(ios_version) => {
-            ios_version.get_string_val().unwrap()
-        }
+    let ios_version = match lockdown_client.get_value("ProductVersion".to_string(), "".to_string())
+    {
+        Ok(ios_version) => ios_version.get_string_val().unwrap(),
         Err(e) => {
             println!("Error getting iOS version: {:?}", e);
             return;
         }
     };
 
-    let ios_major_version = ios_version.split('.').next().unwrap().parse::<u32>().unwrap();
+    let ios_major_version = ios_version
+        .split('.')
+        .next()
+        .unwrap()
+        .parse::<u32>()
+        .unwrap();
     if ios_major_version < 8 {
         println!("Error: old versions of iOS are not supported atm because lazy");
         return;
     }
 
-    let service = match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
-        Ok(service) => {
-            println!("Successfully started com.apple.mobile.mobile_image_mounter");
-            service
-        }
-        Err(e) => {
-            println!("Error starting com.apple.mobile.mobile_image_mounter: {:?}", e);
-            return;
-        }
-    };
+    let service =
+        match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
+            Ok(service) => {
+                println!("Successfully started com.apple.mobile.mobile_image_mounter");
+                service
+            }
+            Err(e) => {
+                println!(
+                    "Error starting com.apple.mobile.mobile_image_mounter: {:?}",
+                    e
+                );
+                return;
+            }
+        };
 
     let mim = match device.new_mobile_image_mounter(&service) {
         Ok(mim) => {
@@ -136,7 +141,11 @@ fn main() {
             }
         }
     } else {
-        match mim.upload_image(dmg_path.clone(), image_type.clone(), format!("{}.signature", dmg_path.clone()).to_string()) {
+        match mim.upload_image(
+            dmg_path.clone(),
+            image_type.clone(),
+            format!("{}.signature", dmg_path.clone()).to_string(),
+        ) {
             Ok(_) => {
                 println!("Successfully uploaded image");
             }
@@ -145,7 +154,11 @@ fn main() {
                 return;
             }
         }
-        match mim.mount_image(dmg_path.clone(), image_type, format!("{}.signature", dmg_path.clone()).to_string()) {
+        match mim.mount_image(
+            dmg_path.clone(),
+            image_type,
+            format!("{}.signature", dmg_path.clone()).to_string(),
+        ) {
             Ok(_) => {
                 println!("Successfully mounted image");
             }
@@ -154,7 +167,5 @@ fn main() {
                 return;
             }
         }
-        
     }
 }
-

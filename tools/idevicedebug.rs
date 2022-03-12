@@ -1,7 +1,5 @@
 // jkcoxson
 
-use rusty_libimobiledevice::debug_server::DebugServerCommand;
-use rusty_libimobiledevice::error::InstProxyError;
 use rusty_libimobiledevice::instproxy::InstProxyClient;
 use rusty_libimobiledevice::libimobiledevice;
 use rusty_libimobiledevice::plist::Plist;
@@ -51,21 +49,10 @@ fn main() {
     }
 
     // Get the device
-    let mut device = match libimobiledevice::get_device(udid.to_string()) {
+    let device = match libimobiledevice::get_device(udid.to_string()) {
         Ok(device) => device,
         Err(e) => {
             println!("Error: Could not find device: {:?}", e);
-            return;
-        }
-    };
-
-    let mut lockdown_client = match device.new_lockdownd_client("idevicedebug".to_string()) {
-        Ok(lckd) => {
-            println!("Successfully connected to lockdownd");
-            lckd
-        }
-        Err(e) => {
-            println!("Error starting lockdown service: {:?}", e);
             return;
         }
     };

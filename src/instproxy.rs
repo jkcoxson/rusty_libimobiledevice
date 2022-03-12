@@ -65,7 +65,7 @@ impl InstProxyClient<'_> {
     pub fn lookup(
         &self,
         app_ids: Vec<String>,
-        mut client_options: Plist,
+        client_options: Plist,
     ) -> Result<Plist, InstProxyError> {
         // Convert vector of strings to a slice
         let cstrings = app_ids
