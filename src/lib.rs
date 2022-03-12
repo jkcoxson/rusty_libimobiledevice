@@ -1,6 +1,7 @@
 // jkcoxson
 
 pub mod bindings;
+pub mod debug_server;
 pub mod error;
 pub mod instproxy;
 pub mod libimobiledevice;

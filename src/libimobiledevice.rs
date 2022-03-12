@@ -1,7 +1,7 @@
 // jkcoxson
 
 use core::fmt;
-use std::{convert::TryInto, fmt::Debug, fmt::Formatter, ptr::null_mut};
+use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
@@ -99,8 +99,6 @@ pub struct Device {
     // Raw properties
     conn_data: *mut std::os::raw::c_void, // tbh what the heck is this
     pub(crate) pointer: unsafe_bindings::idevice_t,
-    proxy_client: Option<unsafe_bindings::instproxy_client_t>,
-    debug_server: Option<unsafe_bindings::debugserver_client_t>,
 }
 
 impl Device {
@@ -115,8 +113,6 @@ impl Device {
             network,
             conn_data,
             pointer: device,
-            proxy_client: None,
-            debug_server: None,
         };
     }
     /// Starts the lockdown service for the device
@@ -125,89 +121,7 @@ impl Device {
         Ok(LockdowndClient::new(self, label)?)
     }
 
-    /// Starts the instproxy service for the device
-    pub fn start_instproxy_service(&mut self, label: String) -> Result<(), InstProxyError> {
-        let mut client: unsafe_bindings::instproxy_client_t = unsafe { std::mem::zeroed() };
-        let client_ptr: *mut unsafe_bindings::instproxy_client_t = &mut client;
-
-        let label_c_str = std::ffi::CString::new(label).unwrap();
-
-        let result = unsafe {
-            unsafe_bindings::instproxy_client_start_service(
-                self.pointer,
-                client_ptr,
-                label_c_str.as_ptr(),
-            )
-        }
-        .into();
-        if result != InstProxyError::Success {
-            return Err(result);
-        }
-
-        self.proxy_client = Some(client);
-        Ok(())
-    }
-
-    /// Starts the debugserver service for the device
-    pub fn start_debug_server(&mut self, label: String) -> Result<(), DebugServerError> {
-        let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
-        let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
-
-        let label_c_str = std::ffi::CString::new(label).unwrap();
-
-        let result = unsafe {
-            unsafe_bindings::debugserver_client_start_service(
-                self.pointer,
-                client_ptr,
-                label_c_str.as_ptr(),
-            )
-        }
-        .into();
-        if result != DebugServerError::Success {
-            return Err(result);
-        }
-
-        self.debug_server = Some(client);
-        Ok(())
-    }
-
-    /// Sends a DebugServerCommand to the device
-    pub fn send_command(
-        &mut self,
-        command: DebugServerCommand,
-    ) -> Result<String, DebugServerError> {
-        if self.debug_server.is_none() {
-            self.start_debug_server(String::from("com.apple.debugserver"))?;
-        }
-        let mut response: std::os::raw::c_char = unsafe { std::mem::zeroed() };
-        let mut response_ptr: *mut std::os::raw::c_char = &mut response;
-        let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
-
-        let response_size = std::ptr::null_mut();
-
-        let result = unsafe {
-            unsafe_bindings::debugserver_client_send_command(
-                self.debug_server.unwrap(),
-                command.command,
-                response_ptr_ptr,
-                response_size,
-            )
-        }
-        .into();
-        if result != DebugServerError::Success {
-            return Err(result);
-        }
-
-        // Convert response to String
-        let response_str = unsafe {
-            std::ffi::CStr::from_ptr(response_ptr)
-                .to_string_lossy()
-                .to_string()
-        };
-
-        Ok(response_str)
-    }
-
+    /// Creates an image mounter for the device
     pub fn new_mobile_image_mounter(
         &self,
         service: &LockdowndService,
@@ -236,11 +150,20 @@ impl Device {
         Ok(mobile_image_mounter)
     }
 
+    /// Creates an instproxy client for the device
     pub fn new_instproxy_client(
         &self,
         label: String,
     ) -> Result<crate::instproxy::InstProxyClient, InstProxyError> {
         crate::instproxy::InstProxyClient::new(self, label)
+    }
+
+    /// Creates a new debug server for the device
+    pub fn new_debug_server(
+        &self,
+        label: &str,
+    ) -> Result<crate::debug_server::DebugServer, DebugServerError> {
+        crate::debug_server::DebugServer::new(self, label)
     }
 }
 
@@ -259,59 +182,5 @@ impl Drop for Device {
         unsafe {
             unsafe_bindings::idevice_free(self.pointer);
         }
-    }
-}
-
-pub struct DebugServerCommand {
-    command: unsafe_bindings::debugserver_command_t,
-}
-
-impl DebugServerCommand {
-    pub fn new(command: String, arguments: Vec<String>) -> Result<DebugServerCommand, String> {
-        let mut command_ptr: unsafe_bindings::debugserver_command_t = unsafe { std::mem::zeroed() };
-        let command_ptr_ptr: *mut unsafe_bindings::debugserver_command_t = &mut command_ptr;
-
-        let command_c_str = std::ffi::CString::new(command).unwrap();
-
-        // Create C array
-        let mut arguments_c_array: Vec<i8> = Vec::new();
-        for i in arguments.iter() {
-            let c_str = std::ffi::CString::new(i.clone()).unwrap();
-            arguments_c_array.push(c_str.as_bytes_with_nul()[0].try_into().unwrap());
-        }
-        // Create pointer to to_fill[0]
-        let mut c_array_ptr: *mut std::os::raw::c_char = arguments_c_array.as_mut_ptr();
-        let c_array_ptr_ptr: *mut *mut std::os::raw::c_char = &mut c_array_ptr;
-
-        let result = unsafe {
-            unsafe_bindings::debugserver_command_new(
-                command_c_str.as_ptr(),
-                arguments.len() as i32,
-                c_array_ptr_ptr,
-                command_ptr_ptr,
-            )
-        };
-        if result < 0 {
-            return Err(String::from("Failed to create command"));
-        }
-
-        Ok(DebugServerCommand {
-            command: command_ptr,
-        })
-    }
-}
-
-impl Into<DebugServerCommand> for String {
-    fn into(self) -> DebugServerCommand {
-        // Split string into command and arguments
-        let mut split = self.split_whitespace();
-        let command = split.next().unwrap().to_string();
-        let arguments: Vec<String> = split.map(|s| s.to_string()).collect();
-        DebugServerCommand::new(command, arguments).unwrap()
-    }
-}
-impl Into<DebugServerCommand> for &str {
-    fn into(self) -> DebugServerCommand {
-        self.to_string().into()
     }
 }

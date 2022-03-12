@@ -1,5 +1,6 @@
 // jkcoxson
 
+use rusty_libimobiledevice::debug_server::DebugServerCommand;
 use rusty_libimobiledevice::error::InstProxyError;
 use rusty_libimobiledevice::instproxy::InstProxyClient;
 use rusty_libimobiledevice::libimobiledevice;
@@ -92,7 +93,7 @@ fn main() {
         ],
     );
     let lookup_results =
-        match instproxy_client.lookup(vec!["com.google.ios.youtube".to_string()], client_opts) {
+        match instproxy_client.lookup(vec!["com.jkcoxson.DolphiniOS".to_string()], client_opts) {
             Ok(apps) => {
                 println!("Successfully looked up apps");
                 apps
@@ -103,7 +104,7 @@ fn main() {
             }
         };
     let lookup_results = lookup_results
-        .dict_get_item("com.google.ios.youtube")
+        .dict_get_item("com.jkcoxson.DolphiniOS")
         .unwrap();
 
     let working_directory = match lookup_results.dict_get_item("Container") {
@@ -114,13 +115,17 @@ fn main() {
         }
     };
 
-    println!(
-        "Working Directory: {:?}",
-        working_directory.get_string_val().unwrap()
-    );
+    let working_directory = match working_directory.get_string_val() {
+        Ok(p) => p,
+        Err(_) => {
+            println!("App not found");
+            return;
+        }
+    };
+    println!("Working directory: {}", working_directory);
 
     let bundle_path = match instproxy_client
-        .get_path_for_bundle_identifier("com.google.ios.youtube".to_string())
+        .get_path_for_bundle_identifier("com.jkcoxson.DolphiniOS".to_string())
     {
         Ok(p) => {
             println!("Successfully found bundle path");
@@ -133,4 +138,56 @@ fn main() {
     };
 
     println!("Bundle Path: {}", bundle_path);
+
+    let debug_server = match device.new_debug_server("idevicedebug") {
+        Ok(d) => {
+            println!("Successfully started debug server");
+            d
+        }
+        Err(e) => {
+            println!("Error starting debug server: {:?}", e);
+            println!("Maybe mount the Developer DMG?");
+            return;
+        }
+    };
+
+    match debug_server.send_command("QSetMaxPacketSize: 1024".into()) {
+        Ok(res) => println!("Successfully set max packet size: {:?}", res),
+        Err(e) => {
+            println!("Error setting max packet size: {:?}", e);
+            return;
+        }
+    }
+
+    match debug_server.send_command(format!("QSetWorkingDir: {}", working_directory).into()) {
+        Ok(res) => println!("Successfully set working directory: {:?}", res),
+        Err(e) => {
+            println!("Error setting working directory: {:?}", e);
+            return;
+        }
+    }
+
+    match debug_server.set_argv(vec![bundle_path.clone(), bundle_path.clone()]) {
+        Ok(res) => println!("Successfully set argv: {:?}", res),
+        Err(e) => {
+            println!("Error setting argv: {:?}", e);
+            return;
+        }
+    }
+
+    match debug_server.send_command("qLaunchSuccess".into()) {
+        Ok(res) => println!("Got launch response: {:?}", res),
+        Err(e) => {
+            println!("Error checking if app launched: {:?}", e);
+            return;
+        }
+    }
+
+    match debug_server.send_command("D".into()) {
+        Ok(res) => println!("Detaching: {:?}", res),
+        Err(e) => {
+            println!("Error detaching: {:?}", e);
+            return;
+        }
+    }
 }
