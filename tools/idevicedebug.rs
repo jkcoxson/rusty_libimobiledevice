@@ -10,6 +10,7 @@ fn main() {
     const VERSION: &str = "0.1.0";
 
     let mut udid = "".to_string();
+    let mut app = "".to_string();
 
     // Parse arguments
     let mut args: Vec<String> = std::env::args().collect();
@@ -22,7 +23,7 @@ fn main() {
                 i += 1;
             }
             "-h" | "--help" => {
-                println!("Usage: ideviceimagemounter [options] <DMG Path>");
+                println!("Usage: idevicedebug [options] <app>");
                 println!("");
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
@@ -39,6 +40,7 @@ fn main() {
                     println!("Unknown flag: {}", args[i]);
                     return;
                 }
+                app = args[i].clone();
             }
         }
         i += 1;
@@ -92,20 +94,17 @@ fn main() {
             "Container".to_string(),
         ],
     );
-    let lookup_results =
-        match instproxy_client.lookup(vec!["com.jkcoxson.DolphiniOS".to_string()], client_opts) {
-            Ok(apps) => {
-                println!("Successfully looked up apps");
-                apps
-            }
-            Err(e) => {
-                println!("Error looking up apps: {:?}", e);
-                return;
-            }
-        };
-    let lookup_results = lookup_results
-        .dict_get_item("com.jkcoxson.DolphiniOS")
-        .unwrap();
+    let lookup_results = match instproxy_client.lookup(vec![app], client_opts) {
+        Ok(apps) => {
+            println!("Successfully looked up apps");
+            apps
+        }
+        Err(e) => {
+            println!("Error looking up apps: {:?}", e);
+            return;
+        }
+    };
+    let lookup_results = lookup_results.dict_get_item(app).unwrap();
 
     let working_directory = match lookup_results.dict_get_item("Container") {
         Ok(p) => p,
@@ -124,9 +123,7 @@ fn main() {
     };
     println!("Working directory: {}", working_directory);
 
-    let bundle_path = match instproxy_client
-        .get_path_for_bundle_identifier("com.jkcoxson.DolphiniOS".to_string())
-    {
+    let bundle_path = match instproxy_client.get_path_for_bundle_identifier(app) {
         Ok(p) => {
             println!("Successfully found bundle path");
             p
