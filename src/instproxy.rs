@@ -74,7 +74,10 @@ impl InstProxyClient<'_> {
             .collect::<Vec<_>>();
         let mut cstring_pointers = cstrings.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
         cstring_pointers.push(std::ptr::null());
-        let cstring_pointers_ptr = cstring_pointers.as_mut_ptr();
+        let mut cstring_pointers_ptr = cstring_pointers.as_mut_ptr();
+        if app_ids.len() == 0 {
+            cstring_pointers_ptr = std::ptr::null_mut();
+        }
 
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         let result = unsafe {

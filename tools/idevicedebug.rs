@@ -94,7 +94,7 @@ fn main() {
             "Container".to_string(),
         ],
     );
-    let lookup_results = match instproxy_client.lookup(vec![app], client_opts) {
+    let lookup_results = match instproxy_client.lookup(vec![app.clone()], client_opts) {
         Ok(apps) => {
             println!("Successfully looked up apps");
             apps
@@ -104,7 +104,7 @@ fn main() {
             return;
         }
     };
-    let lookup_results = lookup_results.dict_get_item(app).unwrap();
+    let lookup_results = lookup_results.dict_get_item(&app).unwrap();
 
     let working_directory = match lookup_results.dict_get_item("Container") {
         Ok(p) => p,

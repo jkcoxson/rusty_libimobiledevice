@@ -26,3 +26,7 @@ path = "ideviceinfo.rs"
 [[bin]]
 name = "idevicedebug"
 path = "idevicedebug.rs"
+
+[[bin]]
+name = "idevicelistapps"
+path = "idevicelistapps.rs"
