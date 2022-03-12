@@ -15,6 +15,9 @@ pub struct LockdowndClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
+unsafe impl Send for LockdowndClient<'_> {}
+unsafe impl Sync for LockdowndClient<'_> {}
+
 pub struct LockdowndService<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_service_descriptor_t,
     pub label: String,
@@ -22,10 +25,16 @@ pub struct LockdowndService<'a> {
     phantom: std::marker::PhantomData<&'a LockdowndClient<'a>>,
 }
 
+unsafe impl Send for LockdowndService<'_> {}
+unsafe impl Sync for LockdowndService<'_> {}
+
 pub struct MobileImageMounter<'a> {
     pub(crate) pointer: unsafe_bindings::mobile_image_mounter_client_t,
     pub(crate) phantom: std::marker::PhantomData<&'a LockdowndService<'a>>,
 }
+
+unsafe impl Send for MobileImageMounter<'_> {}
+unsafe impl Sync for MobileImageMounter<'_> {}
 
 impl LockdowndClient<'_> {
     pub fn new(device: &Device, label: String) -> Result<Self, LockdowndError> {

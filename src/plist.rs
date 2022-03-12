@@ -10,6 +10,9 @@ pub struct Plist {
     pub(crate) dependent_plists: Vec<Plist>,
 }
 
+unsafe impl Send for Plist {}
+unsafe impl Sync for Plist {}
+
 pub struct PlistArrayIter {
     plist_array_iter: unsafe_bindings::plist_array_iter,
     plist: Plist,

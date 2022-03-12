@@ -16,7 +16,36 @@ use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
 // Smexy Functions //
 /////////////////////
 
+/// Get a list of UDIDs
+pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
+    let mut device_list: *mut idevice_info_t = null_mut();
+    let mut device_count: i32 = 0;
+    let result: error::IdeviceError = unsafe {
+        unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
+    }
+    .into();
+
+    if result != error::IdeviceError::Success {
+        return Err(result);
+    }
+
+    // Create slice of mutable references to idevice_info_t from device_list and device_count
+    let device_list_slice =
+        unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
+
+    let mut to_return = vec![];
+    for device in device_list_slice {
+        to_return.push(unsafe {
+            std::ffi::CStr::from_ptr((*(*device)).udid)
+                .to_string_lossy()
+                .into_owned()
+        });
+    }
+    Ok(to_return)
+}
+
 /// Gets all devices detected by usbmuxd
+/// An abstraction that fetches the device list and connects to it
 pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
@@ -97,9 +126,13 @@ pub struct Device {
     pub udid: String,
     pub network: bool,
     // Raw properties
+    #[allow(dead_code)]
     conn_data: *mut std::os::raw::c_void, // tbh what the heck is this
     pub(crate) pointer: unsafe_bindings::idevice_t,
 }
+
+unsafe impl Send for Device {}
+unsafe impl Sync for Device {}
 
 impl Device {
     pub fn new(

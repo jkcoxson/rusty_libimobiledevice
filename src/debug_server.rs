@@ -9,6 +9,9 @@ pub struct DebugServer<'a> {
     pub(crate) phantom: std::marker::PhantomData<&'a Device>,
 }
 
+unsafe impl Send for DebugServer<'_> {}
+unsafe impl Sync for DebugServer<'_> {}
+
 pub struct DebugServerCommand {
     command: unsafe_bindings::debugserver_command_t,
 }

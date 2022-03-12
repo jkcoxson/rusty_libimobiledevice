@@ -12,6 +12,9 @@ pub struct InstProxyClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
+unsafe impl Send for InstProxyClient<'_> {}
+unsafe impl Sync for InstProxyClient<'_> {}
+
 impl InstProxyClient<'_> {
     pub fn new(device: &Device, label: String) -> Result<Self, InstProxyError> {
         let mut instproxy_client = unsafe { std::mem::zeroed() };
