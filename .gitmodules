@@ -1,6 +1,0 @@
-[submodule "submodules/libimobiledevice"]
-	path = submodules/libimobiledevice
-	url = https://github.com/libimobiledevice/libimobiledevice
-[submodule "submodules/libplist"]
-	path = submodules/libplist
-	url = https://github.com/libimobiledevice/libplist
