@@ -3,15 +3,9 @@
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! debug {
-    ($x:expr) => {
-        dbg!($x)
-    };
-}
-#[cfg(debug_assertions)]
-#[macro_export]
-macro_rules! debug_print {
     ($($arg : tt) *) => {
-        println!("DEBUG: {}", format!($($arg)*));
+        let file = file!().split('/').last().unwrap();
+        println!("{}:{} -- {}", file, line!(), format!($($arg)*));
     };
 }
 
@@ -19,10 +13,4 @@ macro_rules! debug_print {
 #[macro_export]
 macro_rules! debug {
     ($x:expr) => {};
-}
-#[cfg(not(debug_assertions))]
-#[macro_export]
-macro_rules! debug_print {
-    () => {};
-    ($($arg : tt) *) => {};
 }

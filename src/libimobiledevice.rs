@@ -5,11 +5,11 @@ use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 pub use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
+use crate::debug;
 use crate::error::{
     self, DebugServerError, IdeviceError, InstProxyError, LockdowndError, MobileImageMounterError,
 };
 use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
-use crate::{debug, debug_print};
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
@@ -85,7 +85,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 
         let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
         let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
-        debug_print!("Creating device struct connection to {}", udid);
+        debug!("Creating device struct connection to {}", udid);
         let result = unsafe {
             unsafe_bindings::idevice_new_with_options(
                 device_info_ptr,
@@ -98,7 +98,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             )
         };
         if result != 0 {
-            debug_print!("Failed to create device struct to {}", udid);
+            debug!("Failed to create device struct to {}", udid);
             continue;
         }
         let to_push = Device::new(udid, network, unsafe { (*(*i)).conn_data }, device_info);
@@ -170,7 +170,7 @@ impl Device {
         let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t =
             unsafe { std::mem::zeroed() };
 
-        debug_print!("Creating mobile image mounter for {}", self.udid);
+        debug!("Creating mobile image mounter for {}", self.udid);
         let error = unsafe {
             unsafe_bindings::mobile_image_mounter_new(
                 self.pointer,
@@ -221,7 +221,7 @@ impl Debug for Device {
 
 impl Drop for Device {
     fn drop(&mut self) {
-        debug_print!("Dropping device {}", self.udid);
+        debug!("Dropping device {}", self.udid);
         unsafe {
             unsafe_bindings::idevice_free(self.pointer);
         }

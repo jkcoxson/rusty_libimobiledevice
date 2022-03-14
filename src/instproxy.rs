@@ -3,8 +3,8 @@
 use std::ffi::CString;
 
 use crate::{
-    bindings as unsafe_bindings, debug, debug_print, error::InstProxyError,
-    libimobiledevice::Device, plist::Plist,
+    bindings as unsafe_bindings, debug, error::InstProxyError, libimobiledevice::Device,
+    plist::Plist,
 };
 
 pub struct InstProxyClient<'a> {
@@ -20,7 +20,7 @@ impl InstProxyClient<'_> {
     pub fn new(device: &Device, label: String) -> Result<Self, InstProxyError> {
         let mut instproxy_client = unsafe { std::mem::zeroed() };
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
-        debug_print!("Creating instproxy client for {}", device.udid);
+        debug!("Creating instproxy client for {}", device.udid);
         let result = unsafe {
             unsafe_bindings::instproxy_client_start_service(
                 device.pointer,

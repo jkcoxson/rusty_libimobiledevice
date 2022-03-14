@@ -653,7 +653,12 @@ impl Drop for Plist {
     fn drop(&mut self) {
         debug!("Dropping plist");
         // Dependent plists should be freed automatically because this object is being dropped, right?
+        if self.plist_t as u8 == 0 {
+            debug!("Plist has already been freed");
+            return;
+        }
         unsafe { unsafe_bindings::plist_free(self.plist_t) }
+        debug!("Plist dropped");
     }
 }
 

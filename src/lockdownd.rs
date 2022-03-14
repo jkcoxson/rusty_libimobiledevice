@@ -5,10 +5,10 @@ use std::io::Read;
 use libc::c_void;
 
 pub use crate::bindings as unsafe_bindings;
+use crate::debug;
 use crate::error::{LockdowndError, MobileImageMounterError};
 use crate::libimobiledevice::Device;
 use crate::plist::Plist;
-use crate::{debug, debug_print};
 
 pub struct LockdowndClient<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_client_t,
@@ -44,7 +44,7 @@ impl LockdowndClient<'_> {
 
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
 
-        debug_print!("Creating lockdownd client for {}", device.udid);
+        debug!("Creating lockdownd client for {}", device.udid);
         let result = unsafe {
             unsafe_bindings::lockdownd_client_new_with_handshake(
                 device.pointer,
@@ -82,7 +82,7 @@ impl LockdowndClient<'_> {
 
         let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
-        debug_print!("Getting value for {}", key);
+        debug!("Getting value for {}", key);
         let result = unsafe {
             unsafe_bindings::lockdownd_get_value(self.pointer, domain_c_str, key_c_str, &mut value)
         }
