@@ -3,11 +3,13 @@
 use std::{convert::TryInto, ffi::CString, fmt::Formatter, time::SystemTime};
 
 use crate::{debug, libimobiledevice::*};
+use rand::Rng;
 
 pub struct Plist {
     pub(crate) plist_t: unsafe_bindings::plist_t,
     pub plist_type: PlistType,
     pub(crate) dependent_plists: Vec<Plist>,
+    pub(crate) id: u32,
 }
 
 unsafe impl Send for Plist {}
@@ -64,21 +66,11 @@ impl From<PlistType> for String {
 impl Plist {
     pub fn new_dict() -> Plist {
         debug!("Generating new dictionary plist");
-        let plist_t = unsafe { unsafe_bindings::plist_new_dict() };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Dictionary,
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_new_dict() }.into()
     }
     pub fn new_array() -> Plist {
         debug!("Generating new array plist");
-        let plist_t = unsafe { unsafe_bindings::plist_new_array() };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Array,
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_new_array() }.into()
     }
     pub fn new_string(string: &str) -> Plist {
         debug!("Generating new string plist");
@@ -88,58 +80,35 @@ impl Plist {
                 panic!("Could not convert string to CString");
             }
         };
-        let plist_t = unsafe { unsafe_bindings::plist_new_string(string.as_ptr() as *const i8) };
-        Plist {
-            plist_t,
-            plist_type: PlistType::String,
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_new_string(string.as_ptr() as *const i8) }.into()
     }
     pub fn new_bool(bool: bool) -> Plist {
         debug!("Generating new bool plist");
-        let plist_t = unsafe {
+        unsafe {
             unsafe_bindings::plist_new_bool(match bool == true {
                 true => 1,
                 false => 0,
             })
-        };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Boolean,
-            dependent_plists: Vec::new(),
         }
+        .into()
     }
     pub fn new_uint(uint: u64) -> Plist {
         debug!("Generating new uint plist");
-        let plist_t = unsafe { unsafe_bindings::plist_new_uint(uint) };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Integer,
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_new_uint(uint) }.into()
     }
     pub fn new_real(real: f64) -> Plist {
         debug!("Generating new float plist");
-        let plist_t = unsafe { unsafe_bindings::plist_new_real(real) };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Real,
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_new_real(real) }.into()
     }
     pub fn new_data(data: &[u8]) -> Plist {
         debug!("Generating new data plist");
-        let plist_t = unsafe {
+        unsafe {
             unsafe_bindings::plist_new_data(
                 data.as_ptr() as *const i8,
                 std::convert::TryInto::try_into(data.len()).unwrap(),
             )
-        };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Data,
-            dependent_plists: Vec::new(),
         }
+        .into()
     }
     pub fn new_date(_date: SystemTime) -> Plist {
         unimplemented!() // I am too tired to implement this right now
@@ -147,12 +116,7 @@ impl Plist {
     }
     pub fn new_plist_uid(uid: u64) -> Plist {
         debug!("Generating new plist uid");
-        let plist_t = unsafe { unsafe_bindings::plist_new_uid(uid) };
-        Plist {
-            plist_t,
-            plist_type: PlistType::Uid,
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_new_uid(uid) }.into()
     }
     pub fn from_xml(xml: String) -> Result<Plist, ()> {
         let xml = match CString::new(xml) {
@@ -181,13 +145,7 @@ impl Plist {
             return Err(());
         }
         debug!("Getting array item");
-        let plist_t = unsafe { unsafe_bindings::plist_array_get_item(self.plist_t, index) };
-        debug!("Getting the node type of the item");
-        Ok(Plist {
-            plist_t,
-            plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
-            dependent_plists: Vec::new(),
-        })
+        Ok(unsafe { unsafe_bindings::plist_array_get_item(self.plist_t, index) }.into())
     }
     pub fn array_get_item_index(&self) -> Result<u32, ()> {
         if self.plist_type != PlistType::Array {
@@ -266,27 +224,17 @@ impl Plist {
         }
         let key_c_string = CString::new(key).unwrap();
         debug!("Getting dict item");
-        let plist_t =
-            unsafe { unsafe_bindings::plist_dict_get_item(self.plist_t, key_c_string.as_ptr()) };
-        debug!("Getting the node type of the item");
-        Ok(Plist {
-            plist_t,
-            plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
-            dependent_plists: Vec::new(),
-        })
+        Ok(
+            unsafe { unsafe_bindings::plist_dict_get_item(self.plist_t, key_c_string.as_ptr()) }
+                .into(),
+        )
     }
     pub fn dict_item_get_key(&self) -> Result<Plist, ()> {
         if self.plist_type != PlistType::Dictionary {
             return Err(());
         }
         debug!("Getting dict item key");
-        let plist_t = unsafe { unsafe_bindings::plist_dict_item_get_key(self.plist_t) };
-        debug!("Getting the node type of the item");
-        Ok(Plist {
-            plist_t,
-            plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
-            dependent_plists: Vec::new(),
-        })
+        Ok(unsafe { unsafe_bindings::plist_dict_item_get_key(self.plist_t) }.into())
     }
     pub fn dict_set_item(&mut self, key: &str, item: Plist) -> Result<(), ()> {
         let key = CString::new(key).unwrap();
@@ -334,13 +282,7 @@ impl Plist {
     }
     pub fn get_parent(&self) -> Plist {
         debug!("Getting parent");
-        let plist_t = unsafe { unsafe_bindings::plist_get_parent(self.plist_t) };
-        debug!("Getting the node type of the parent");
-        Plist {
-            plist_t,
-            plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
-            dependent_plists: Vec::new(),
-        }
+        unsafe { unsafe_bindings::plist_get_parent(self.plist_t) }.into()
     }
     pub fn get_node_type(&self) -> PlistType {
         debug!("Getting node type");
@@ -510,11 +452,14 @@ impl Plist {
 
 impl From<unsafe_bindings::plist_t> for Plist {
     fn from(plist_t: unsafe_bindings::plist_t) -> Self {
-        debug!("Creating plist from plist_t");
+        let mut rng = rand::thread_rng();
+        let id = rng.gen::<u32>();
+        debug!("Creating plist from plist_t with id {}", id);
         Plist {
             plist_t,
             plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
             dependent_plists: Vec::new(),
+            id: id,
         }
     }
 }
@@ -619,12 +564,7 @@ impl From<Vec<u8>> for Plist {
         let plist_t = unsafe { std::mem::zeroed() };
         debug!("Creating plist from binary data");
         unsafe { unsafe_bindings::plist_from_bin(plist_data, len as u32, plist_t) };
-        debug!("Getting type of binary data");
-        Plist {
-            plist_t: unsafe { *plist_t },
-            plist_type: unsafe { unsafe_bindings::plist_get_node_type(*plist_t) }.into(),
-            dependent_plists: Vec::new(),
-        }
+        unsafe { (*plist_t).into() }
     }
 }
 
@@ -632,13 +572,8 @@ impl Clone for Plist {
     fn clone(&self) -> Self {
         debug!("Cloning plist");
         let plist_t = unsafe { unsafe_bindings::plist_copy(self.plist_t) };
-        let dependent_plists = self.dependent_plists.clone();
         debug!("Getting type of cloned plist");
-        Plist {
-            plist_t,
-            plist_type: unsafe { unsafe_bindings::plist_get_node_type(plist_t) }.into(),
-            dependent_plists,
-        }
+        plist_t.into()
     }
 }
 
@@ -651,7 +586,7 @@ impl std::fmt::Debug for Plist {
 
 impl Drop for Plist {
     fn drop(&mut self) {
-        debug!("Dropping plist");
+        debug!("Dropping plist {}", self.id);
         // Dependent plists should be freed automatically because this object is being dropped, right?
         if self.plist_t as u8 == 0 {
             debug!("Plist has already been freed");
@@ -678,11 +613,7 @@ impl PlistArrayIter {
             None
         } else {
             debug!("Getting type of next item in array");
-            Some(Plist {
-                plist_t: unsafe { *to_fill },
-                plist_type: unsafe { unsafe_bindings::plist_get_node_type(*to_fill) }.into(),
-                dependent_plists: Vec::new(),
-            }) // yeet
+            Some(unsafe { *to_fill }.into())
         }
     }
 }
@@ -718,14 +649,7 @@ impl PlistDictIter {
         } else {
             let key_str = unsafe { std::ffi::CStr::from_ptr(key).to_string_lossy().into_owned() };
             debug!("Getting type of next item in dictionary");
-            Some((
-                key_str,
-                Plist {
-                    plist_t: to_fill,
-                    plist_type: unsafe { unsafe_bindings::plist_get_node_type(to_fill) }.into(),
-                    dependent_plists: Vec::new(),
-                },
-            )) // yeet
+            Some((key_str, to_fill.into())) // yeet
         }
     }
 }
