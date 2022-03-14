@@ -8,6 +8,7 @@ pub use crate::bindings as unsafe_bindings;
 use crate::error::{LockdowndError, MobileImageMounterError};
 use crate::libimobiledevice::Device;
 use crate::plist::Plist;
+use crate::{debug, debug_print};
 
 pub struct LockdowndClient<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_client_t,
@@ -43,6 +44,7 @@ impl LockdowndClient<'_> {
 
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
 
+        debug_print!("Creating lockdownd client for {}", device.udid);
         let result = unsafe {
             unsafe_bindings::lockdownd_client_new_with_handshake(
                 device.pointer,
@@ -80,6 +82,7 @@ impl LockdowndClient<'_> {
 
         let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
+        debug_print!("Getting value for {}", key);
         let result = unsafe {
             unsafe_bindings::lockdownd_get_value(self.pointer, domain_c_str, key_c_str, &mut value)
         }
@@ -103,6 +106,7 @@ impl LockdowndClient<'_> {
         let mut service: unsafe_bindings::lockdownd_service_descriptor_t =
             unsafe { std::mem::zeroed() };
 
+        debug!("Starting lockdown service");
         let result = unsafe {
             unsafe_bindings::lockdownd_start_service(self.pointer, label_c_str, &mut service)
         }
@@ -158,9 +162,11 @@ impl MobileImageMounter<'_> {
         // Read the image into a buffer
         let image_path_c_str = &mut std::ffi::CString::new(image_path.clone()).unwrap();
         let mode_c_str = &mut std::ffi::CString::new("rb").unwrap();
+        debug!("Opening image file");
         let image_buffer = unsafe { libc::fopen(image_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
         // Read the signature into a buffer
         let signature_path_c_str = &mut std::ffi::CString::new(signature_path.clone()).unwrap();
+        debug!("Reading signature file");
         let signature_buffer =
             unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
 
@@ -171,6 +177,7 @@ impl MobileImageMounter<'_> {
             image_type_c_str.as_ptr()
         };
 
+        debug!("Uploading image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 self.pointer,
@@ -229,6 +236,7 @@ impl MobileImageMounter<'_> {
 
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
+        debug!("Mounting image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_mount_image(
                 self.pointer,
@@ -257,6 +265,7 @@ impl MobileImageMounter<'_> {
 
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
+        debug!("Looking up image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_lookup_image(
                 self.pointer,
@@ -278,18 +287,21 @@ extern "C" fn image_mounter_callback(
     b: ImageMounterPointerSize,
     c: *mut c_void,
 ) -> ImageMounterReturnType {
+    debug!("image_mounter_callback called");
     return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) }
         as ImageMounterReturnType;
 }
 
 impl Drop for LockdowndClient<'_> {
     fn drop(&mut self) {
+        debug!("Dropping LockdowndClient");
         unsafe { unsafe_bindings::lockdownd_client_free(self.pointer) };
     }
 }
 
 impl Drop for LockdowndService<'_> {
     fn drop(&mut self) {
+        debug!("Dropping LockdowndService");
         unsafe {
             unsafe_bindings::lockdownd_service_descriptor_free(self.pointer);
         }
@@ -298,6 +310,7 @@ impl Drop for LockdowndService<'_> {
 
 impl Drop for MobileImageMounter<'_> {
     fn drop(&mut self) {
+        debug!("Dropping MobileImageMounter");
         unsafe {
             unsafe_bindings::mobile_image_mounter_free(self.pointer);
         }

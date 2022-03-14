@@ -9,6 +9,7 @@ use crate::error::{
     self, DebugServerError, IdeviceError, InstProxyError, LockdowndError, MobileImageMounterError,
 };
 use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
+use crate::{debug, debug_print};
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
 
@@ -20,16 +21,17 @@ use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
 pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
+    debug!("Getting all devices from the muxer");
     let result: error::IdeviceError = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
     }
     .into();
-
     if result != error::IdeviceError::Success {
         return Err(result);
     }
 
     // Create slice of mutable references to idevice_info_t from device_list and device_count
+    debug!("Getting device list from slice");
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
 
@@ -41,6 +43,7 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
                 .into_owned()
         });
     }
+    debug!("Returning device list");
     Ok(to_return)
 }
 
@@ -49,6 +52,7 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
 pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
+    debug!("Getting device list from the muxer");
     let result: error::IdeviceError = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
     }
@@ -58,6 +62,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
         return Err(result);
     }
 
+    debug!("Determining devices from slice");
     // Create slice of mutable references to idevice_info_t from device_list and device_count
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
@@ -80,6 +85,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 
         let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
         let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
+        debug_print!("Creating device struct connection to {}", udid);
         let result = unsafe {
             unsafe_bindings::idevice_new_with_options(
                 device_info_ptr,
@@ -92,6 +98,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             )
         };
         if result != 0 {
+            debug_print!("Failed to create device struct to {}", udid);
             continue;
         }
         let to_push = Device::new(udid, network, unsafe { (*(*i)).conn_data }, device_info);
@@ -99,11 +106,12 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     }
 
     // Drop the memory that the C library allocated
+    debug!("Freeing device list");
     let device_list_ptr = device_list as *mut *mut std::os::raw::c_char;
     unsafe {
         unsafe_bindings::idevice_device_list_free(device_list_ptr);
     }
-
+    debug!("Returning device structs");
     Ok(to_return)
 }
 
@@ -162,6 +170,7 @@ impl Device {
         let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t =
             unsafe { std::mem::zeroed() };
 
+        debug_print!("Creating mobile image mounter for {}", self.udid);
         let error = unsafe {
             unsafe_bindings::mobile_image_mounter_new(
                 self.pointer,
@@ -212,6 +221,7 @@ impl Debug for Device {
 
 impl Drop for Device {
     fn drop(&mut self) {
+        debug_print!("Dropping device {}", self.udid);
         unsafe {
             unsafe_bindings::idevice_free(self.pointer);
         }

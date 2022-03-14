@@ -3,7 +3,8 @@
 use std::ffi::CString;
 
 use crate::{
-    bindings as unsafe_bindings, error::InstProxyError, libimobiledevice::Device, plist::Plist,
+    bindings as unsafe_bindings, debug, debug_print, error::InstProxyError,
+    libimobiledevice::Device, plist::Plist,
 };
 
 pub struct InstProxyClient<'a> {
@@ -19,6 +20,7 @@ impl InstProxyClient<'_> {
     pub fn new(device: &Device, label: String) -> Result<Self, InstProxyError> {
         let mut instproxy_client = unsafe { std::mem::zeroed() };
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
+        debug_print!("Creating instproxy client for {}", device.udid);
         let result = unsafe {
             unsafe_bindings::instproxy_client_start_service(
                 device.pointer,
@@ -40,6 +42,7 @@ impl InstProxyClient<'_> {
     }
 
     pub fn options_new() -> Plist {
+        debug!("Generating new options plist");
         unsafe { unsafe_bindings::instproxy_client_options_new() }.into() // insert sunglasses emoji
     }
 
@@ -83,6 +86,7 @@ impl InstProxyClient<'_> {
         }
 
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+        debug!("Instproxy lookup");
         let result = unsafe {
             unsafe_bindings::instproxy_lookup(
                 self.pointer,
@@ -98,9 +102,11 @@ impl InstProxyClient<'_> {
 
         // todo make this not a hack (which means it'll never happen)
         // This is because when the default plist impl drop fires, it will segfault on this specific plist type
+        debug!("Hack dropping the options");
         unsafe { unsafe_bindings::instproxy_client_options_free(client_options.plist_t) };
         std::mem::forget(client_options);
 
+        debug!("Instproxy lookup done");
         Ok(res_plist.into())
     }
 
@@ -114,6 +120,7 @@ impl InstProxyClient<'_> {
         let mut to_fill_bytes = to_fill.into_raw();
         let to_fill_ptr = &mut to_fill_bytes;
 
+        debug!("Instproxy get_path_for_bundle_identifier");
         let result = unsafe {
             unsafe_bindings::instproxy_client_get_path_for_bundle_identifier(
                 self.pointer,
@@ -127,12 +134,14 @@ impl InstProxyClient<'_> {
             return Err(result);
         }
 
+        debug!("Instproxy get_path_for_bundle_identifier done");
         Ok(unsafe { CString::from_raw(to_fill_bytes).into_string().unwrap() })
     }
 }
 
 impl Drop for InstProxyClient<'_> {
     fn drop(&mut self) {
+        debug!("Dropping instproxy client");
         unsafe {
             unsafe_bindings::instproxy_client_free(self.pointer);
         }
