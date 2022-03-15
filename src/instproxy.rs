@@ -57,6 +57,7 @@ impl InstProxyClient<'_> {
     /// A rough translation of what I think the C library does.
     /// Rust doesn't support function overloading...
     pub fn options_set_return_attributes(options: &mut Plist, args: Vec<String>) {
+        debug!("Setting return attributes");
         let mut return_attributes = Plist::new_array();
         for i in args {
             let t = Plist::new_string(&i);

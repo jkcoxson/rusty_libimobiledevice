@@ -8,7 +8,7 @@ use rand::Rng;
 pub struct Plist {
     pub(crate) plist_t: unsafe_bindings::plist_t,
     pub plist_type: PlistType,
-    pub(crate) dependent_plists: Vec<Plist>,
+    pub(crate) dependent_plists: Vec<unsafe_bindings::plist_t>,
     pub(crate) id: u32,
 }
 
@@ -163,7 +163,8 @@ impl Plist {
         }
         debug!("Setting array item");
         unsafe { unsafe_bindings::plist_array_set_item(self.plist_t, item.plist_t, index) };
-        self.dependent_plists.push(item);
+        self.dependent_plists.push(item.plist_t);
+        item.false_drop();
         Ok(())
     }
     pub fn array_append_item(&mut self, item: Plist) -> Result<(), ()> {
@@ -172,7 +173,8 @@ impl Plist {
         }
         debug!("Appending array item");
         unsafe { unsafe_bindings::plist_array_append_item(self.plist_t, item.plist_t) };
-        self.dependent_plists.push(item);
+        self.dependent_plists.push(item.plist_t);
+        item.false_drop();
         Ok(())
     }
     pub fn array_insert_item(&mut self, item: Plist, index: u32) -> Result<(), ()> {
@@ -181,7 +183,8 @@ impl Plist {
         }
         debug!("Inserting array item");
         unsafe { unsafe_bindings::plist_array_insert_item(self.plist_t, item.plist_t, index) }
-        self.dependent_plists.push(item);
+        self.dependent_plists.push(item.plist_t);
+        item.false_drop();
         Ok(())
     }
     pub fn array_remove_item(&self, index: u32) -> Result<(), ()> {
@@ -243,7 +246,8 @@ impl Plist {
         }
         debug!("Setting dict item");
         unsafe { unsafe_bindings::plist_dict_set_item(self.plist_t, key.as_ptr(), item.plist_t) }
-        self.dependent_plists.push(item);
+        self.dependent_plists.push(item.plist_t);
+        item.false_drop();
         Ok(())
     }
     pub fn dict_insert_item(&mut self, key: &str, item: Plist) -> Result<(), ()> {
@@ -259,7 +263,8 @@ impl Plist {
                 item.plist_t,
             )
         }
-        self.dependent_plists.push(item);
+        self.dependent_plists.push(item.plist_t);
+        item.false_drop();
         Ok(())
     }
     pub fn dict_remove_item(&self, key: &str) -> Result<(), ()> {
@@ -277,7 +282,8 @@ impl Plist {
         }
         debug!("Merging dict");
         unsafe { unsafe_bindings::plist_dict_merge(&mut self.plist_t, dict.plist_t) }
-        self.dependent_plists.push(dict);
+        self.dependent_plists.push(dict.plist_t);
+        dict.false_drop();
         Ok(())
     }
     pub fn get_parent(&self) -> Plist {
@@ -447,6 +453,15 @@ impl Plist {
             i += 1;
         }
         Ok(current.plist_t.into()) // Probably really stupid
+    }
+
+    /// This is necessary when a function absorbs another plist.
+    /// That way, the rest of the plist struct is dropped, but the pointer is not.
+    /// This prevents many segfaults.
+    pub fn false_drop(mut self) {
+        debug!("False dropping {}", self.id);
+        let replacement = unsafe { unsafe_bindings::plist_new_bool(0) };
+        self.plist_t = replacement;
     }
 }
 
