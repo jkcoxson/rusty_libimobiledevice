@@ -133,45 +133,87 @@ impl LockdowndClient<'_> {
         })
     }
 
-    pub fn pair(&self) -> Result<LockdowndPairRecord, LockdowndError> {
-        let to_fill = unsafe { std::mem::zeroed() };
-        let result = unsafe { unsafe_bindings::lockdownd_pair(self.pointer, to_fill) }.into();
-        if result != LockdowndError::Success {
-            return Err(result);
+    pub fn pair(&self, pairing_record: Option<LockdowndPairRecord>) -> Result<(), LockdowndError> {
+        if let Some(pairing_record) = pairing_record {
+            let mut pairing_record = pairing_record.into();
+            let result =
+                unsafe { unsafe_bindings::lockdownd_pair(self.pointer, &mut pairing_record) }
+                    .into();
+            if result != LockdowndError::Success {
+                return Err(result);
+            }
+
+            Ok(())
+        } else {
+            let to_fill = unsafe { std::mem::zeroed() };
+            let result = unsafe { unsafe_bindings::lockdownd_pair(self.pointer, to_fill) }.into();
+            if result != LockdowndError::Success {
+                return Err(result);
+            }
+
+            Ok(())
         }
-        Ok(to_fill.into())
     }
 }
 
 impl From<*mut unsafe_bindings::lockdownd_pair_record> for LockdowndPairRecord {
     fn from(l: *mut unsafe_bindings::lockdownd_pair_record) -> Self {
+        debug!("Converting device certificate");
         let device_certificate = unsafe { CStr::from_ptr((*l).device_certificate) }
             .to_str()
             .unwrap()
             .to_string();
+        debug!("Converting host certificate");
         let host_certificate = unsafe { CStr::from_ptr((*l).host_certificate) }
             .to_str()
             .unwrap()
             .to_string();
+        debug!("Converting root certificate");
         let root_certificate = unsafe { CStr::from_ptr((*l).root_certificate) }
             .to_str()
             .unwrap()
             .to_string();
+        debug!("Converting host id");
         let host_id = unsafe { CStr::from_ptr((*l).host_id) }
             .to_str()
             .unwrap()
             .to_string();
+        debug!("Converting system buid");
         let system_buid = unsafe { CStr::from_ptr((*l).system_buid) }
             .to_str()
             .unwrap()
             .to_string();
-
+        debug!("Returning pair record");
         Self {
             device_certificate,
             host_certificate,
             root_certificate,
             host_id,
             system_buid,
+        }
+    }
+}
+
+impl From<LockdowndPairRecord> for unsafe_bindings::lockdownd_pair_record {
+    fn from(l: LockdowndPairRecord) -> Self {
+        debug!("Converting device certificate");
+        let device_certificate = std::ffi::CString::new(l.device_certificate).unwrap();
+        debug!("Converting host certificate");
+        let host_certificate = std::ffi::CString::new(l.host_certificate).unwrap();
+        debug!("Converting root certificate");
+        let root_certificate = std::ffi::CString::new(l.root_certificate).unwrap();
+        debug!("Converting host id");
+        let host_id = std::ffi::CString::new(l.host_id).unwrap();
+        debug!("Converting system buid");
+        let system_buid = std::ffi::CString::new(l.system_buid).unwrap();
+
+        debug!("Setting device certificate");
+        Self {
+            device_certificate: device_certificate.as_ptr() as *mut i8,
+            host_certificate: host_certificate.as_ptr() as *mut i8,
+            root_certificate: root_certificate.as_ptr() as *mut i8,
+            host_id: host_id.as_ptr() as *mut i8,
+            system_buid: system_buid.as_ptr() as *mut i8,
         }
     }
 }
