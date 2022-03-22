@@ -2,7 +2,8 @@
 
 use std::{convert::TryInto, ffi::CString, fmt::Formatter, time::SystemTime};
 
-use crate::{debug, libimobiledevice::*};
+use crate::bindings as unsafe_bindings;
+use crate::debug;
 use rand::Rng;
 
 pub struct Plist {

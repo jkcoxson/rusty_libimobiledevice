@@ -3,7 +3,7 @@
 use core::fmt;
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
-pub use crate::bindings as unsafe_bindings;
+use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::debug;
 use crate::error::{

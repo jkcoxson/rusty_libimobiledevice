@@ -5,7 +5,7 @@ use std::io::Read;
 
 use libc::c_void;
 
-pub use crate::bindings as unsafe_bindings;
+use crate::bindings as unsafe_bindings;
 use crate::debug;
 use crate::error::{LockdowndError, MobileImageMounterError};
 use crate::libimobiledevice::Device;
