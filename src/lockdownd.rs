@@ -1,5 +1,6 @@
 // jkcoxson
 
+use std::ffi::CStr;
 use std::io::Read;
 
 use libc::c_void;
@@ -14,6 +15,14 @@ pub struct LockdowndClient<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_client_t,
     pub label: String,
     phantom: std::marker::PhantomData<&'a Device>,
+}
+
+pub struct LockdowndPairRecord {
+    pub device_certificate: String,
+    pub host_certificate: String,
+    pub root_certificate: String,
+    pub host_id: String,
+    pub system_buid: String,
 }
 
 unsafe impl Send for LockdowndClient<'_> {}
@@ -122,6 +131,48 @@ impl LockdowndClient<'_> {
             port: 0,
             phantom: std::marker::PhantomData,
         })
+    }
+
+    pub fn pair(&self) -> Result<LockdowndPairRecord, LockdowndError> {
+        let to_fill = unsafe { std::mem::zeroed() };
+        let result = unsafe { unsafe_bindings::lockdownd_pair(self.pointer, to_fill) }.into();
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+        Ok(to_fill.into())
+    }
+}
+
+impl From<*mut unsafe_bindings::lockdownd_pair_record> for LockdowndPairRecord {
+    fn from(l: *mut unsafe_bindings::lockdownd_pair_record) -> Self {
+        let device_certificate = unsafe { CStr::from_ptr((*l).device_certificate) }
+            .to_str()
+            .unwrap()
+            .to_string();
+        let host_certificate = unsafe { CStr::from_ptr((*l).host_certificate) }
+            .to_str()
+            .unwrap()
+            .to_string();
+        let root_certificate = unsafe { CStr::from_ptr((*l).root_certificate) }
+            .to_str()
+            .unwrap()
+            .to_string();
+        let host_id = unsafe { CStr::from_ptr((*l).host_id) }
+            .to_str()
+            .unwrap()
+            .to_string();
+        let system_buid = unsafe { CStr::from_ptr((*l).system_buid) }
+            .to_str()
+            .unwrap()
+            .to_string();
+
+        Self {
+            device_certificate,
+            host_certificate,
+            root_certificate,
+            host_id,
+            system_buid,
+        }
     }
 }
 
