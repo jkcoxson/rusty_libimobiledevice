@@ -128,6 +128,15 @@ pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
     Err(error::IdeviceError::NoDevice)
 }
 
+pub fn set_debug(debug: bool) {
+    let debug = match debug {
+        true => 1,
+        false => 0,
+    };
+    debug!("Setting debug mode to {}", debug);
+    unsafe { unsafe_bindings::idevice_set_debug_level(debug) }
+}
+
 // Structs
 pub struct Device {
     // Front facing properties

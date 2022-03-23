@@ -1,6 +1,7 @@
 // jkcoxson
 
 mod bindings;
+pub mod connection;
 pub mod debug;
 pub mod debug_server;
 pub mod error;
