@@ -104,6 +104,70 @@ impl LockdowndClient<'_> {
         Ok(value.into())
     }
 
+    pub fn set_value(
+        &self,
+        domain: String,
+        key: String,
+        value: Plist,
+    ) -> Result<(), LockdowndError> {
+        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
+        let domain_c_str = if domain == "".to_string() {
+            std::ptr::null()
+        } else {
+            domain_c_str.as_ptr()
+        };
+        let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
+        let key_c_str = if key == "".to_string() {
+            std::ptr::null()
+        } else {
+            key_c_str.as_ptr()
+        };
+
+        debug!("Setting value for {}", key);
+        let result = unsafe {
+            unsafe_bindings::lockdownd_set_value(
+                self.pointer,
+                domain_c_str,
+                key_c_str,
+                value.plist_t,
+            )
+        }
+        .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn remove_value(&self, domain: String, key: String) -> Result<(), LockdowndError> {
+        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
+        let domain_c_str = if domain == "".to_string() {
+            std::ptr::null()
+        } else {
+            domain_c_str.as_ptr()
+        };
+        let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
+        let key_c_str = if key == "".to_string() {
+            std::ptr::null()
+        } else {
+            key_c_str.as_ptr()
+        };
+
+        debug!("Removing value for {}", key);
+        let result = unsafe {
+            unsafe_bindings::lockdownd_remove_value(self.pointer, domain_c_str, key_c_str)
+        }
+        .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
     pub fn start_service(&mut self, label: String) -> Result<LockdowndService, LockdowndError> {
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
         let label_c_str = if label == "".to_string() {
@@ -133,6 +197,112 @@ impl LockdowndClient<'_> {
         })
     }
 
+    pub fn start_service_with_escrow_bag(
+        &mut self,
+        label: String,
+    ) -> Result<LockdowndService, LockdowndError> {
+        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
+        let label_c_str = if label == "".to_string() {
+            std::ptr::null()
+        } else {
+            label_c_str.as_ptr()
+        };
+
+        let mut service: unsafe_bindings::lockdownd_service_descriptor_t =
+            unsafe { std::mem::zeroed() };
+
+        debug!("Starting lockdown service");
+        let result = unsafe {
+            unsafe_bindings::lockdownd_start_service_with_escrow_bag(
+                self.pointer,
+                label_c_str,
+                &mut service,
+            )
+        }
+        .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(LockdowndService {
+            pointer: service,
+            label: label,
+            port: 0,
+            phantom: std::marker::PhantomData,
+        })
+    }
+
+    pub fn start_session(&self, host_id: String) -> Result<(String, bool), LockdowndError> {
+        let host_id_c_str = std::ffi::CString::new(host_id.clone()).unwrap();
+        let mut session_id = unsafe { std::mem::zeroed() };
+        let mut ssl_enabled = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::lockdownd_start_session(
+                self.pointer,
+                host_id_c_str.as_ptr(),
+                &mut session_id,
+                &mut ssl_enabled,
+            )
+        }
+        .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        unsafe {
+            Ok((
+                std::ffi::CStr::from_ptr(session_id)
+                    .to_string_lossy()
+                    .into_owned(),
+                ssl_enabled != 0,
+            ))
+        }
+    }
+
+    pub fn stop_session(&self, session_id: String) -> Result<(), LockdowndError> {
+        let session_id_c_str = std::ffi::CString::new(session_id.clone()).unwrap();
+        let session_id_c_str = if session_id == "".to_string() {
+            std::ptr::null()
+        } else {
+            session_id_c_str.as_ptr()
+        };
+
+        let result =
+            unsafe { unsafe_bindings::lockdownd_stop_session(self.pointer, session_id_c_str) }
+                .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn send(&self, plist: Plist) -> Result<(), LockdowndError> {
+        let result = unsafe { unsafe_bindings::lockdownd_send(self.pointer, plist.plist_t) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn receive(&self) -> Result<Plist, LockdowndError> {
+        let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+
+        let result = unsafe { unsafe_bindings::lockdownd_receive(self.pointer, &mut plist) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(plist.into())
+    }
+
     pub fn pair(&self, pairing_record: Option<LockdowndPairRecord>) -> Result<(), LockdowndError> {
         if let Some(pairing_record) = pairing_record {
             let mut pairing_record = pairing_record.into();
@@ -153,6 +323,215 @@ impl LockdowndClient<'_> {
 
             Ok(())
         }
+    }
+
+    pub fn pair_with_options(
+        &self,
+        pairing_record: Option<LockdowndPairRecord>,
+        options: Plist,
+    ) -> Result<Plist, LockdowndError> {
+        if let Some(pairing_record) = pairing_record {
+            let mut pairing_record = pairing_record.into();
+            let mut response = unsafe { std::mem::zeroed() };
+
+            let result = unsafe {
+                unsafe_bindings::lockdownd_pair_with_options(
+                    self.pointer,
+                    &mut pairing_record,
+                    options.plist_t,
+                    &mut response,
+                )
+            }
+            .into();
+
+            if result != LockdowndError::Success {
+                return Err(result);
+            }
+
+            Ok(response.into())
+        } else {
+            let to_fill = unsafe { std::mem::zeroed() };
+            let mut response = unsafe { std::mem::zeroed() };
+
+            let result = unsafe {
+                unsafe_bindings::lockdownd_pair_with_options(
+                    self.pointer,
+                    to_fill,
+                    options.plist_t,
+                    &mut response,
+                )
+            }
+            .into();
+
+            if result != LockdowndError::Success {
+                return Err(result);
+            }
+
+            Ok(response.into())
+        }
+    }
+
+    pub fn validate_pair(&self, pairing_record: LockdowndPairRecord) -> Result<(), LockdowndError> {
+        let mut pairing_record = pairing_record.into();
+        let result =
+            unsafe { unsafe_bindings::lockdownd_validate_pair(self.pointer, &mut pairing_record) }
+                .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn unpair(&self, pairing_record: LockdowndPairRecord) -> Result<(), LockdowndError> {
+        let mut pairing_record = pairing_record.into();
+        let result =
+            unsafe { unsafe_bindings::lockdownd_unpair(self.pointer, &mut pairing_record) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn activate(&self, activation_record: Plist) -> Result<(), LockdowndError> {
+        let result =
+            unsafe { unsafe_bindings::lockdownd_activate(self.pointer, activation_record.plist_t) }
+                .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn deactivate(&self) -> Result<(), LockdowndError> {
+        let result = unsafe { unsafe_bindings::lockdownd_deactivate(self.pointer) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn enter_recovery(&self) -> Result<(), LockdowndError> {
+        let result = unsafe { unsafe_bindings::lockdownd_enter_recovery(self.pointer) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn goodbye(&self) -> Result<(), LockdowndError> {
+        let result = unsafe { unsafe_bindings::lockdownd_goodbye(self.pointer) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn client_set_label(&self, label: String) {
+        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
+        let label_c_str = if label == "".to_string() {
+            std::ptr::null()
+        } else {
+            label_c_str.as_ptr()
+        };
+
+        unsafe { unsafe_bindings::lockdownd_client_set_label(self.pointer, label_c_str) };
+    }
+
+    pub fn get_device_udid(&self) -> Result<String, LockdowndError> {
+        let mut udid_c_str = unsafe { std::mem::zeroed() };
+
+        let result =
+            unsafe { unsafe_bindings::lockdownd_get_device_udid(self.pointer, &mut udid_c_str) }
+                .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(unsafe {
+            std::ffi::CStr::from_ptr(udid_c_str)
+                .to_string_lossy()
+                .into_owned()
+        })
+    }
+
+    pub fn get_device_name(&self) -> Result<String, LockdowndError> {
+        let mut name_c_str = unsafe { std::mem::zeroed() };
+
+        let result =
+            unsafe { unsafe_bindings::lockdownd_get_device_name(self.pointer, &mut name_c_str) }
+                .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(unsafe {
+            std::ffi::CStr::from_ptr(name_c_str)
+                .to_string_lossy()
+                .into_owned()
+        })
+    }
+
+    pub fn get_sync_data_classes(&self) -> Result<Vec<String>, LockdowndError> {
+        let mut classes_c_str = unsafe { std::mem::zeroed() };
+        let mut count = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::lockdownd_get_sync_data_classes(
+                self.pointer,
+                &mut classes_c_str,
+                &mut count,
+            )
+        }
+        .into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        let classes = unsafe { std::ffi::CStr::from_ptr(*classes_c_str) }
+            .to_str()
+            .unwrap()
+            .split(',')
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+
+        let result = unsafe { unsafe_bindings::lockdownd_data_classes_free(classes_c_str) }.into();
+
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        Ok(classes)
+    }
+
+    pub fn query_type(&self) -> Result<String, LockdowndError> {
+        let mut type_c_str: *mut i8 = std::ptr::null_mut();
+        let result =
+            unsafe { unsafe_bindings::lockdownd_query_type(self.pointer, &mut type_c_str) }.into();
+        if result != LockdowndError::Success {
+            return Err(result);
+        }
+
+        let type_str = unsafe { std::ffi::CStr::from_ptr(type_c_str as *const i8) }
+            .to_str()
+            .unwrap()
+            .to_string();
+
+        Ok(type_str)
     }
 }
 
