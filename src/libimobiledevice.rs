@@ -165,6 +165,17 @@ impl Device {
             pointer: device,
         };
     }
+
+    pub fn get_handle(&self) -> Result<u32, IdeviceError> {
+        let mut handle: u32 = 0;
+        let result =
+            unsafe { unsafe_bindings::idevice_get_handle(self.pointer, &mut handle) }.into();
+        if result != IdeviceError::Success {
+            return Err(result);
+        }
+        Ok(handle)
+    }
+
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
     pub fn new_lockdownd_client(&self, label: String) -> Result<LockdowndClient, LockdowndError> {
