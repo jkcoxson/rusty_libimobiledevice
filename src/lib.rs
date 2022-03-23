@@ -1,5 +1,6 @@
 // jkcoxson
 
+pub mod afc_client;
 mod bindings;
 pub mod connection;
 pub mod debug;
