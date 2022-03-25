@@ -21,5 +21,6 @@ fn main() {
                 false => "USB",
             }
         );
+        println!("IP: {:?}", i.get_ip_address());
     }
 }

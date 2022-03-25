@@ -102,12 +102,6 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             continue;
         }
         let to_push = Device::new(device_info);
-        // Print the data referenced at the conn_data pointer
-        let ptr = unsafe { (*(*i)).conn_data } as *mut u8;
-        let ptr_slice = unsafe { std::slice::from_raw_parts(ptr, 128) };
-        for i in ptr_slice.iter() {
-            print!("{:02X}, ", i);
-        }
         to_return.push(to_push);
     }
 
@@ -181,6 +175,34 @@ impl Device {
             } else {
                 true
             }
+        }
+    }
+
+    pub fn get_ip_address(&self) -> Option<String> {
+        if !self.get_network() {
+            return None;
+        }
+        let data_pointer = unsafe { (*(self.pointer)).conn_data } as *mut u8;
+        // Determine how many bytes long the data is
+        let data_length = unsafe { *(data_pointer) };
+        let data = unsafe { std::slice::from_raw_parts(data_pointer, data_length.into()) };
+        // Determine if the data is IPv4 or IPv6
+        match data[1] {
+            0x02 => {
+                // IPv4
+                let mut ip_addr = [0u8; 4];
+                ip_addr.copy_from_slice(&data[4..8]);
+                let ip_addr = std::net::Ipv4Addr::from(ip_addr);
+                Some(ip_addr.to_string())
+            }
+            0x1E => {
+                // IPv6
+                let mut ip_addr = [0u8; 16];
+                ip_addr.copy_from_slice(&data[7..23]);
+                let ip_addr = std::net::Ipv6Addr::from(ip_addr);
+                Some(ip_addr.to_string())
+            }
+            _ => None,
         }
     }
 
