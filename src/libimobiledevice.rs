@@ -101,7 +101,13 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             debug!("Failed to create device struct to {}", udid);
             continue;
         }
-        let to_push = Device::new(udid, network, unsafe { (*(*i)).conn_data }, device_info);
+        let to_push = Device::new(device_info);
+        // Print the data referenced at the conn_data pointer
+        let ptr = unsafe { (*(*i)).conn_data } as *mut u8;
+        let ptr_slice = unsafe { std::slice::from_raw_parts(ptr, 128) };
+        for i in ptr_slice.iter() {
+            print!("{:02X}, ", i);
+        }
         to_return.push(to_push);
     }
 
@@ -121,7 +127,7 @@ pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
         Err(e) => return Err(e),
     };
     for device in devices {
-        if device.udid == udid {
+        if device.get_udid() == udid {
             return Ok(device);
         }
     }
@@ -139,12 +145,6 @@ pub fn set_debug(debug: bool) {
 
 // Structs
 pub struct Device {
-    // Front facing properties
-    pub udid: String,
-    pub network: bool,
-    // Raw properties
-    #[allow(dead_code)]
-    conn_data: *mut std::os::raw::c_void, // tbh what the heck is this
     pub(crate) pointer: unsafe_bindings::idevice_t,
 }
 
@@ -152,18 +152,8 @@ unsafe impl Send for Device {}
 unsafe impl Sync for Device {}
 
 impl Device {
-    pub fn new(
-        udid: String,
-        network: bool,
-        conn_data: *mut std::os::raw::c_void,
-        device: unsafe_bindings::idevice_t,
-    ) -> Device {
-        return Device {
-            udid,
-            network,
-            conn_data,
-            pointer: device,
-        };
+    pub fn new(device: unsafe_bindings::idevice_t) -> Device {
+        return Device { pointer: device };
     }
 
     pub fn get_handle(&self) -> Result<u32, IdeviceError> {
@@ -174,6 +164,24 @@ impl Device {
             return Err(result);
         }
         Ok(handle)
+    }
+
+    pub fn get_udid(&self) -> String {
+        unsafe {
+            std::ffi::CStr::from_ptr((*self.pointer).udid)
+                .to_string_lossy()
+                .to_string()
+        }
+    }
+
+    pub fn get_network(&self) -> bool {
+        unsafe {
+            if (*self.pointer).conn_type == 1 {
+                false
+            } else {
+                true
+            }
+        }
     }
 
     /// Starts the lockdown service for the device
@@ -190,7 +198,7 @@ impl Device {
         let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t =
             unsafe { std::mem::zeroed() };
 
-        debug!("Creating mobile image mounter for {}", self.udid);
+        debug!("Creating mobile image mounter for {}", self.get_udid());
         let error = unsafe {
             unsafe_bindings::mobile_image_mounter_new(
                 self.pointer,
@@ -234,14 +242,15 @@ impl Debug for Device {
         write!(
             f,
             "Device {{ udid: {}, network: {} }}",
-            self.udid, self.network
+            self.get_udid(),
+            self.get_network()
         )
     }
 }
 
 impl Drop for Device {
     fn drop(&mut self) {
-        debug!("Dropping device {}", self.udid);
+        debug!("Dropping device {}", self.get_udid());
         unsafe {
             unsafe_bindings::idevice_free(self.pointer);
         }

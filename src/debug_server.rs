@@ -24,7 +24,7 @@ impl DebugServer<'_> {
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
 
         let label_c_str = std::ffi::CString::new(label).unwrap();
-        debug!("Creating debug server for {}", device.udid);
+        debug!("Creating debug server for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::debugserver_client_start_service(
                 device.pointer,

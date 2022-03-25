@@ -53,7 +53,7 @@ impl LockdowndClient<'_> {
 
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
 
-        debug!("Creating lockdownd client for {}", device.udid);
+        debug!("Creating lockdownd client for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::lockdownd_client_new_with_handshake(
                 device.pointer,
