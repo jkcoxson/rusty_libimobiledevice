@@ -13,9 +13,13 @@ fn main() {
     };
 
     for i in &devices {
-        println!("{} ({})", i.udid, match i.network {
-            true => "Network",
-            false => "USB"
-        });
+        println!(
+            "{} ({})",
+            i.get_udid(),
+            match i.get_network() {
+                true => "Network",
+                false => "USB",
+            }
+        );
     }
 }
