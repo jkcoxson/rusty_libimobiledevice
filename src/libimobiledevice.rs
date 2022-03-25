@@ -1,7 +1,11 @@
 // jkcoxson
 
 use core::fmt;
+use std::ffi::CString;
+use std::net::{IpAddr, SocketAddr};
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
+
+use libc::c_void;
 
 use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
@@ -101,7 +105,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             debug!("Failed to create device struct to {}", udid);
             continue;
         }
-        let to_push = Device::new(device_info);
+        let to_push = device_info.into();
         to_return.push(to_push);
     }
 
@@ -146,8 +150,57 @@ unsafe impl Send for Device {}
 unsafe impl Sync for Device {}
 
 impl Device {
-    pub fn new(device: unsafe_bindings::idevice_t) -> Device {
-        return Device { pointer: device };
+    pub fn new(
+        udid: String,
+        network: bool,
+        ip_addr: Option<SocketAddr>,
+        mux_id: u32,
+    ) -> Result<Device, ()> {
+        // Convert the udid to a CString
+        let udid_cstring = CString::new(udid).unwrap();
+        if network && ip_addr.is_none() {
+            return Err(());
+        }
+        // Convert the ip_addr into bytes
+        let ip_addr: Vec<u8> = match network {
+            true => match ip_addr.unwrap().ip() {
+                IpAddr::V4(ip) => {
+                    let mut to_return = vec![0x10, 0x02, 0x00, 0x00];
+                    to_return.extend(ip.octets().iter().cloned());
+                    to_return.extend(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+                    to_return
+                }
+                IpAddr::V6(ip) => {
+                    let mut to_return = vec![0x1C, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    to_return.extend(ip.octets().iter().cloned());
+                    to_return.extend(vec![0x00, 0x00, 0x00, 0x00, 0x00]);
+                    to_return
+                }
+            },
+            false => vec![],
+        };
+        // Create a pointer to the ip_addr bytes
+        let ip_addr_ptr = ip_addr.as_ptr() as *const u8;
+        std::mem::forget(ip_addr);
+        // Create udid pointer
+        let udid_ptr = udid_cstring.as_ptr();
+        std::mem::forget(udid_cstring);
+        // Create the device struct
+        let mut i_private = unsafe_bindings::idevice_private {
+            udid: udid_ptr as *mut i8,
+            mux_id,
+            conn_type: match network {
+                true => 1,
+                false => 0,
+            },
+            conn_data: ip_addr_ptr as *mut c_void,
+            version: 0,
+            device_class: 0,
+        };
+        // Create pointer to the device struct
+        let i_private_ptr = &mut i_private as *mut unsafe_bindings::idevice_private;
+        std::mem::forget(i_private);
+        Ok(i_private_ptr.into())
     }
 
     pub fn get_handle(&self) -> Result<u32, IdeviceError> {
@@ -256,6 +309,12 @@ impl Device {
         label: &str,
     ) -> Result<crate::debug_server::DebugServer, DebugServerError> {
         crate::debug_server::DebugServer::new(self, label)
+    }
+}
+
+impl From<unsafe_bindings::idevice_t> for Device {
+    fn from(device: unsafe_bindings::idevice_t) -> Device {
+        return Device { pointer: device };
     }
 }
 
