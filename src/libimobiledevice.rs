@@ -150,6 +150,11 @@ unsafe impl Send for Device {}
 unsafe impl Sync for Device {}
 
 impl Device {
+    /// THIS FUNCTION IS HECKA BROKEN!
+    /// PLS FIX!
+    ///
+    /// There's some sort of data drop that is causing memory fragmentation.
+    /// Luckily, this function is not used internally, but this will be fixed.
     pub fn new(
         udid: String,
         network: bool,
@@ -180,13 +185,15 @@ impl Device {
             false => vec![],
         };
         // Create a pointer to the ip_addr bytes
-        let ip_addr_ptr = ip_addr.as_ptr() as *const u8;
-        std::mem::forget(ip_addr);
+        let mut ip_addr_box = Box::new(ip_addr);
+        let ip_addr_ptr = unsafe { *ip_addr_box.as_mut_ptr() };
+        Box::leak(ip_addr_box);
         // Create udid pointer
-        let udid_ptr = udid_cstring.as_ptr();
-        std::mem::forget(udid_cstring);
+        let udid_box = Box::new(udid_cstring);
+        let udid_ptr = unsafe { *udid_box.as_ptr() };
+        Box::leak(udid_box);
         // Create the device struct
-        let mut i_private = unsafe_bindings::idevice_private {
+        let i_private = unsafe_bindings::idevice_private {
             udid: udid_ptr as *mut i8,
             mux_id,
             conn_type: match network {
@@ -198,8 +205,8 @@ impl Device {
             device_class: 0,
         };
         // Create pointer to the device struct
-        let i_private_ptr = &mut i_private as *mut unsafe_bindings::idevice_private;
-        std::mem::forget(i_private);
+        let i_private_box = Box::new(i_private);
+        let i_private_ptr = Box::into_raw(i_private_box);
         Ok(i_private_ptr.into())
     }
 
