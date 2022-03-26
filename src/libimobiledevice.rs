@@ -2,7 +2,7 @@
 
 use core::fmt;
 use std::ffi::CStr;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 use libc::c_void;
@@ -153,7 +153,7 @@ impl Device {
     pub fn new(
         udid: String,
         network: bool,
-        ip_addr: Option<SocketAddr>,
+        ip_addr: Option<IpAddr>,
         mux_id: u32,
     ) -> Result<Device, ()> {
         if network && ip_addr.is_none() {
@@ -179,7 +179,7 @@ impl Device {
 
         // Convert the ip_addr into bytes
         let ip_addr_ptr = match network {
-            true => match ip_addr.unwrap().ip() {
+            true => match ip_addr.unwrap() {
                 IpAddr::V4(ip) => {
                     let ip_addr = unsafe { libc::malloc(16) as *mut u8 };
 
@@ -386,9 +386,12 @@ impl Debug for Device {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
-            "Device {{ udid: {}, network: {} }}",
+            "Device {{ udid: {}, network: {}, ip_address: {:?}, device_class: {}, version: {} }}",
             self.get_udid(),
-            self.get_network()
+            self.get_network(),
+            self.get_ip_address(),
+            self.get_device_class(),
+            self.get_version()
         )
     }
 }

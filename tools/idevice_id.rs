@@ -1,8 +1,8 @@
 // jkcoxson
 
 use rusty_libimobiledevice::libimobiledevice;
+use std::net::IpAddr;
 use std::net::Ipv4Addr;
-use std::net::{IpAddr, SocketAddr};
 
 fn main() {
     // Get all devices attatched
@@ -23,19 +23,16 @@ fn main() {
                 false => "USB",
             }
         );
+        println!("{:?}", i);
     }
 
     let x = libimobiledevice::Device::new(
         "00008101-001E30590C08001E".to_string(),
         true,
-        Some(SocketAddr::new(
-            IpAddr::V4(Ipv4Addr::new(192, 168, 1, 18)),
-            27015,
-        )),
+        Some(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 18))),
         1920,
     )
     .unwrap();
 
-    println!("{:?}", x.get_ip_address());
-    println!("{:?}", x.get_udid());
+    println!("{:?}", x);
 }
