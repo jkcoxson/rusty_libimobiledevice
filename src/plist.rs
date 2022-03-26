@@ -123,6 +123,7 @@ impl Plist {
         let xml = match CString::new(xml) {
             Ok(s) => s,
             Err(_) => {
+                debug!("Could not convert string to CString");
                 return Err(());
             }
         };

@@ -1,7 +1,7 @@
 // jkcoxson
 
 use core::fmt;
-use std::ffi::CString;
+use std::ffi::CStr;
 use std::net::{IpAddr, SocketAddr};
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
@@ -150,63 +150,98 @@ unsafe impl Send for Device {}
 unsafe impl Sync for Device {}
 
 impl Device {
-    /// THIS FUNCTION IS HECKA BROKEN!
-    /// PLS FIX!
-    ///
-    /// There's some sort of data drop that is causing memory fragmentation.
-    /// Luckily, this function is not used internally, but this will be fixed.
     pub fn new(
         udid: String,
         network: bool,
         ip_addr: Option<SocketAddr>,
         mux_id: u32,
     ) -> Result<Device, ()> {
-        // Convert the udid to a CString
-        let udid_cstring = CString::new(udid).unwrap();
         if network && ip_addr.is_none() {
             return Err(());
         }
+
+        // Convert the udid to a C string
+        let mut udid_bytes = udid.into_bytes();
+        udid_bytes.push(0);
+        // Ensure valid C string
+        CStr::from_bytes_with_nul(&udid_bytes).unwrap();
+        let udid_len = udid_bytes.len();
+        let udid_ptr = unsafe { libc::malloc(udid_len) as *mut u8 };
+
+        // SAFETY: udid_cstring has capacity for udid_len bytes, and only need
+        // contain valid u8s
+        unsafe { udid_ptr.write_bytes(0, udid_len) };
+
+        // SAFETY: udid_cstring points to udid_len bytes, initialized to zero
+        let udid_slice = unsafe { std::slice::from_raw_parts_mut(udid_ptr, udid_len) };
+
+        udid_slice.copy_from_slice(&udid_bytes);
+
         // Convert the ip_addr into bytes
-        let ip_addr: Vec<u8> = match network {
+        let ip_addr_ptr = match network {
             true => match ip_addr.unwrap().ip() {
                 IpAddr::V4(ip) => {
-                    let mut to_return = vec![0x10, 0x02, 0x00, 0x00];
-                    to_return.extend(ip.octets().iter().cloned());
-                    to_return.extend(vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
-                    to_return
+                    let ip_addr = unsafe { libc::malloc(16) as *mut u8 };
+
+                    // SAFETY: ip_addr has capacity for 16 bytes, and only need
+                    // contain valid u8s
+                    unsafe {
+                        ip_addr.write_bytes(0, 16);
+                    }
+
+                    // SAFETY: ip_addr points to 16 bytes, initialized to zero
+                    let ip_addr_slice = unsafe { std::slice::from_raw_parts_mut(ip_addr, 16) };
+
+                    ip_addr_slice[0..4].copy_from_slice(&[0x10, 0x02, 0x00, 0x00]);
+                    ip_addr_slice[4..8].copy_from_slice(&ip.octets());
+                    ip_addr_slice[8..16]
+                        .copy_from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+                    ip_addr
                 }
                 IpAddr::V6(ip) => {
-                    let mut to_return = vec![0x1C, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    to_return.extend(ip.octets().iter().cloned());
-                    to_return.extend(vec![0x00, 0x00, 0x00, 0x00, 0x00]);
-                    to_return
+                    let ip_addr = unsafe { libc::malloc(29) as *mut u8 };
+
+                    // SAFETY: ip_addr has capacity for 28 bytes, and only need
+                    // contain valid u8s
+                    unsafe {
+                        ip_addr.write_bytes(0, 28);
+                    }
+
+                    // SAFETY: ip_addr points to 29 bytes, initialized to zero
+                    let ip_addr_slice = unsafe { std::slice::from_raw_parts_mut(ip_addr, 29) };
+
+                    ip_addr_slice[0..8]
+                        .copy_from_slice(&[0x1C, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00]);
+                    ip_addr_slice[8..24].copy_from_slice(&ip.octets());
+                    ip_addr_slice[24..29].copy_from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00]);
+
+                    ip_addr
                 }
             },
-            false => vec![],
+            false => 0 as *mut u8,
         };
-        // Create a pointer to the ip_addr bytes
-        let mut ip_addr_box = Box::new(ip_addr);
-        let ip_addr_ptr = unsafe { *ip_addr_box.as_mut_ptr() };
-        Box::leak(ip_addr_box);
-        // Create udid pointer
-        let udid_box = Box::new(udid_cstring);
-        let udid_ptr = unsafe { *udid_box.as_ptr() };
-        Box::leak(udid_box);
-        // Create the device struct
-        let i_private = unsafe_bindings::idevice_private {
-            udid: udid_ptr as *mut i8,
-            mux_id,
-            conn_type: match network {
-                true => 1,
-                false => 0,
-            },
-            conn_data: ip_addr_ptr as *mut c_void,
-            version: 0,
-            device_class: 0,
+
+        let i_private_ptr = unsafe {
+            libc::malloc(std::mem::size_of::<unsafe_bindings::idevice_private>())
+                as *mut unsafe_bindings::idevice_private
         };
-        // Create pointer to the device struct
-        let i_private_box = Box::new(i_private);
-        let i_private_ptr = Box::into_raw(i_private_box);
+
+        // SAFETY: i_private_ptr has enough capacity for an idevice_private struct
+        unsafe {
+            i_private_ptr.write(unsafe_bindings::idevice_private {
+                udid: udid_ptr as *mut i8,
+                mux_id,
+                conn_type: match network {
+                    true => 2,
+                    false => 1,
+                },
+                conn_data: ip_addr_ptr as *mut c_void,
+                version: 0,
+                device_class: 0,
+            });
+        }
+
         Ok(i_private_ptr.into())
     }
 
@@ -240,11 +275,13 @@ impl Device {
 
     pub fn get_ip_address(&self) -> Option<String> {
         if !self.get_network() {
+            debug!("Requested an IP address, but device is not a network device");
             return None;
         }
         let data_pointer = unsafe { (*(self.pointer)).conn_data } as *mut u8;
         // Determine how many bytes long the data is
         let data_length = unsafe { *(data_pointer) };
+        debug!("Data length is {}", data_length);
         let data = unsafe { std::slice::from_raw_parts(data_pointer, data_length.into()) };
         // Determine if the data is IPv4 or IPv6
         match data[1] {
@@ -262,7 +299,10 @@ impl Device {
                 let ip_addr = std::net::Ipv6Addr::from(ip_addr);
                 Some(ip_addr.to_string())
             }
-            _ => None,
+            _ => {
+                debug!("Unknown IP address type");
+                None
+            }
         }
     }
 

@@ -24,4 +24,18 @@ fn main() {
             }
         );
     }
+
+    let x = libimobiledevice::Device::new(
+        "00008101-001E30590C08001E".to_string(),
+        true,
+        Some(SocketAddr::new(
+            IpAddr::V4(Ipv4Addr::new(192, 168, 1, 18)),
+            27015,
+        )),
+        1920,
+    )
+    .unwrap();
+
+    println!("{:?}", x.get_ip_address());
+    println!("{:?}", x.get_udid());
 }
