@@ -306,6 +306,23 @@ impl Device {
         }
     }
 
+    pub fn get_device_class(&self) -> i32 {
+        unsafe { (*self.pointer).device_class }
+    }
+
+    pub fn get_version(&self) -> i32 {
+        unsafe { (*self.pointer).version }
+    }
+
+    pub fn get_conn_data(&self) -> Vec<u8> {
+        let data_pointer = unsafe { (*(self.pointer)).conn_data } as *mut u8;
+        // Determine how many bytes long the data is
+        let data_length = unsafe { *(data_pointer) };
+        debug!("Data length is {}", data_length);
+        let data = unsafe { std::slice::from_raw_parts(data_pointer, data_length.into()) };
+        data.to_vec()
+    }
+
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
     pub fn new_lockdownd_client(&self, label: String) -> Result<LockdowndClient, LockdowndError> {
