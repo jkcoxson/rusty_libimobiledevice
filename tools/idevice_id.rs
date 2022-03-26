@@ -25,14 +25,4 @@ fn main() {
         );
         println!("{:?}", i);
     }
-
-    let x = libimobiledevice::Device::new(
-        "00008101-001E30590C08001E".to_string(),
-        true,
-        Some(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 18))),
-        1920,
-    )
-    .unwrap();
-
-    println!("{:?}", x);
 }
