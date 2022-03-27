@@ -11,8 +11,10 @@ use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::debug;
 use crate::error::{
-    self, DebugServerError, IdeviceError, InstProxyError, LockdowndError, MobileImageMounterError,
+    self, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
+    MobileImageMounterError,
 };
+use crate::heartbeat::HeartbeatClient;
 use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
 
 // The end goal here is to create a safe library that can wrap the unsafe C code
@@ -327,6 +329,10 @@ impl Device {
     /// This allows things like debuggers to be attached
     pub fn new_lockdownd_client(&self, label: String) -> Result<LockdowndClient, LockdowndError> {
         Ok(LockdowndClient::new(self, label)?)
+    }
+
+    pub fn new_heartbeat_client(&self, label: String) -> Result<HeartbeatClient, HeartbeatError> {
+        Ok(HeartbeatClient::new(self, label)?)
     }
 
     /// Creates an image mounter for the device

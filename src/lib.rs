@@ -6,6 +6,7 @@ pub mod connection;
 pub mod debug;
 pub mod debug_server;
 pub mod error;
+pub mod heartbeat;
 pub mod instproxy;
 pub mod libimobiledevice;
 pub mod lockdownd;

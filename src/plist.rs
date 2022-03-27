@@ -319,8 +319,8 @@ impl Plist {
         Ok(val)
     }
     /// Don't use this unless you want to shoot yourself in the foot
-    pub unsafe fn get_string_ptr(&self) -> *const i8 {
-        unsafe_bindings::plist_get_string_ptr(self.plist_t, std::ptr::null_mut())
+    pub fn get_string_ptr(&self) -> *const i8 {
+        unsafe { unsafe_bindings::plist_get_string_ptr(self.plist_t, std::ptr::null_mut()) }
     }
     pub fn get_bool_val(&self) -> Result<bool, ()> {
         if self.plist_type != PlistType::Boolean {
