@@ -10,6 +10,7 @@ pub mod diagnostics_relay;
 pub mod error;
 pub mod file_relay;
 pub mod heartbeat;
+pub mod house_arrest;
 pub mod instproxy;
 pub mod libimobiledevice;
 pub mod lockdownd;
