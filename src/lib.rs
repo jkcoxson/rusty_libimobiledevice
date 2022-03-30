@@ -8,6 +8,7 @@ pub mod debug;
 pub mod debug_server;
 pub mod diagnostics_relay;
 pub mod error;
+pub mod file_relay;
 pub mod heartbeat;
 pub mod instproxy;
 pub mod libimobiledevice;
