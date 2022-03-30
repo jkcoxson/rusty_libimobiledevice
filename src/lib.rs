@@ -2,6 +2,7 @@
 
 pub mod afc_client;
 mod bindings;
+pub mod companion_proxy;
 pub mod connection;
 pub mod debug;
 pub mod debug_server;

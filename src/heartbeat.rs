@@ -3,7 +3,8 @@
 use std::ffi::CString;
 
 use crate::{
-    bindings as unsafe_bindings, error::HeartbeatError, libimobiledevice::Device, plist::Plist,
+    bindings as unsafe_bindings, debug, error::HeartbeatError, libimobiledevice::Device,
+    plist::Plist,
 };
 
 pub struct HeartbeatClient {
@@ -66,6 +67,7 @@ impl HeartbeatClient {
 
 impl Drop for HeartbeatClient {
     fn drop(&mut self) {
+        debug!("Dropping heartbeat client");
         unsafe {
             unsafe_bindings::heartbeat_client_free(self.pointer);
         }
