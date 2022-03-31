@@ -2,7 +2,7 @@
 
 extern crate bindgen;
 
-use std::{env, path::PathBuf, fs::canonicalize };
+use std::{env, fs::canonicalize, path::PathBuf};
 
 fn main() {
     // Tell cargo to invalidate the built crate whenever the wrapper changes
@@ -50,8 +50,11 @@ fn main() {
     // Check if folder ./override exists
     let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());
     if override_path.exists() {
-        println!("cargo:rustc-link-search={}", canonicalize(&override_path).unwrap().display());
-    } 
+        println!(
+            "cargo:rustc-link-search={}",
+            canonicalize(&override_path).unwrap().display()
+        );
+    }
 
     let location_determinator;
     if cfg!(feature = "static") {
@@ -61,23 +64,20 @@ fn main() {
     } else {
         location_determinator = "dylib";
     }
-        
+
     // Link libi* deps
-    println!("cargo:rustc-link-lib={}=imobiledevice-1.0", location_determinator);
+    println!(
+        "cargo:rustc-link-lib={}=imobiledevice-1.0",
+        location_determinator
+    );
     println!("cargo:rustc-link-lib={}=plist-2.0", location_determinator);
     println!("cargo:rustc-link-lib={}=usbmuxd-2.0", location_determinator);
-    println!("cargo:rustc-link-lib={}=imobiledevice-glue-1.0", location_determinator);
+    println!(
+        "cargo:rustc-link-lib={}=imobiledevice-glue-1.0",
+        location_determinator
+    );
 
     // Link ancient tech deps
     println!("cargo:rustc-link-lib={}=crypto", location_determinator);
     println!("cargo:rustc-link-lib={}=ssl", location_determinator);
-
-    // This is why we can't have nice things (switch to Mac)
-    if env::var("TARGET").unwrap().contains("windows") {
-        println!("cargo:rustc-link-lib=dylib=Iphlpapi");
-        println!("cargo:rustc-link-lib=dylib=crypt32"); 
-        println!("cargo:rustc-link-lib=dylib=ncrypt"); 
-        println!("cargo:rustc-link-lib=dylib=ole32"); 
-        println!("cargo:rustc-link-lib=dylib=shell32"); 
-    }
 }

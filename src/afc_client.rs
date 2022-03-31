@@ -1,8 +1,6 @@
 // jkcoxson
 
-use std::{convert::TryFrom, ffi::CStr};
-
-use libc::c_char;
+use std::{convert::TryFrom, ffi::CStr, os::raw::c_char};
 
 use crate::{
     bindings as unsafe_bindings, error::AfcError, house_arrest::HouseArrest,
@@ -57,7 +55,7 @@ impl AfcClient<'_> {
             unsafe_bindings::afc_client_start_service(
                 device.pointer,
                 &mut self.pointer,
-                service_name.as_ptr() as *const i8,
+                service_name.as_ptr() as *const c_char,
             )
         }
         .into();

@@ -2,6 +2,7 @@
 
 use std::ffi::CStr;
 use std::io::Read;
+use std::os::raw::c_char;
 
 use libc::c_void;
 
@@ -519,14 +520,14 @@ impl LockdowndClient<'_> {
     }
 
     pub fn query_type(&self) -> Result<String, LockdowndError> {
-        let mut type_c_str: *mut i8 = std::ptr::null_mut();
+        let mut type_c_str: *mut c_char = std::ptr::null_mut();
         let result =
             unsafe { unsafe_bindings::lockdownd_query_type(self.pointer, &mut type_c_str) }.into();
         if result != LockdowndError::Success {
             return Err(result);
         }
 
-        let type_str = unsafe { std::ffi::CStr::from_ptr(type_c_str as *const i8) }
+        let type_str = unsafe { std::ffi::CStr::from_ptr(type_c_str as *const c_char) }
             .to_str()
             .unwrap()
             .to_string();
@@ -588,11 +589,11 @@ impl From<LockdowndPairRecord> for unsafe_bindings::lockdownd_pair_record {
 
         debug!("Setting device certificate");
         Self {
-            device_certificate: device_certificate.as_ptr() as *mut i8,
-            host_certificate: host_certificate.as_ptr() as *mut i8,
-            root_certificate: root_certificate.as_ptr() as *mut i8,
-            host_id: host_id.as_ptr() as *mut i8,
-            system_buid: system_buid.as_ptr() as *mut i8,
+            device_certificate: device_certificate.as_ptr() as *mut c_char,
+            host_certificate: host_certificate.as_ptr() as *mut c_char,
+            root_certificate: root_certificate.as_ptr() as *mut c_char,
+            host_id: host_id.as_ptr() as *mut c_char,
+            system_buid: system_buid.as_ptr() as *mut c_char,
         }
     }
 }

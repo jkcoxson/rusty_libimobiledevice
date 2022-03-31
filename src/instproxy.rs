@@ -41,6 +41,28 @@ impl InstProxyClient<'_> {
         })
     }
 
+    pub fn browse(&self, option: BrowseOption) -> Result<Plist, InstProxyError> {
+        let mut plist = std::ptr::null_mut();
+
+        let result = if option == BrowseOption::None {
+            unsafe {
+                unsafe_bindings::instproxy_browse(self.pointer, std::ptr::null_mut(), &mut plist)
+            }
+        } else {
+            let option_plist: Plist = option.into();
+            unsafe {
+                unsafe_bindings::instproxy_browse(self.pointer, option_plist.plist_t, &mut plist)
+            }
+        }
+        .into();
+
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+
+        Ok(plist.into())
+    }
+
     pub fn options_new() -> Plist {
         debug!("Generating new options plist");
         unsafe { unsafe_bindings::instproxy_client_options_new() }.into() // insert sunglasses emoji
@@ -111,6 +133,26 @@ impl InstProxyClient<'_> {
         Ok(res_plist.into())
     }
 
+    // pub fn install(&self, pkg_path: String, client_options: Plist, callback: ) -> Result<(), InstProxyError> {
+    //     let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+    //     debug!("Instproxy install");
+    //     let result = unsafe {
+    //         unsafe_bindings::instproxy_install(
+    //             self.pointer,
+    //             pkg_path_c_str.as_ptr(),
+    //             client_options.plist_t,
+    //             null(),
+    //             std::ptr::null_mut(),
+    //         )
+    //     }
+    //     .into();
+    //     if result != InstProxyError::Success {
+    //         return Err(result);
+    //     }
+
+    //     Ok(())
+    // }
+
     pub fn get_path_for_bundle_identifier(
         &self,
         bundle_identifier: String,
@@ -137,6 +179,37 @@ impl InstProxyClient<'_> {
 
         debug!("Instproxy get_path_for_bundle_identifier done");
         Ok(unsafe { CString::from_raw(to_fill_bytes).into_string().unwrap() })
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub enum BrowseOption {
+    System,
+    User,
+    Internal,
+    All,
+    None,
+}
+
+impl From<BrowseOption> for Plist {
+    fn from(option: BrowseOption) -> Self {
+        let mut dict = Plist::new_dict();
+        match option {
+            BrowseOption::System => dict
+                .dict_set_item("ApplicationType", "System".into())
+                .unwrap(),
+            BrowseOption::User => dict
+                .dict_set_item("ApplicationType", "User".into())
+                .unwrap(),
+            BrowseOption::Internal => dict
+                .dict_set_item("ApplicationType", "Internal".into())
+                .unwrap(),
+            BrowseOption::All => dict.dict_set_item("ApplicationType", "All".into()).unwrap(),
+            BrowseOption::None => dict
+                .dict_set_item("ApplicationType", "None".into())
+                .unwrap(),
+        }
+        dict
     }
 }
 

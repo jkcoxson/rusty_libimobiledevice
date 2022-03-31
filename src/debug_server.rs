@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::convert::TryInto;
+use std::{convert::TryInto, os::raw::c_char};
 
 use libc::c_int;
 
@@ -53,7 +53,7 @@ impl DebugServer<'_> {
                 self.pointer,
                 data_c_str.as_ptr(),
                 data_c_str.as_bytes().len().try_into().unwrap(),
-                &mut sent
+                &mut sent,
             )
         }
         .into();
@@ -64,7 +64,11 @@ impl DebugServer<'_> {
         Ok(())
     }
 
-    pub fn recieve_with_timeout(&self, size: u32, timeout: u32) -> Result<String, DebugServerError> {
+    pub fn recieve_with_timeout(
+        &self,
+        size: u32,
+        timeout: u32,
+    ) -> Result<String, DebugServerError> {
         let mut data = vec![0u8; size as usize];
         let mut received = 0;
         let result = unsafe {
@@ -73,7 +77,7 @@ impl DebugServer<'_> {
                 data.as_mut_ptr() as *mut i8,
                 size,
                 &mut received,
-                timeout
+                timeout,
             )
         }
         .into();
@@ -92,7 +96,7 @@ impl DebugServer<'_> {
                 self.pointer,
                 data.as_mut_ptr() as *mut i8,
                 size,
-                &mut received
+                &mut received,
             )
         }
         .into();
@@ -104,16 +108,10 @@ impl DebugServer<'_> {
     }
 
     pub fn recieve_response(&self) -> Result<String, DebugServerError> {
-        let mut data = unsafe {
-            std::mem::zeroed()
-        };
+        let mut data = unsafe { std::mem::zeroed() };
         let mut size = 0;
         let result = unsafe {
-            unsafe_bindings::debugserver_client_receive_response(
-                self.pointer,
-                &mut data,
-                &mut size,
-            )
+            unsafe_bindings::debugserver_client_receive_response(self.pointer, &mut data, &mut size)
         }
         .into();
         if result != DebugServerError::Success {
@@ -121,15 +119,15 @@ impl DebugServer<'_> {
         }
         let data = data as *mut u8;
 
-        Ok(String::from_utf8(unsafe { std::slice::from_raw_parts(data, size as usize).to_vec() }).unwrap())
+        Ok(
+            String::from_utf8(unsafe { std::slice::from_raw_parts(data, size as usize).to_vec() })
+                .unwrap(),
+        )
     }
 
     pub fn set_ack_mode(&self, enabled: bool) -> Result<(), DebugServerError> {
         let result = unsafe {
-            unsafe_bindings::debugserver_client_set_ack_mode(
-                self.pointer,
-                enabled as c_int
-            )
+            unsafe_bindings::debugserver_client_set_ack_mode(self.pointer, enabled as c_int)
         }
         .into();
         if result != DebugServerError::Success {
@@ -146,7 +144,7 @@ impl DebugServer<'_> {
             unsafe_bindings::debugserver_client_set_environment_hex_encoded(
                 self.pointer,
                 env_c_str.as_ptr(),
-                &mut response
+                &mut response,
             )
         }
         .into();
@@ -154,7 +152,11 @@ impl DebugServer<'_> {
             return Err(result);
         }
 
-        Ok(unsafe { std::ffi::CStr::from_ptr(response).to_string_lossy().into_owned() })
+        Ok(unsafe {
+            std::ffi::CStr::from_ptr(response)
+                .to_string_lossy()
+                .into_owned()
+        })
     }
 
     pub fn send_command(&self, command: DebugServerCommand) -> Result<String, DebugServerError> {
@@ -250,15 +252,11 @@ impl DebugServer<'_> {
 
     pub fn decode_string(buffer: String) -> String {
         let mut decoded_buffer = unsafe { std::mem::zeroed() };
-        let buffer_len = buffer.len() as u64;
+        let buffer_len = buffer.len() as unsafe_bindings::size_t;
         let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
         let buffer_ptr = buffer_c_str.as_ptr() as *mut i8;
         unsafe {
-            unsafe_bindings::debugserver_decode_string(
-                buffer_ptr,
-                buffer_len,
-                &mut decoded_buffer,
-            );
+            unsafe_bindings::debugserver_decode_string(buffer_ptr, buffer_len, &mut decoded_buffer);
         }
         let decoded_buffer_str = unsafe {
             std::ffi::CStr::from_ptr(decoded_buffer)
@@ -277,7 +275,7 @@ impl DebugServerCommand {
         let command_c_str = std::ffi::CString::new(command).unwrap();
 
         // Create C array
-        let mut arguments_c_array: Vec<i8> = Vec::new();
+        let mut arguments_c_array: Vec<c_char> = Vec::new();
         for i in arguments.iter() {
             let c_str = std::ffi::CString::new(i.clone()).unwrap();
             arguments_c_array.push(c_str.as_bytes_with_nul()[0].try_into().unwrap());

@@ -2,6 +2,7 @@
 
 use std::convert::TryInto;
 use std::marker::PhantomData;
+use std::os::raw::c_char;
 
 use crate::bindings as unsafe_bindings;
 use crate::error::IdeviceError;
@@ -43,7 +44,7 @@ impl DeviceConnection<'_> {
         let result = unsafe {
             unsafe_bindings::idevice_connection_send(
                 self.pointer,
-                data.as_ptr() as *const i8,
+                data.as_ptr() as *const c_char,
                 data.len().try_into().unwrap(),
                 &mut to_fill,
             )
@@ -57,7 +58,7 @@ impl DeviceConnection<'_> {
         Ok(to_fill)
     }
 
-    pub fn recieve(&self, len: u32, timeout: u32) -> Result<i8, IdeviceError> {
+    pub fn recieve(&self, len: u32, timeout: u32) -> Result<c_char, IdeviceError> {
         let mut buffer = unsafe { std::mem::zeroed() };
         let mut recieved = unsafe { std::mem::zeroed() };
 

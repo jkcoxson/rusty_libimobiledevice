@@ -3,12 +3,14 @@
 use core::fmt;
 use std::ffi::CStr;
 use std::net::IpAddr;
+use std::os::raw::c_char;
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 use libc::c_void;
 
 use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
+use crate::callback::IDeviceEventCallback;
 use crate::debug;
 use crate::error::{
     self, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
@@ -16,12 +18,6 @@ use crate::error::{
 };
 use crate::heartbeat::HeartbeatClient;
 use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
-
-// The end goal here is to create a safe library that can wrap the unsafe C code
-
-/////////////////////
-// Smexy Functions //
-/////////////////////
 
 /// Get a list of UDIDs
 pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
@@ -143,6 +139,10 @@ pub fn set_debug(debug: bool) {
     unsafe { unsafe_bindings::idevice_set_debug_level(debug) }
 }
 
+pub fn event_subscribe(_cb: IDeviceEventCallback) -> Result<(), IdeviceError> {
+    todo!()
+}
+
 // Structs
 pub struct Device {
     pub(crate) pointer: unsafe_bindings::idevice_t,
@@ -232,7 +232,7 @@ impl Device {
         // SAFETY: i_private_ptr has enough capacity for an idevice_private struct
         unsafe {
             i_private_ptr.write(unsafe_bindings::idevice_private {
-                udid: udid_ptr as *mut i8,
+                udid: udid_ptr as *mut c_char,
                 mux_id,
                 conn_type: match network {
                     true => 2,
@@ -380,6 +380,22 @@ impl Device {
     ) -> Result<crate::debug_server::DebugServer, DebugServerError> {
         crate::debug_server::DebugServer::new(self, label)
     }
+}
+
+pub struct IDeviceEvent {
+    pub(crate) _pointer: unsafe_bindings::idevice_event_t,
+}
+
+impl From<unsafe_bindings::idevice_event_t> for IDeviceEvent {
+    fn from(_pointer: unsafe_bindings::idevice_event_t) -> Self {
+        IDeviceEvent { _pointer }
+    }
+}
+
+pub enum EventType {
+    Add,
+    Remove,
+    Pair,
 }
 
 impl From<unsafe_bindings::idevice_t> for Device {
