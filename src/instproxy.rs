@@ -1,10 +1,9 @@
 // jkcoxson
 
-use std::ffi::CString;
+use std::{ffi::CString, os::raw::c_char};
 
 use crate::{
-    bindings as unsafe_bindings, debug, error::InstProxyError, idevice::Device,
-    plist::Plist,
+    bindings as unsafe_bindings, debug, error::InstProxyError, idevice::Device, plist::Plist,
 };
 
 pub struct InstProxyClient<'a> {
@@ -133,25 +132,170 @@ impl InstProxyClient<'_> {
         Ok(res_plist.into())
     }
 
-    // pub fn install(&self, pkg_path: String, client_options: Plist, callback: ) -> Result<(), InstProxyError> {
-    //     let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
-    //     debug!("Instproxy install");
-    //     let result = unsafe {
-    //         unsafe_bindings::instproxy_install(
-    //             self.pointer,
-    //             pkg_path_c_str.as_ptr(),
-    //             client_options.plist_t,
-    //             null(),
-    //             std::ptr::null_mut(),
-    //         )
-    //     }
-    //     .into();
-    //     if result != InstProxyError::Success {
-    //         return Err(result);
-    //     }
+    pub fn install(&self, pkg_path: String, client_options: Plist) -> Result<(), InstProxyError> {
+        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+        debug!("Instproxy install");
+        let result = unsafe {
+            unsafe_bindings::instproxy_install(
+                self.pointer,
+                pkg_path_c_str.as_ptr(),
+                client_options.plist_t,
+                None, // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
+
+    pub fn upgrade(&self, pkg_path: String, client_options: Plist) -> Result<(), InstProxyError> {
+        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+        debug!("Instproxy upgrade");
+        let result = unsafe {
+            unsafe_bindings::instproxy_upgrade(
+                self.pointer,
+                pkg_path_c_str.as_ptr(),
+                client_options.plist_t,
+                None, // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn uninstall(&self, app_id: String, client_options: Plist) -> Result<(), InstProxyError> {
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        debug!("Instproxy uninstall");
+        let result = unsafe {
+            unsafe_bindings::instproxy_uninstall(
+                self.pointer,
+                app_id_c_str.as_ptr(),
+                client_options.plist_t,
+                None, // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn lookup_archives(&self, client_options: Plist) -> Result<Plist, InstProxyError> {
+        let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
+        debug!("Instproxy lookup archives");
+        let result = unsafe {
+            unsafe_bindings::instproxy_lookup_archives(
+                self.pointer,
+                client_options.plist_t,
+                &mut res_plist,
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+        Ok(res_plist.into())
+    }
+
+    pub fn archive(&self, app_id: String, client_options: Plist) -> Result<(), InstProxyError> {
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        debug!("Instproxy archive");
+        let result = unsafe {
+            unsafe_bindings::instproxy_archive(
+                self.pointer,
+                app_id_c_str.as_ptr(),
+                client_options.plist_t,
+                None, // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+        Ok(())
+    }
+
+    pub fn restore(&self, app_id: String, client_options: Plist) -> Result<(), InstProxyError> {
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        debug!("Instproxy restore");
+        let result = unsafe {
+            unsafe_bindings::instproxy_restore(
+                self.pointer,
+                app_id_c_str.as_ptr(),
+                client_options.plist_t,
+                None, // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+        Ok(())
+    }
+
+    pub fn remove_archive(
+        &self,
+        app_id: String,
+        client_options: Plist,
+    ) -> Result<(), InstProxyError> {
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        debug!("Instproxy remove archive");
+        let result = unsafe {
+            unsafe_bindings::instproxy_remove_archive(
+                self.pointer,
+                app_id_c_str.as_ptr(),
+                client_options.plist_t,
+                None, // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+        Ok(())
+    }
+
+    pub fn check_capabilities_match(
+        &self,
+        capabilities: Vec<String>,
+        client_options: Plist,
+    ) -> Result<Plist, InstProxyError> {
+        let mut res_plist = unsafe { std::mem::zeroed() };
+        let mut capabilities_c_str = vec![];
+        for capability in capabilities {
+            capabilities_c_str.push(std::ffi::CString::new(capability).unwrap());
+        }
+        let capabilities_c_str_ptr = capabilities_c_str.as_mut_ptr();
+        let cap_ptr_ptr = capabilities_c_str_ptr as *mut *const c_char;
+        let result = unsafe {
+            unsafe_bindings::instproxy_check_capabilities_match(
+                self.pointer,
+                cap_ptr_ptr,
+                client_options.plist_t,
+                &mut res_plist,
+            )
+        }
+        .into();
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+        Ok(res_plist.into())
+    }
 
     pub fn get_path_for_bundle_identifier(
         &self,
