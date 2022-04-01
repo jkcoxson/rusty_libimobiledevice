@@ -16,6 +16,7 @@ pub mod idevice;
 pub mod instproxy;
 pub mod lockdownd;
 pub mod misagent;
+pub mod mobile_activation;
 pub mod plist;
 pub mod preference_plist;
 pub mod userpref;
