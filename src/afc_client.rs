@@ -4,7 +4,7 @@ use std::{convert::TryFrom, ffi::CStr, os::raw::c_char};
 
 use crate::{
     bindings as unsafe_bindings, error::AfcError, house_arrest::HouseArrest,
-    libimobiledevice::Device,
+    idevice::Device,
 };
 
 pub struct AfcClient<'a> {

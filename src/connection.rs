@@ -6,7 +6,7 @@ use std::os::raw::c_char;
 
 use crate::bindings as unsafe_bindings;
 use crate::error::IdeviceError;
-use crate::libimobiledevice::Device;
+use crate::idevice::Device;
 
 pub struct DeviceConnection<'a> {
     pub(crate) pointer: *mut unsafe_bindings::idevice_connection_private,

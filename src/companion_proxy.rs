@@ -1,6 +1,6 @@
 // jkcoxson
 
-use crate::{bindings as unsafe_bindings, libimobiledevice::Device, error::CompanionProxyError, lockdownd::LockdowndService, plist::Plist};
+use crate::{bindings as unsafe_bindings, idevice::Device, error::CompanionProxyError, lockdownd::LockdowndService, plist::Plist};
 
 pub struct CompanionProxy<'a> {
     pub(crate) pointer: unsafe_bindings::companion_proxy_client_t,

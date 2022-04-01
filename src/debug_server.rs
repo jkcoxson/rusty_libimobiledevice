@@ -5,7 +5,7 @@ use std::{convert::TryInto, os::raw::c_char};
 use libc::c_int;
 
 use crate::{
-    bindings as unsafe_bindings, debug, error::DebugServerError, libimobiledevice::Device,
+    bindings as unsafe_bindings, debug, error::DebugServerError, idevice::Device,
 };
 
 pub struct DebugServer<'a> {

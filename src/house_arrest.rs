@@ -1,7 +1,7 @@
 // jkcoxson
 
 use crate::{
-    bindings as unsafe_bindings, error::HouseArrestError, libimobiledevice::Device,
+    bindings as unsafe_bindings, error::HouseArrestError, idevice::Device,
     lockdownd::LockdowndService, plist::Plist,
 };
 

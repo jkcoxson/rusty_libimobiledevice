@@ -4,7 +4,7 @@
 use libc::c_void;
 
 use crate::bindings as unsafe_bindings;
-use crate::libimobiledevice::IDeviceEvent;
+use crate::idevice::IDeviceEvent;
 use std::any::Any;
 
 pub struct IDeviceEventCallback {

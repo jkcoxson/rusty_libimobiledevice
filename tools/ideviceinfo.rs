@@ -1,7 +1,7 @@
 // jkcoxson
 // Note: incomplete
 
-use rusty_libimobiledevice::libimobiledevice;
+use rusty_libimobiledevice::idevice;
 
 fn main() {
     const VERSION: &str = "0.1.0";
@@ -40,7 +40,7 @@ fn main() {
     }
 
     if udid == "" {
-        let devices = match libimobiledevice::get_devices() {
+        let devices = match idevice::get_devices() {
             Ok(devices) => devices,
             Err(e) => {
                 println!("Error: {:?}", e);
@@ -68,7 +68,7 @@ fn main() {
         let output: String = output.into();
         println!("{}", output);
     } else {
-        let device = match libimobiledevice::get_device(udid.to_string()) {
+        let device = match idevice::get_device(udid.to_string()) {
             Ok(device) => device,
             Err(e) => {
                 println!("Error: {:?}", e);

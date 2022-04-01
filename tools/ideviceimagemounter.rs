@@ -1,6 +1,6 @@
 // jkcoxson
 
-use rusty_libimobiledevice::libimobiledevice;
+use rusty_libimobiledevice::idevice;
 
 fn main() {
     const VERSION: &str = "0.1.0";
@@ -65,7 +65,7 @@ fn main() {
     println!("{}", dmg_path);
 
     // Get the device
-    let device = match libimobiledevice::get_device(udid.to_string()) {
+    let device = match idevice::get_device(udid.to_string()) {
         Ok(device) => device,
         Err(e) => {
             println!("Error: Could not find device: {:?}", e);

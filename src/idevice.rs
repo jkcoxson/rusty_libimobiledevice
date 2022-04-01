@@ -5,9 +5,7 @@ use std::ffi::CStr;
 use std::net::IpAddr;
 use std::os::raw::c_char;
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
-
 use libc::c_void;
-
 use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;

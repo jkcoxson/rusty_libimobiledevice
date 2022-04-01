@@ -3,7 +3,7 @@
 use std::ffi::CString;
 
 use crate::{
-    bindings as unsafe_bindings, debug, error::HeartbeatError, libimobiledevice::Device,
+    bindings as unsafe_bindings, debug, error::HeartbeatError, idevice::Device,
     plist::Plist,
 };
 

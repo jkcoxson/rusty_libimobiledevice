@@ -13,7 +13,7 @@ pub mod file_relay;
 pub mod heartbeat;
 pub mod house_arrest;
 pub mod instproxy;
-pub mod libimobiledevice;
+pub mod idevice;
 pub mod lockdownd;
 pub mod plist;
 pub mod preference_plist;

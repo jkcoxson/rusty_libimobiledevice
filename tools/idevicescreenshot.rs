@@ -1,6 +1,6 @@
 // jkcoxson
 
-use rusty_libimobiledevice::libimobiledevice;
+use rusty_libimobiledevice::idevice;
 
 fn main() {
     const VERSION: &str = "0.1.0";
@@ -38,7 +38,7 @@ fn main() {
         panic!("No device UDID specified");
     }
 
-    let device = match libimobiledevice::get_device(udid) {
+    let device = match idevice::get_device(udid) {
         Ok(d) => d,
         Err(e) => {
             println!("Error: {:?}", e);

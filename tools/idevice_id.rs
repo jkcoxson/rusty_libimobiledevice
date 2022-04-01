@@ -1,12 +1,10 @@
 // jkcoxson
 
-use rusty_libimobiledevice::libimobiledevice;
-use std::net::IpAddr;
-use std::net::Ipv4Addr;
+use rusty_libimobiledevice::idevice;
 
 fn main() {
     // Get all devices attatched
-    let devices = match libimobiledevice::get_devices() {
+    let devices = match idevice::get_devices() {
         Ok(devices) => devices,
         Err(e) => {
             println!("Error getting devices: {:?}", e);

@@ -1,7 +1,7 @@
 // jkcoxson
 
 use rusty_libimobiledevice::instproxy::InstProxyClient;
-use rusty_libimobiledevice::libimobiledevice;
+use rusty_libimobiledevice::idevice;
 use rusty_libimobiledevice::plist::Plist;
 
 fn main() {
@@ -49,7 +49,7 @@ fn main() {
     }
 
     // Get the device
-    let device = match libimobiledevice::get_device(udid.to_string()) {
+    let device = match idevice::get_device(udid.to_string()) {
         Ok(device) => device,
         Err(e) => {
             println!("Error: Could not find device: {:?}", e);

@@ -9,7 +9,7 @@ use libc::c_void;
 use crate::bindings as unsafe_bindings;
 use crate::debug;
 use crate::error::{LockdowndError, MobileImageMounterError};
-use crate::libimobiledevice::Device;
+use crate::idevice::Device;
 use crate::plist::Plist;
 
 pub struct LockdowndClient<'a> {

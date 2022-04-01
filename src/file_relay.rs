@@ -4,7 +4,7 @@ use std::ffi::CString;
 
 use crate::{
     bindings as unsafe_bindings, connection::DeviceConnection, error::FileRelayError,
-    libimobiledevice::Device, lockdownd::LockdowndService,
+    idevice::Device, lockdownd::LockdowndService,
 };
 
 pub struct FileRelay<'a> {
