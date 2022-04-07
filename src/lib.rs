@@ -29,3 +29,4 @@ pub mod screenshotr;
 pub mod service;
 pub mod springboard_services;
 pub mod userpref;
+pub mod web_inspector;

@@ -580,7 +580,7 @@ impl From<DebugServerError> for String {
 
 #[derive(PartialEq, Debug)]
 pub enum WebInspectorError {
-    Succes,
+    Success,
     InvalidArg,
     PlistError,
     MuxError,
@@ -593,7 +593,7 @@ pub enum WebInspectorError {
 impl From<i32> for WebInspectorError {
     fn from(value: i32) -> WebInspectorError {
         match value {
-            0 => WebInspectorError::Succes,
+            0 => WebInspectorError::Success,
             -1 => WebInspectorError::InvalidArg,
             -2 => WebInspectorError::PlistError,
             -3 => WebInspectorError::MuxError,
@@ -608,7 +608,7 @@ impl From<i32> for WebInspectorError {
 impl From<WebInspectorError> for String {
     fn from(value: WebInspectorError) -> String {
         match value {
-            WebInspectorError::Succes => "Success".to_string(),
+            WebInspectorError::Success => "Success".to_string(),
             WebInspectorError::InvalidArg => "InvalidArg".to_string(),
             WebInspectorError::PlistError => "PlistError".to_string(),
             WebInspectorError::MuxError => "MuxError".to_string(),
