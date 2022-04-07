@@ -1,6 +1,6 @@
 // jkcoxson
 
-pub mod afc_client;
+pub mod afc;
 mod bindings;
 pub mod callback;
 pub mod companion_proxy;
@@ -19,6 +19,7 @@ pub mod misagent;
 pub mod mobile_activation;
 pub mod mobile_backup;
 pub mod mobile_sync;
+pub mod notification_proxy;
 pub mod plist;
 pub mod preference_plist;
 pub mod userpref;
