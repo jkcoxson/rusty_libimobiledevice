@@ -21,5 +21,6 @@ pub mod mobile_backup;
 pub mod mobile_sync;
 pub mod notification_proxy;
 pub mod plist;
+pub mod preboard;
 pub mod preference_plist;
 pub mod userpref;
