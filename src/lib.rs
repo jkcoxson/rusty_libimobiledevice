@@ -26,5 +26,6 @@ pub mod preference_plist;
 pub mod property_list_service;
 pub mod restored;
 pub mod screenshotr;
+pub mod service;
 pub mod springboard_services;
 pub mod userpref;
