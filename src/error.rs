@@ -777,7 +777,7 @@ impl From<ReverseProxyError> for String {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum RestoreError {
+pub enum RestoredError {
     Success,
     InvalidArg,
     PlistError,
@@ -787,30 +787,30 @@ pub enum RestoreError {
     UnknownError
 }
 
-impl From<i32> for RestoreError {
-    fn from(value: i32) -> RestoreError {
+impl From<i32> for RestoredError {
+    fn from(value: i32) -> RestoredError {
         match value {
-            0 => RestoreError::Success,
-            -1 => RestoreError::InvalidArg,
-            -2 => RestoreError::PlistError,
-            -3 => RestoreError::MuxError,
-            -4 => RestoreError::NotEnoughData,
-            -5 => RestoreError::RecieveTimeout,
-            _ => RestoreError::UnknownError
+            0 => RestoredError::Success,
+            -1 => RestoredError::InvalidArg,
+            -2 => RestoredError::PlistError,
+            -3 => RestoredError::MuxError,
+            -4 => RestoredError::NotEnoughData,
+            -5 => RestoredError::RecieveTimeout,
+            _ => RestoredError::UnknownError
         }
     }
 }
 
-impl From<RestoreError> for String {
-    fn from(value: RestoreError) -> String {
+impl From<RestoredError> for String {
+    fn from(value: RestoredError) -> String {
         match value {
-            RestoreError::Success => "Success".to_string(),
-            RestoreError::InvalidArg => "InvalidArg".to_string(),
-            RestoreError::PlistError => "PlistError".to_string(),
-            RestoreError::MuxError => "MuxError".to_string(),
-            RestoreError::NotEnoughData => "NotEnoughData".to_string(),
-            RestoreError::RecieveTimeout => "RecieveTimeout".to_string(),
-            RestoreError::UnknownError => "UnknownError".to_string(),
+            RestoredError::Success => "Success".to_string(),
+            RestoredError::InvalidArg => "InvalidArg".to_string(),
+            RestoredError::PlistError => "PlistError".to_string(),
+            RestoredError::MuxError => "MuxError".to_string(),
+            RestoredError::NotEnoughData => "NotEnoughData".to_string(),
+            RestoredError::RecieveTimeout => "RecieveTimeout".to_string(),
+            RestoredError::UnknownError => "UnknownError".to_string(),
         }
     }
 }

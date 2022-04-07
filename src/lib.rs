@@ -25,3 +25,4 @@ pub mod preboard;
 pub mod preference_plist;
 pub mod property_list_service;
 pub mod userpref;
+pub mod restored;
