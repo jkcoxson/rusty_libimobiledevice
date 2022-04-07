@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_int};
 
 use crate::{
     bindings as unsafe_bindings,
@@ -335,6 +335,76 @@ impl MobileBackup2Client<'_> {
         }
 
         Ok(version)
+    }
+
+    pub fn send_request(
+        &self,
+        request: MobileBackupRequest,
+        target: String,
+        source: String,
+        options: Plist,
+    ) -> Result<(), MobileBackup2Error> {
+        let result = unsafe {
+            unsafe_bindings::mobilebackup2_send_request(
+                self.pointer,
+                request.into(),
+                target.as_ptr() as *const std::os::raw::c_char,
+                source.as_ptr() as *const std::os::raw::c_char,
+                options.plist_t,
+            )
+        }
+        .into();
+
+        if result != MobileBackup2Error::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+    pub fn send_status_response(
+        &self,
+        code: c_int,
+        status_string: Option<String>,
+        status_plist: Option<Plist>,
+    ) -> Result<(), MobileBackup2Error> {
+        let result = unsafe {
+            unsafe_bindings::mobilebackup2_send_status_response(
+                self.pointer,
+                code,
+                status_string
+                    .map(|s| s.as_ptr() as *const std::os::raw::c_char)
+                    .unwrap_or(std::ptr::null()),
+                status_plist
+                    .map(|p| p.plist_t)
+                    .unwrap_or(0 as *mut std::os::raw::c_void), // idk
+            )
+        }
+        .into();
+
+        if result != MobileBackup2Error::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+}
+
+pub enum MobileBackupRequest {
+    Backup,
+    Restore,
+    Info,
+    List,
+}
+
+impl From<MobileBackupRequest> for *const c_char {
+    fn from(request: MobileBackupRequest) -> Self {
+        match request {
+            MobileBackupRequest::Backup => "Backup".as_ptr() as *const c_char,
+            MobileBackupRequest::Restore => "Restore".as_ptr() as *const c_char,
+            MobileBackupRequest::Info => "Info".as_ptr() as *const c_char,
+            MobileBackupRequest::List => "List".as_ptr() as *const c_char,
+        }
     }
 }
 
