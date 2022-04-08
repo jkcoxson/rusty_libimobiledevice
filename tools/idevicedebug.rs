@@ -1,6 +1,6 @@
 // jkcoxson
 
-use rusty_libimobiledevice::instproxy::InstProxyClient;
+use rusty_libimobiledevice::services::instproxy::InstProxyClient;
 use rusty_libimobiledevice::idevice;
 use rusty_libimobiledevice::plist::Plist;
 

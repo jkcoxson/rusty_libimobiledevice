@@ -1,4 +1,4 @@
-// jkcoxson
+#[doc = include_str!("../README.md")]
 
 mod bindings;
 pub mod callback;
