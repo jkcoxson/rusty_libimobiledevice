@@ -9,7 +9,7 @@ use crate::{
     bindings as unsafe_bindings,
     error::MobileSyncError,
     idevice::Device,
-    lockdownd::LockdowndService,
+    services::lockdownd::LockdowndService,
     plist::{Plist, PlistType},
 };
 

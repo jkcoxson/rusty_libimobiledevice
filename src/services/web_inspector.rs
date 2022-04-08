@@ -4,7 +4,7 @@ use std::os::raw::c_char;
 
 use crate::{
     bindings as unsafe_bindings, error::WebInspectorError, idevice::Device,
-    lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService, plist::Plist,
 };
 
 pub struct WebInspectorClient<'a> {

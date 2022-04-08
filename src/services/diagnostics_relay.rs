@@ -4,7 +4,7 @@ use libc::c_uint;
 
 use crate::{
     bindings as unsafe_bindings, error::DiagnosticsRelayError, idevice::Device,
-    lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService, plist::Plist,
 };
 
 pub struct DiagnosticsRelay<'a> {

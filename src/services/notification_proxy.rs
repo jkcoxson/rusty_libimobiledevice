@@ -3,7 +3,7 @@
 use crate::bindings as unsafe_bindings;
 use crate::error::NpError;
 use crate::idevice::Device;
-use crate::lockdownd::LockdowndService;
+use crate::services::lockdownd::LockdowndService;
 
 pub struct NotificationProxyClient<'a> {
     pub(crate) pointer: unsafe_bindings::np_client_t,

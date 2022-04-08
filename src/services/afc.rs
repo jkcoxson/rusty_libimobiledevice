@@ -3,21 +3,13 @@
 use std::{convert::TryFrom, ffi::CStr, os::raw::c_char};
 
 use crate::{
-    bindings as unsafe_bindings, error::AfcError, house_arrest::HouseArrest,
-    idevice::Device,
+    bindings as unsafe_bindings, error::AfcError, idevice::Device,
+    services::house_arrest::HouseArrest, services::lockdownd::LockdowndService,
 };
 
 pub struct AfcClient<'a> {
     pub(crate) pointer: unsafe_bindings::afc_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
-}
-
-pub struct LockdowndService<'a> {
-    pub(crate) pointer: unsafe_bindings::lockdownd_service_descriptor_t,
-    pub port: u16,
-    pub ssl_enabled: bool,
-    pub identifier: String,
-    phantom: std::marker::PhantomData<&'a AfcClient<'a>>,
 }
 
 impl AfcClient<'_> {
@@ -37,14 +29,8 @@ impl AfcClient<'_> {
             },
             LockdowndService {
                 pointer: &mut pointer,
-                port: pointer.port,
-                ssl_enabled: match pointer.ssl_enabled {
-                    0 => false,
-                    _ => true,
-                },
-                identifier: unsafe { CStr::from_ptr(pointer.identifier) }
-                    .to_string_lossy()
-                    .into_owned(),
+                port: pointer.port as u32,
+                label: "afc_internal".to_string(),
                 phantom: std::marker::PhantomData,
             },
         ))
@@ -401,14 +387,6 @@ impl Drop for AfcClient<'_> {
     fn drop(&mut self) {
         unsafe {
             unsafe_bindings::afc_client_free(self.pointer);
-        }
-    }
-}
-
-impl Drop for LockdowndService<'_> {
-    fn drop(&mut self) {
-        unsafe {
-            unsafe_bindings::lockdownd_service_descriptor_free(self.pointer);
         }
     }
 }

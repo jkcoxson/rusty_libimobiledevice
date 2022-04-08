@@ -3,8 +3,8 @@
 use std::ffi::CString;
 
 use crate::{
-    bindings as unsafe_bindings, connection::DeviceConnection, error::FileRelayError,
-    idevice::Device, lockdownd::LockdowndService,
+    bindings as unsafe_bindings, services::connection::DeviceConnection, error::FileRelayError,
+    idevice::Device, services::lockdownd::LockdowndService,
 };
 
 pub struct FileRelay<'a> {

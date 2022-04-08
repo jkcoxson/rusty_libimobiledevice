@@ -4,7 +4,7 @@ use std::os::raw::c_char;
 
 use crate::{
     bindings as unsafe_bindings, error::ScreenshotrError, idevice::Device,
-    lockdownd::LockdowndService,
+    services::lockdownd::LockdowndService,
 };
 
 pub struct ScreenshotrClient<'a> {

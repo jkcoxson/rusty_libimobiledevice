@@ -6,7 +6,7 @@ use crate::{
     bindings as unsafe_bindings,
     error::{MobileBackup2Error, MobileBackupError},
     idevice::Device,
-    lockdownd::LockdowndService,
+    services::lockdownd::LockdowndService,
     plist::Plist,
 };
 

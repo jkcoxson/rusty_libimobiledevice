@@ -2,7 +2,8 @@
 
 use std::os::raw::c_char;
 
-use crate::{bindings as unsafe_bindings, idevice::Device, lockdownd::LockdowndService, error::ServiceError};
+use crate::{bindings as unsafe_bindings, idevice::Device, error::ServiceError};
+use crate::services::lockdownd::LockdowndService;
 
 pub struct ServiceClient<'a> {
     pub(crate) pointer: unsafe_bindings::service_client_t,

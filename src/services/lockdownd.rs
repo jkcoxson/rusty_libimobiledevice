@@ -33,7 +33,7 @@ pub struct LockdowndService<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_service_descriptor_t,
     pub label: String,
     pub port: u32,
-    phantom: std::marker::PhantomData<&'a LockdowndClient<'a>>,
+    pub(crate) phantom: std::marker::PhantomData<&'a LockdowndClient<'a>>,
 }
 
 unsafe impl Send for LockdowndService<'_> {}

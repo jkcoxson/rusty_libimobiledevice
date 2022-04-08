@@ -2,7 +2,7 @@
 
 use crate::{
     bindings as unsafe_bindings, error::MisagentError, idevice::Device,
-    lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService, plist::Plist,
 };
 
 pub struct MisagentClient<'a> {

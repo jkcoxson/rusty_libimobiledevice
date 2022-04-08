@@ -4,7 +4,7 @@ use std::os::raw::{c_char, c_uint};
 
 use crate::{
     bindings as unsafe_bindings, error::SbservicesError, idevice::Device,
-    lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService, plist::Plist,
 };
 
 pub struct SpringboardServicesClient<'a> {

@@ -2,7 +2,7 @@
 
 use crate::{
     bindings as unsafe_bindings, error::PropertyListServiceError, idevice::Device,
-    lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService, plist::Plist,
 };
 
 pub struct PropertyListServiceClient<'a> {

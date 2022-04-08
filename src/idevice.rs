@@ -1,11 +1,5 @@
 // jkcoxson
 
-use core::fmt;
-use std::ffi::CStr;
-use std::net::IpAddr;
-use std::os::raw::c_char;
-use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
-use libc::c_void;
 use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;
@@ -14,8 +8,14 @@ use crate::error::{
     self, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
     MobileImageMounterError,
 };
-use crate::heartbeat::HeartbeatClient;
-use crate::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
+use crate::services::heartbeat::HeartbeatClient;
+use crate::services::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
+use core::fmt;
+use libc::c_void;
+use std::ffi::CStr;
+use std::net::IpAddr;
+use std::os::raw::c_char;
+use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 /// Get a list of UDIDs
 pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
@@ -367,16 +367,16 @@ impl Device {
     pub fn new_instproxy_client(
         &self,
         label: String,
-    ) -> Result<crate::instproxy::InstProxyClient, InstProxyError> {
-        crate::instproxy::InstProxyClient::new(self, label)
+    ) -> Result<crate::services::instproxy::InstProxyClient, InstProxyError> {
+        crate::services::instproxy::InstProxyClient::new(self, label)
     }
 
     /// Creates a new debug server for the device
     pub fn new_debug_server(
         &self,
         label: &str,
-    ) -> Result<crate::debug_server::DebugServer, DebugServerError> {
-        crate::debug_server::DebugServer::new(self, label)
+    ) -> Result<crate::services::debug_server::DebugServer, DebugServerError> {
+        crate::services::debug_server::DebugServer::new(self, label)
     }
 }
 
