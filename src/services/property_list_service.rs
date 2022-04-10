@@ -2,13 +2,15 @@
 
 use crate::{
     bindings as unsafe_bindings, error::PropertyListServiceError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService
 };
 
 pub struct PropertyListServiceClient<'a> {
     pub(crate) pointer: unsafe_bindings::property_list_service_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
+
+use plist_plus::Plist;
 
 impl PropertyListServiceClient<'_> {
     pub fn new(
@@ -37,7 +39,7 @@ impl PropertyListServiceClient<'_> {
 
     pub fn send_xml_plist(&self, data: Plist) -> Result<(), PropertyListServiceError> {
         let result = unsafe {
-            unsafe_bindings::property_list_service_send_xml_plist(self.pointer, data.plist_t)
+            unsafe_bindings::property_list_service_send_xml_plist(self.pointer, data.get_pointer())
         }
         .into();
 
@@ -50,7 +52,7 @@ impl PropertyListServiceClient<'_> {
 
     pub fn send_binary_plist(&self, data: Plist) -> Result<(), PropertyListServiceError> {
         let result = unsafe {
-            unsafe_bindings::property_list_service_send_binary_plist(self.pointer, data.plist_t)
+            unsafe_bindings::property_list_service_send_binary_plist(self.pointer, data.get_pointer())
         }
         .into();
 

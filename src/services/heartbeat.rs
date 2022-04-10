@@ -4,8 +4,9 @@ use std::ffi::CString;
 
 use crate::{
     bindings as unsafe_bindings, debug, error::HeartbeatError, idevice::Device,
-    plist::Plist,
 };
+
+use plist_plus::Plist;
 
 pub struct HeartbeatClient {
     pub(crate) pointer: unsafe_bindings::heartbeat_client_t,
@@ -35,7 +36,7 @@ impl HeartbeatClient {
 
     pub fn send(&self, message: Plist) -> Result<(), HeartbeatError> {
         let result =
-            unsafe { unsafe_bindings::heartbeat_send(self.pointer, message.plist_t) }.into();
+            unsafe { unsafe_bindings::heartbeat_send(self.pointer, message.get_pointer()) }.into();
         if result != HeartbeatError::Success {
             return Err(result);
         }

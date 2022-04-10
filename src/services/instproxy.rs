@@ -3,8 +3,10 @@
 use std::{ffi::CString, os::raw::c_char};
 
 use crate::{
-    bindings as unsafe_bindings, debug, error::InstProxyError, idevice::Device, plist::Plist,
+    bindings as unsafe_bindings, debug, error::InstProxyError, idevice::Device,
 };
+
+use plist_plus::Plist;
 
 pub struct InstProxyClient<'a> {
     pub(crate) pointer: unsafe_bindings::instproxy_client_t,
@@ -50,7 +52,7 @@ impl InstProxyClient<'_> {
         } else {
             let option_plist: Plist = option.into();
             unsafe {
-                unsafe_bindings::instproxy_browse(self.pointer, option_plist.plist_t, &mut plist)
+                unsafe_bindings::instproxy_browse(self.pointer, option_plist.get_pointer(), &mut plist)
             }
         }
         .into();
@@ -113,7 +115,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_lookup(
                 self.pointer,
                 cstring_pointers_ptr,
-                client_options.plist_t,
+                client_options.get_pointer(),
                 &mut res_plist,
             )
         }
@@ -125,7 +127,7 @@ impl InstProxyClient<'_> {
         // todo make this not a hack (which means it'll never happen)
         // This is because when the default plist impl drop fires, it will segfault on this specific plist type
         debug!("Hack dropping the options");
-        unsafe { unsafe_bindings::instproxy_client_options_free(client_options.plist_t) };
+        unsafe { unsafe_bindings::instproxy_client_options_free(client_options.get_pointer()) };
         std::mem::forget(client_options);
 
         debug!("Instproxy lookup done");
@@ -139,7 +141,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_install(
                 self.pointer,
                 pkg_path_c_str.as_ptr(),
-                client_options.plist_t,
+                client_options.get_pointer(),
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -159,7 +161,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_upgrade(
                 self.pointer,
                 pkg_path_c_str.as_ptr(),
-                client_options.plist_t,
+                client_options.get_pointer(),
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -179,7 +181,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_uninstall(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.plist_t,
+                client_options.get_pointer(),
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -198,7 +200,7 @@ impl InstProxyClient<'_> {
         let result = unsafe {
             unsafe_bindings::instproxy_lookup_archives(
                 self.pointer,
-                client_options.plist_t,
+                client_options.get_pointer(),
                 &mut res_plist,
             )
         }
@@ -216,7 +218,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_archive(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.plist_t,
+                client_options.get_pointer(),
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -235,7 +237,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_restore(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.plist_t,
+                client_options.get_pointer(),
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -258,7 +260,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_remove_archive(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.plist_t,
+                client_options.get_pointer(),
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -286,7 +288,7 @@ impl InstProxyClient<'_> {
             unsafe_bindings::instproxy_check_capabilities_match(
                 self.pointer,
                 cap_ptr_ptr,
-                client_options.plist_t,
+                client_options.get_pointer(),
                 &mut res_plist,
             )
         }

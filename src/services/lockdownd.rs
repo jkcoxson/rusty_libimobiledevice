@@ -10,7 +10,8 @@ use crate::bindings as unsafe_bindings;
 use crate::debug;
 use crate::error::{LockdowndError, MobileImageMounterError};
 use crate::idevice::Device;
-use crate::plist::Plist;
+
+use plist_plus::Plist;
 
 pub struct LockdowndClient<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_client_t,
@@ -130,7 +131,7 @@ impl LockdowndClient<'_> {
                 self.pointer,
                 domain_c_str,
                 key_c_str,
-                value.plist_t,
+                value.get_pointer(),
             )
         }
         .into();
@@ -283,7 +284,8 @@ impl LockdowndClient<'_> {
     }
 
     pub fn send(&self, plist: Plist) -> Result<(), LockdowndError> {
-        let result = unsafe { unsafe_bindings::lockdownd_send(self.pointer, plist.plist_t) }.into();
+        let result =
+            unsafe { unsafe_bindings::lockdownd_send(self.pointer, plist.get_pointer()) }.into();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -339,7 +341,7 @@ impl LockdowndClient<'_> {
                 unsafe_bindings::lockdownd_pair_with_options(
                     self.pointer,
                     &mut pairing_record,
-                    options.plist_t,
+                    options.get_pointer(),
                     &mut response,
                 )
             }
@@ -358,7 +360,7 @@ impl LockdowndClient<'_> {
                 unsafe_bindings::lockdownd_pair_with_options(
                     self.pointer,
                     to_fill,
-                    options.plist_t,
+                    options.get_pointer(),
                     &mut response,
                 )
             }
@@ -399,7 +401,7 @@ impl LockdowndClient<'_> {
 
     pub fn activate(&self, activation_record: Plist) -> Result<(), LockdowndError> {
         let result =
-            unsafe { unsafe_bindings::lockdownd_activate(self.pointer, activation_record.plist_t) }
+            unsafe { unsafe_bindings::lockdownd_activate(self.pointer, activation_record.get_pointer()) }
                 .into();
 
         if result != LockdowndError::Success {

@@ -4,8 +4,10 @@ use std::os::raw::c_char;
 
 use crate::{
     bindings as unsafe_bindings, error::MobileActivationError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService
 };
+
+use plist_plus::Plist;
 
 pub struct MobileActivationClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobileactivation_client_t,
@@ -117,7 +119,7 @@ impl MobileActivationClient<'_> {
 
     pub fn activate(&self, record: Plist) -> Result<(), MobileActivationError> {
         let result =
-            unsafe { unsafe_bindings::mobileactivation_activate(self.pointer, record.plist_t) }
+            unsafe { unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer()) }
                 .into();
 
         if result != MobileActivationError::Success {
@@ -135,8 +137,8 @@ impl MobileActivationClient<'_> {
         let result = unsafe {
             unsafe_bindings::mobileactivation_activate_with_session(
                 self.pointer,
-                record.plist_t,
-                session.plist_t,
+                record.get_pointer(),
+                session.get_pointer(),
             )
         }
         .into();

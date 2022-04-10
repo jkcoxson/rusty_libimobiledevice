@@ -7,8 +7,9 @@ use crate::{
     error::{MobileBackup2Error, MobileBackupError},
     idevice::Device,
     services::lockdownd::LockdowndService,
-    plist::Plist,
 };
+
+use plist_plus::Plist;
 
 /// This is only for old versions of iOS, you are probably looking for MobileBackup2
 pub struct MobileBackupClient<'a> {
@@ -77,7 +78,7 @@ impl MobileBackupClient<'_> {
 
     pub fn send(&self, plist: &Plist) -> Result<(), MobileBackupError> {
         let result =
-            unsafe { unsafe_bindings::mobilebackup_send(self.pointer, plist.plist_t) }.into();
+            unsafe { unsafe_bindings::mobilebackup_send(self.pointer, plist.get_pointer()) }.into();
 
         if result != MobileBackupError::Success {
             return Err(result);
@@ -95,7 +96,7 @@ impl MobileBackupClient<'_> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_backup(
                 self.pointer,
-                manifest.plist_t,
+                manifest.get_pointer(),
                 base_path.as_ptr() as *const std::os::raw::c_char,
                 backup_version.as_ptr() as *const std::os::raw::c_char,
             )
@@ -129,7 +130,7 @@ impl MobileBackupClient<'_> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_restore(
                 self.pointer,
-                manifest.plist_t,
+                manifest.get_pointer(),
                 flags,
                 backup_version.as_ptr() as *const std::os::raw::c_char,
             )
@@ -250,7 +251,7 @@ impl MobileBackup2Client<'_> {
             unsafe_bindings::mobilebackup2_send_message(
                 self.pointer,
                 message.as_ptr() as *const std::os::raw::c_char,
-                options.plist_t,
+                options.get_pointer(),
             )
         }
         .into();
@@ -350,7 +351,7 @@ impl MobileBackup2Client<'_> {
                 request.into(),
                 target.as_ptr() as *const std::os::raw::c_char,
                 source.as_ptr() as *const std::os::raw::c_char,
-                options.plist_t,
+                options.get_pointer(),
             )
         }
         .into();
@@ -376,7 +377,7 @@ impl MobileBackup2Client<'_> {
                     .map(|s| s.as_ptr() as *const std::os::raw::c_char)
                     .unwrap_or(std::ptr::null()),
                 status_plist
-                    .map(|p| p.plist_t)
+                    .map(|p| p.get_pointer())
                     .unwrap_or(0 as *mut std::os::raw::c_void), // idk
             )
         }

@@ -28,9 +28,6 @@ fn main() {
             // bindings for.
             .header("wrapper.h")
             // Include in clang build
-            .clang_arg("-I./submodules/libimobiledevice/include")
-            .clang_arg("-I./submodules/libplist/include")
-            .clang_arg("-I./submodules/libimobiledevice")
             .clang_arg(format!("-I{}", gnutls_path))
             // Tell cargo to invalidate the built crate whenever any of the
             // included header files changed.
@@ -70,7 +67,6 @@ fn main() {
         "cargo:rustc-link-lib={}=imobiledevice-1.0",
         location_determinator
     );
-    println!("cargo:rustc-link-lib={}=plist-2.0", location_determinator);
     println!("cargo:rustc-link-lib={}=usbmuxd-2.0", location_determinator);
     println!(
         "cargo:rustc-link-lib={}=imobiledevice-glue-1.0",

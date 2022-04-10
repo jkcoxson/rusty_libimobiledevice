@@ -4,8 +4,10 @@ use std::os::raw::{c_char, c_uint};
 
 use crate::{
     bindings as unsafe_bindings, error::SbservicesError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService
 };
+
+use plist_plus::Plist;
 
 pub struct SpringboardServicesClient<'a> {
     pub(crate) pointer: unsafe_bindings::sbservices_client_t,
@@ -74,7 +76,7 @@ impl SpringboardServicesClient<'_> {
 
     pub fn set_icon_state(&self, state: Plist) -> Result<(), SbservicesError> {
         let result =
-            unsafe { unsafe_bindings::sbservices_set_icon_state(self.pointer, state.plist_t) }
+            unsafe { unsafe_bindings::sbservices_set_icon_state(self.pointer, state.get_pointer()) }
                 .into();
 
         if result != SbservicesError::Success {

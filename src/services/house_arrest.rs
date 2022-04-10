@@ -2,8 +2,10 @@
 
 use crate::{
     bindings as unsafe_bindings, error::HouseArrestError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService,
 };
+
+use plist_plus::Plist;
 
 pub struct HouseArrest<'a> {
     pub(crate) pointer: unsafe_bindings::house_arrest_client_t,
@@ -51,7 +53,7 @@ impl HouseArrest<'_> {
 
     pub fn send_request(&self, request: Plist) -> Result<(), HouseArrestError> {
         let result =
-            unsafe { unsafe_bindings::house_arrest_send_request(self.pointer, request.plist_t) }
+            unsafe { unsafe_bindings::house_arrest_send_request(self.pointer, request.get_pointer()) }
                 .into();
 
         if result != HouseArrestError::Success {

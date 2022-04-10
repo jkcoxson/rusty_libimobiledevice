@@ -2,8 +2,10 @@
 
 use crate::{
     bindings as unsafe_bindings, error::MisagentError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService, 
 };
+
+use plist_plus::Plist;
 
 pub struct MisagentClient<'a> {
     pub(crate) pointer: unsafe_bindings::misagent_client_t,
@@ -49,7 +51,7 @@ impl MisagentClient<'_> {
 
     pub fn install(&self, profile: Plist) -> Result<(), MisagentError> {
         let result =
-            unsafe { unsafe_bindings::misagent_install(self.pointer, profile.plist_t) }.into();
+            unsafe { unsafe_bindings::misagent_install(self.pointer, profile.get_pointer()) }.into();
         if result != MisagentError::Success {
             return Err(result);
         }

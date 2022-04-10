@@ -4,8 +4,10 @@ use libc::c_uint;
 
 use crate::{
     bindings as unsafe_bindings, error::DiagnosticsRelayError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService,
 };
+
+use plist_plus::Plist;
 
 pub struct DiagnosticsRelay<'a> {
     pub(crate) pointer: unsafe_bindings::diagnostics_relay_client_t,
@@ -120,7 +122,7 @@ impl DiagnosticsRelay<'_> {
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_mobilegestalt(
                 self.pointer,
-                keys.plist_t,
+                keys.get_pointer(),
                 &mut plist,
             )
         }

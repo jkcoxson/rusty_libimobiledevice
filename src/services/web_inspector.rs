@@ -4,8 +4,10 @@ use std::os::raw::c_char;
 
 use crate::{
     bindings as unsafe_bindings, error::WebInspectorError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService
 };
+
+use plist_plus::Plist;
 
 pub struct WebInspectorClient<'a> {
     pub(crate) pointer: unsafe_bindings::webinspector_client_t,
@@ -59,7 +61,7 @@ impl WebInspectorClient<'_> {
 
     pub fn send(&self, data: Plist) -> Result<(), WebInspectorError> {
         let result =
-            unsafe { unsafe_bindings::webinspector_send(self.pointer, data.plist_t) }.into();
+            unsafe { unsafe_bindings::webinspector_send(self.pointer, data.get_pointer()) }.into();
 
         if result != WebInspectorError::Success {
             return Err(result);

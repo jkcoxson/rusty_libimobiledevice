@@ -2,7 +2,9 @@
 
 use std::os::raw::c_char;
 
-use crate::{bindings as unsafe_bindings, error::RestoredError, idevice::Device, plist::Plist};
+use crate::{bindings as unsafe_bindings, error::RestoredError, idevice::Device};
+
+use plist_plus::Plist;
 
 pub struct RestoredClient<'a> {
     pub(crate) pointer: unsafe_bindings::restored_client_t,
@@ -86,7 +88,7 @@ impl RestoredClient<'_> {
         let result = unsafe {
             unsafe_bindings::restored_send(
                 self.pointer,
-                data.plist_t,
+                data.get_pointer(),
             )
         }
         .into();
@@ -126,7 +128,7 @@ impl RestoredClient<'_> {
         let result = unsafe {
             unsafe_bindings::restored_start_restore(
                 self.pointer,
-                options.plist_t,
+                options.get_pointer(),
                 version,
             )
         }

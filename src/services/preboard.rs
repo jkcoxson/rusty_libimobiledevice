@@ -4,8 +4,10 @@ use std::os::raw::c_char;
 
 use crate::{
     bindings as unsafe_bindings, error::PreboardError, idevice::Device,
-    services::lockdownd::LockdowndService, plist::Plist,
+    services::lockdownd::LockdowndService
 };
+
+use plist_plus::Plist;
 
 pub struct PreboardClient<'a> {
     pub(crate) pointer: unsafe_bindings::preboard_client_t,
@@ -52,7 +54,7 @@ impl PreboardClient<'_> {
     }
 
     pub fn send(&self, data: Plist) -> Result<(), PreboardError> {
-        let result = unsafe { unsafe_bindings::preboard_send(self.pointer, data.plist_t) }.into();
+        let result = unsafe { unsafe_bindings::preboard_send(self.pointer, data.get_pointer()) }.into();
 
         if result != PreboardError::Success {
             return Err(result);
@@ -95,7 +97,7 @@ impl PreboardClient<'_> {
         let result = unsafe {
             unsafe_bindings::preboard_create_stashbag(
                 self.pointer,
-                manifest.map(|p| p.plist_t).unwrap_or(std::ptr::null_mut()),
+                manifest.map(|p| p.get_pointer()).unwrap_or(std::ptr::null_mut()),
                 None,
                 std::ptr::null_mut(),
             )
@@ -113,7 +115,7 @@ impl PreboardClient<'_> {
         let result = unsafe {
             unsafe_bindings::preboard_commit_stashbag(
                 self.pointer,
-                manifest.map(|p| p.plist_t).unwrap_or(std::ptr::null_mut()),
+                manifest.map(|p| p.get_pointer()).unwrap_or(std::ptr::null_mut()),
                 None,
                 std::ptr::null_mut(),
             )

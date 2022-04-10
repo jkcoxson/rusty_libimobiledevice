@@ -10,8 +10,9 @@ use crate::{
     error::MobileSyncError,
     idevice::Device,
     services::lockdownd::LockdowndService,
-    plist::{Plist, PlistType},
 };
+
+use plist_plus::{Plist, PlistType};
 
 pub struct MobileSyncClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobilesync_client_t,
@@ -76,7 +77,7 @@ impl MobileSyncClient<'_> {
 
     pub fn send(&self, plist: Plist) -> Result<(), MobileSyncError> {
         let result =
-            unsafe { unsafe_bindings::mobilesync_send(self.pointer, plist.plist_t) }.into();
+            unsafe { unsafe_bindings::mobilesync_send(self.pointer, plist.get_pointer()) }.into();
 
         if result != MobileSyncError::Success {
             return Err(result);
@@ -239,12 +240,12 @@ impl MobileSyncClient<'_> {
         is_last: bool,
         actions: Option<Plist>,
     ) -> Result<(), MobileSyncError> {
-        let actions = actions.map(|x| x.plist_t).unwrap_or(std::ptr::null_mut());
+        let actions = actions.map(|x| x.get_pointer()).unwrap_or(std::ptr::null_mut());
 
         let result = unsafe {
             unsafe_bindings::mobilesync_send_changes(
                 self.pointer,
-                entities.plist_t,
+                entities.get_pointer(),
                 is_last.into(),
                 actions,
             )
@@ -264,7 +265,7 @@ impl MobileSyncClient<'_> {
         }
 
         let result =
-            unsafe { unsafe_bindings::mobilesync_remap_identifiers(self.pointer, &mut mapping.plist_t) }
+            unsafe { unsafe_bindings::mobilesync_remap_identifiers(self.pointer, &mut mapping.get_pointer()) }
                 .into();
 
         if result != MobileSyncError::Success {

@@ -1,9 +1,11 @@
 // jkcoxson
 
 use crate::{
-    bindings as unsafe_bindings, error::CompanionProxyError, idevice::Device, plist::Plist,
+    bindings as unsafe_bindings, error::CompanionProxyError, idevice::Device, 
     services::lockdownd::LockdowndService,
 };
+
+use plist_plus::Plist;
 
 pub struct CompanionProxy<'a> {
     pub(crate) pointer: unsafe_bindings::companion_proxy_client_t,
@@ -53,7 +55,7 @@ impl CompanionProxy<'_> {
 
     pub fn send(&self, message: Plist) -> Result<(), CompanionProxyError> {
         let result =
-            unsafe { unsafe_bindings::companion_proxy_send(self.pointer, message.plist_t) }.into();
+            unsafe { unsafe_bindings::companion_proxy_send(self.pointer, message.get_pointer()) }.into();
         if result != CompanionProxyError::Success {
             return Err(result);
         }
@@ -120,7 +122,7 @@ impl CompanionProxy<'_> {
                 port,
                 service_name.as_ptr() as *const i8,
                 &mut result_port,
-                options.plist_t,
+                options.get_pointer(),
             )
         }
         .into();

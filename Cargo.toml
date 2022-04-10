@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 libc = "*"
 rand = "*"
+plist_plus = { version = "*", path = "../plist_plus", features = [ "static" ] }
 
 [build-dependencies]
 bindgen = "*"
