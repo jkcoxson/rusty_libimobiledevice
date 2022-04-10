@@ -259,7 +259,7 @@ impl MobileSyncClient<'_> {
         Ok(())
     }
 
-    pub fn remap_identifiers(&self, mut mapping: Plist) -> Result<(), MobileSyncError> {
+    pub fn remap_identifiers(&self, mapping: Plist) -> Result<(), MobileSyncError> {
         if mapping.plist_type != PlistType::Array {
             return Err(MobileSyncError::InvalidArg);
         }
