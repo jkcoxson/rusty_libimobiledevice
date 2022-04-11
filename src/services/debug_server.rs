@@ -4,9 +4,7 @@ use std::{convert::TryInto, os::raw::c_char};
 
 use libc::c_int;
 
-use crate::{
-    bindings as unsafe_bindings, debug, error::DebugServerError, idevice::Device,
-};
+use crate::{bindings as unsafe_bindings, debug, error::DebugServerError, idevice::Device};
 
 pub struct DebugServer<'a> {
     pub(crate) pointer: unsafe_bindings::debugserver_client_t,
@@ -21,6 +19,14 @@ pub struct DebugServerCommand {
 }
 
 impl DebugServer<'_> {
+    /// Starts a new debug server on the device
+    /// # Arguments
+    /// * `device` - The device to start the debug server on
+    /// * `label` - The label to use for the debug server
+    /// # Returns
+    /// A debug server struct
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, label: &str) -> Result<Self, DebugServerError> {
         let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
@@ -45,6 +51,13 @@ impl DebugServer<'_> {
         })
     }
 
+    /// Sends a command to the debug server
+    /// # Arguments
+    /// * `data` - The command to send
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn send(&self, data: String) -> Result<(), DebugServerError> {
         let data_c_str = std::ffi::CString::new(data).unwrap();
         let mut sent = 0;
@@ -64,50 +77,59 @@ impl DebugServer<'_> {
         Ok(())
     }
 
-    pub fn recieve_with_timeout(
-        &self,
-        size: u32,
-        timeout: u32,
-    ) -> Result<String, DebugServerError> {
+    /// Receives a command from the debug server with a timeout
+    /// # Arguments
+    /// * `size` - The number of bytes to receive
+    /// * `timeout` - The timeout in milliseconds. If zero, this will be blocking
+    /// # Returns
+    /// The bytes received
+    ///
+    /// ***Verified:*** False
+    pub fn recieve(&self, size: u32, timeout: u32) -> Result<Vec<u8>, DebugServerError> {
         let mut data = vec![0u8; size as usize];
         let mut received = 0;
-        let result = unsafe {
-            unsafe_bindings::debugserver_client_receive_with_timeout(
-                self.pointer,
-                data.as_mut_ptr() as *mut i8,
-                size,
-                &mut received,
-                timeout,
-            )
-        }
-        .into();
-        if result != DebugServerError::Success {
-            return Err(result);
+
+        if timeout == 0 {
+            let result = unsafe {
+                unsafe_bindings::debugserver_client_receive(
+                    self.pointer,
+                    data.as_mut_ptr() as *mut i8,
+                    size,
+                    &mut received,
+                )
+            }
+            .into();
+            if result != DebugServerError::Success {
+                return Err(result);
+            }
+        } else {
+            let result = unsafe {
+                unsafe_bindings::debugserver_client_receive_with_timeout(
+                    self.pointer,
+                    data.as_mut_ptr() as *mut i8,
+                    size,
+                    &mut received,
+                    timeout,
+                )
+            }
+            .into();
+            if result != DebugServerError::Success {
+                return Err(result);
+            }
         }
 
-        Ok(String::from_utf8(data).unwrap())
+        Ok(data[..received as usize].to_vec())
     }
 
-    pub fn recieve(&self, size: u32) -> Result<String, DebugServerError> {
-        let mut data = vec![0u8; size as usize];
-        let mut received = 0;
-        let result = unsafe {
-            unsafe_bindings::debugserver_client_receive(
-                self.pointer,
-                data.as_mut_ptr() as *mut i8,
-                size,
-                &mut received,
-            )
-        }
-        .into();
-        if result != DebugServerError::Success {
-            return Err(result);
-        }
-
-        Ok(String::from_utf8(data).unwrap())
-    }
-
-    pub fn recieve_response(&self) -> Result<String, DebugServerError> {
+    /// Receives a response from the debug server
+    /// Blocks until a response is received
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// The response
+    ///
+    /// ***Verified:*** False
+    pub fn receive_response(&self) -> Result<String, DebugServerError> {
         let mut data = unsafe { std::mem::zeroed() };
         let mut size = 0;
         let result = unsafe {
@@ -125,6 +147,13 @@ impl DebugServer<'_> {
         )
     }
 
+    /// Sets the ack mode of the debug server
+    /// # Arguments
+    /// * `enabled` - Whether to enable ack mode
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn set_ack_mode(&self, enabled: bool) -> Result<(), DebugServerError> {
         let result = unsafe {
             unsafe_bindings::debugserver_client_set_ack_mode(self.pointer, enabled as c_int)
