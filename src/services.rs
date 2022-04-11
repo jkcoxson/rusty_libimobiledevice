@@ -2,7 +2,8 @@
 
 /// Transfers files between host and the iDevice
 pub mod afc;
-/// Usage unknown
+/// A proxy for interoping with devices paired with the iOS device
+/// This includes the Apple Watch
 pub mod companion_proxy;
 /// Usage unknown
 pub mod connection;
@@ -12,7 +13,7 @@ pub mod debug_server;
 pub mod diagnostics_relay;
 /// Relays files from the iOS device to the host
 pub mod file_relay;
-/// A required service for most other services. 
+/// A required service for most other services.
 /// iOS will close other connections if there is no active heartbeat client
 pub mod heartbeat;
 /// iTunes file transfer service
