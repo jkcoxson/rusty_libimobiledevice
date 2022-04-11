@@ -3,7 +3,7 @@
 use std::ffi::CString;
 
 use crate::{
-    bindings as unsafe_bindings, services::connection::DeviceConnection, error::FileRelayError,
+    bindings as unsafe_bindings, connection::DeviceConnection, error::FileRelayError,
     idevice::Device, services::lockdownd::LockdowndService,
 };
 
@@ -108,8 +108,6 @@ impl FileRelay<'_> {
 
         Ok(())
     }
-
-    
 }
 
 pub enum FileRelaySources {

@@ -21,7 +21,16 @@ pub enum DeviceConnectionType {
 }
 
 impl DeviceConnection<'_> {
-    pub fn connect(device: Device, port: u16) -> Result<DeviceConnection<'static>, IdeviceError> {
+    /// Create a connection to an iOS device
+    /// This is NOT a lockdown connection, for things like debugging use a specific service
+    /// # Arguments
+    /// * `device` - The device to create a connection to
+    /// * `port` - The port to connect to
+    /// # Returns
+    /// A handle for the connection
+    ///
+    /// ***Verified:*** False
+    pub fn connect(device: Device, port: u16) -> Result<Self, IdeviceError> {
         let mut to_fill = unsafe { std::mem::zeroed() };
 
         let result =
@@ -36,9 +45,14 @@ impl DeviceConnection<'_> {
             phantom: std::marker::PhantomData,
         })
     }
-    pub fn disconnect(self) -> IdeviceError {
-        unsafe { unsafe_bindings::idevice_disconnect(self.pointer) }.into()
-    }
+
+    /// Sends data to the device
+    /// # Arguments
+    /// * `data` - The data to send
+    /// # Returns
+    /// The number of bytes sent
+    ///
+    /// ***Verified:*** False
     pub fn send(&self, data: Vec<u8>) -> Result<u32, IdeviceError> {
         let mut to_fill = unsafe { std::mem::zeroed() };
         let result = unsafe {
@@ -58,6 +72,14 @@ impl DeviceConnection<'_> {
         Ok(to_fill)
     }
 
+    /// Receives data from the device
+    /// # Arguments
+    /// * `len` - The number of bytes to receive
+    /// * `timeout` - The timeout in milliseconds
+    /// # Returns
+    /// The received data
+    ///
+    /// ***Verified:*** False
     pub fn recieve(&self, len: u32, timeout: u32) -> Result<c_char, IdeviceError> {
         let mut buffer = unsafe { std::mem::zeroed() };
         let mut recieved = unsafe { std::mem::zeroed() };
@@ -90,6 +112,13 @@ impl DeviceConnection<'_> {
         Ok(buffer) // idk if this is correct
     }
 
+    /// Toggles SSL on the connection
+    /// # Arguments
+    /// * `enable` - Whether to enable SSL
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn enable_ssl(&self, enable: bool) -> Result<(), IdeviceError> {
         let result = match enable {
             true => unsafe { unsafe_bindings::idevice_connection_enable_ssl(self.pointer) },
@@ -104,10 +133,18 @@ impl DeviceConnection<'_> {
         Ok(())
     }
 
-    pub fn disable_bypass_ssl(&self, bypass: u8) -> Result<(), IdeviceError> {
-        let result =
-            unsafe { unsafe_bindings::idevice_connection_disable_bypass_ssl(self.pointer, bypass) }
-                .into();
+    /// Bypasses the SSL on the iOS device
+    /// # Arguments
+    /// * `bypass` - Whether to close the connection or not
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn disable_bypass_ssl(&self, bypass: bool) -> Result<(), IdeviceError> {
+        let result = unsafe {
+            unsafe_bindings::idevice_connection_disable_bypass_ssl(self.pointer, bypass as u8)
+        }
+        .into();
 
         if result != IdeviceError::Success {
             return Err(result);
@@ -116,10 +153,23 @@ impl DeviceConnection<'_> {
         Ok(())
     }
 
+    /// Gets the file descriptor of the connection
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// The file descriptor
+    ///
+    /// ***Verified:*** False
     pub fn get_fd(&self) -> i32 {
         let mut to_fill = unsafe { std::mem::zeroed() };
         unsafe { unsafe_bindings::idevice_connection_get_fd(self.pointer, &mut to_fill) };
         to_fill
+    }
+}
+
+impl Drop for DeviceConnection<'_> {
+    fn drop(&mut self) {
+        unsafe { unsafe_bindings::idevice_disconnect(self.pointer) };
     }
 }
 

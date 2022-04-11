@@ -5,8 +5,6 @@ pub mod afc;
 /// A proxy for interoping with devices paired with the iOS device
 /// This includes the Apple Watch
 pub mod companion_proxy;
-/// Usage unknown
-pub mod connection;
 /// Used for debugging applications on the device
 pub mod debug_server;
 /// Relays diagnostic logs from the iOS device to the host
