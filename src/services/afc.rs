@@ -254,6 +254,15 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Seeks for a file or something
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// * `offset` - Unknown
+    /// * `whence` - Unknown
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn file_seek(&self, handle: u64, offset: i64, whence: u8) -> Result<(), AfcError> {
         let result =
             unsafe { unsafe_bindings::afc_file_seek(self.pointer, handle, offset, whence.into()) }
@@ -264,6 +273,13 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Unknown usage
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn file_tell(&self, handle: u64) -> Result<u64, AfcError> {
         let mut position = unsafe { std::mem::zeroed() };
         let result =
@@ -274,6 +290,14 @@ impl AfcClient<'_> {
         Ok(position)
     }
 
+    /// Truncates a file on the iOS device
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// * `length` - The length of which to truncate the file to
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn file_truncate(&self, handle: u64, length: u64) -> Result<(), AfcError> {
         let result =
             unsafe { unsafe_bindings::afc_file_truncate(self.pointer, handle, length) }.into();
@@ -283,6 +307,13 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Removes a path on the iOS device
+    /// # Arguments
+    /// * `path` - The path to the folder that's being removed
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn remove_path(&self, path: String) -> Result<(), AfcError> {
         let path_ptr: *const c_char = path.as_ptr() as *const c_char;
         let result = unsafe { unsafe_bindings::afc_remove_path(self.pointer, path_ptr) }.into();
@@ -292,6 +323,14 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Renames or moves a folder on the iOS device
+    /// # Arguments
+    /// * `old_path` - The path to the folder to rename
+    /// * `new_path` - The destination path
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn rename_path(&self, old_path: String, new_path: String) -> Result<(), AfcError> {
         let old_path_ptr: *const c_char = old_path.as_ptr() as *const c_char;
         let new_path_ptr: *const c_char = new_path.as_ptr() as *const c_char;
@@ -304,6 +343,13 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Creates a directory on the iOS device
+    /// # Arguments
+    /// * `path` - The path to create
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn make_directory(&self, path: String) -> Result<(), AfcError> {
         let path_ptr: *const c_char = path.as_ptr() as *const c_char;
         let result = unsafe { unsafe_bindings::afc_make_directory(self.pointer, path_ptr) }.into();
@@ -313,6 +359,14 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Usage unknown
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// * `length` - Unknown
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn truncate(&self, path: String, length: u64) -> Result<(), AfcError> {
         let path_ptr: *const c_char = path.as_ptr() as *const c_char;
         let result =
@@ -323,14 +377,23 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Creates a symbolic link on the iOS device
+    /// # Arguments
+    /// * `target` - The path to the file/folder being linked
+    /// * `link_type` - The type of link being created
+    /// * `link_path` - The path to place the link
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn make_link(
         &self,
         target: String,
         link_type: LinkType,
-        link_name: String,
+        link_path: String,
     ) -> Result<(), AfcError> {
         let target_ptr: *const c_char = target.as_ptr() as *const c_char;
-        let link_name_ptr: *const c_char = link_name.as_ptr() as *const c_char;
+        let link_name_ptr: *const c_char = link_path.as_ptr() as *const c_char;
         let result = unsafe {
             unsafe_bindings::afc_make_link(
                 self.pointer,
@@ -346,6 +409,14 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Sets the time metadata of a file
+    /// # Arguments
+    /// * `path` - The path to the file
+    /// * `mtime` - The unix epoch time in miliseconds
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn set_file_time(&self, path: String, mtime: u64) -> Result<(), AfcError> {
         let path_ptr: *const c_char = path.as_ptr() as *const c_char;
         let result =
@@ -356,6 +427,13 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Removes a path and the files inside it
+    /// # Arguments
+    /// * `path` - The path to the folder being destroyed
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn remove_path_and_contents(&self, path: String) -> Result<(), AfcError> {
         let path_ptr: *const c_char = path.as_ptr() as *const c_char;
         let result =
@@ -366,6 +444,13 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Gets a specific value for a key on the device's connection
+    /// # Arguments
+    /// * `key` - The key of which to look up
+    /// # Returns
+    /// The info value of the lookup
+    ///
+    /// ***Verified:*** False
     pub fn get_device_info_key(&self, key: String) -> Result<String, AfcError> {
         let key_ptr: *const c_char = key.as_ptr() as *const c_char;
         let mut value_ptr = unsafe { std::mem::zeroed() };
