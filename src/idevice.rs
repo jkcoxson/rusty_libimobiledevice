@@ -18,6 +18,12 @@ use std::os::raw::c_char;
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 /// Get a list of UDIDs
+/// # Arguments
+/// *none*
+/// # Returns
+/// A vector of UDIDs
+///
+/// ***Verified:*** False
 pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
@@ -49,6 +55,12 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
 
 /// Gets all devices detected by usbmuxd
 /// An abstraction that fetches the device list and connects to it
+/// # Arguments
+/// *none*
+/// # Returns
+/// A vector of devices
+///
+/// ***Verified:*** False
 pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
@@ -115,6 +127,13 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     Ok(to_return)
 }
 
+/// Fetches a list of devices, but returns one with the given udid
+/// # Arguments
+/// * `udid` - The udid of the device to return
+/// # Returns
+/// A device struct
+///
+/// ***Verified:*** False
 pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
     let devices = match get_devices() {
         Ok(devices) => devices,
@@ -128,6 +147,13 @@ pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
     Err(error::IdeviceError::NoDevice)
 }
 
+/// Toggles usbmuxd's debug mode
+/// # Arguments
+/// * `debug` - Whether to turn on or off debug mode
+/// # Returns
+/// ()
+///
+/// ***Verified:*** False
 pub fn set_debug(debug: bool) {
     let debug = match debug {
         true => 1,
@@ -150,6 +176,17 @@ unsafe impl Send for Device {}
 unsafe impl Sync for Device {}
 
 impl Device {
+    /// Creates a new device struct from options
+    /// This will sidestep the need for usbmuxd's discovery
+    /// # Arguments
+    /// * `udid` - The udid of the device to connect to
+    /// * `network` - Whether to connect to the device over network or not
+    /// * `ip_addr` - The IP address of the device to connect to
+    /// * `mux_id` - The ID given to the device by a muxer
+    /// # Returns
+    /// A device struct
+    ///
+    /// ***Verified:*** True
     pub fn new(
         udid: String,
         network: bool,
@@ -245,6 +282,11 @@ impl Device {
         Ok(i_private_ptr.into())
     }
 
+    /// Get the raw handle to the device
+    /// # Returns
+    /// The raw handle to the device as a `u32`
+    ///
+    /// ***Verified:*** False
     pub fn get_handle(&self) -> Result<u32, IdeviceError> {
         let mut handle: u32 = 0;
         let result =
@@ -255,6 +297,11 @@ impl Device {
         Ok(handle)
     }
 
+    /// Get the udid of the device
+    /// # Returns
+    /// The udid of the device as a `String`
+    ///
+    /// ***Verified:*** False
     pub fn get_udid(&self) -> String {
         unsafe {
             std::ffi::CStr::from_ptr((*self.pointer).udid)
@@ -263,6 +310,9 @@ impl Device {
         }
     }
 
+    /// Return whether the device is connected via network
+    /// # Returns
+    /// Whether the device is connected via network as a `bool`
     pub fn get_network(&self) -> bool {
         unsafe {
             if (*self.pointer).conn_type == 1 {
@@ -273,6 +323,11 @@ impl Device {
         }
     }
 
+    /// Get the ip address of the device if connected over network
+    /// # Returns
+    /// The ip address of the device
+    ///
+    /// ***Verified:*** False
     pub fn get_ip_address(&self) -> Option<String> {
         if !self.get_network() {
             debug!("Requested an IP address, but device is not a network device");
@@ -306,14 +361,30 @@ impl Device {
         }
     }
 
+    /// Get the class of the device
+    /// # Returns
+    /// The class of the device as a `i32`
+    ///
+    /// ***Verified:*** False
     pub fn get_device_class(&self) -> i32 {
         unsafe { (*self.pointer).device_class }
     }
 
+    /// Get the version of the device
+    /// # Returns
+    /// The version of the device as a `i32`
+    ///
+    /// ***Verified:*** False
     pub fn get_version(&self) -> i32 {
         unsafe { (*self.pointer).version }
     }
 
+    /// Returns the bytes containing the connection data
+    /// This translates to the IP address of the device if connected over network
+    /// # Returns
+    /// The bytes containing the connection data as a `Vec<u8>`
+    ///
+    /// ***Verified:*** False
     pub fn get_conn_data(&self) -> Vec<u8> {
         let data_pointer = unsafe { (*(self.pointer)).conn_data } as *mut u8;
         // Determine how many bytes long the data is
@@ -325,15 +396,34 @@ impl Device {
 
     /// Starts the lockdown service for the device
     /// This allows things like debuggers to be attached
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// A lockdown service for the device
+    ///
+    /// ***Verified:*** False
     pub fn new_lockdownd_client(&self, label: String) -> Result<LockdowndClient, LockdowndError> {
         Ok(LockdowndClient::new(self, label)?)
     }
 
+    /// Starts the heartbeat service for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// A heartbeat service for the device
+    ///
+    /// ***Verified:*** False
     pub fn new_heartbeat_client(&self, label: String) -> Result<HeartbeatClient, HeartbeatError> {
         Ok(HeartbeatClient::new(self, label)?)
     }
 
     /// Creates an image mounter for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// An image mounter service for the device
+    ///
+    /// ***Verified:*** False
     pub fn new_mobile_image_mounter(
         &self,
         service: &LockdowndService,
@@ -364,6 +454,12 @@ impl Device {
     }
 
     /// Creates an instproxy client for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// An instproxy client for the device
+    ///
+    /// ***Verified:*** False
     pub fn new_instproxy_client(
         &self,
         label: String,
@@ -372,6 +468,12 @@ impl Device {
     }
 
     /// Creates a new debug server for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// A debug server for the device
+    ///
+    /// ***Verified:*** False
     pub fn new_debug_server(
         &self,
         label: &str,

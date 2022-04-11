@@ -62,6 +62,13 @@ fn main() {
         location_determinator = "dylib";
     }
 
+    println!("cargo:rustc-link-search=/usr/local/lib");
+    println!("cargo:rustc-link-search=/usr/lib");
+    println!("cargo:rustc-link-search=/opt/homebrew/lib");
+    println!("cargo:rustc-link-search=/usr/local/opt/libimobiledevice/lib");
+    println!("cargo:rustc-link-search=/usr/local/opt/libusbmuxd/lib");
+    println!("cargo:rustc-link-search=/usr/local/opt/libimobiledevice-glue/lib");
+
     // Link libi* deps
     println!(
         "cargo:rustc-link-lib={}=imobiledevice-1.0",

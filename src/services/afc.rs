@@ -7,12 +7,21 @@ use crate::{
     services::house_arrest::HouseArrest, services::lockdownd::LockdowndService,
 };
 
+/// Transfers files between host and the iDevice
 pub struct AfcClient<'a> {
     pub(crate) pointer: unsafe_bindings::afc_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
 impl AfcClient<'_> {
+    /// Creates a new afc service connection to the device
+    /// The use of this function is unknown
+    /// # Arguments
+    /// * `device` - The device to create the service with
+    /// # Returns
+    /// The lockdownd service
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device) -> Result<(Self, LockdowndService), String> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let mut client_pointer = unsafe { std::mem::zeroed() };
@@ -36,11 +45,20 @@ impl AfcClient<'_> {
         ))
     }
 
-    pub fn start_service(&mut self, device: &Device, service_name: &str) -> Result<(), AfcError> {
+    /// Starts an afc service connection to the device
+    /// # Arguments
+    /// * `device` - The device to create the service with
+    /// * `service_name` - The name of the service to start
+    /// # Returns
+    /// An afc service connection
+    ///
+    /// ***Verified:*** False
+    pub fn start_service(device: &Device, service_name: &str) -> Result<Self, AfcError> {
+        let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_client_start_service(
                 device.pointer,
-                &mut self.pointer,
+                &mut pointer,
                 service_name.as_ptr() as *const c_char,
             )
         }
@@ -48,9 +66,19 @@ impl AfcClient<'_> {
         if result != AfcError::Success {
             return Err(result);
         }
-        Ok(())
+        Ok(AfcClient {
+            pointer,
+            phantom: std::marker::PhantomData,
+        })
     }
 
+    /// Get information about the device
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A string containing the device information
+    ///
+    /// ***Verified:*** False
     pub fn get_device_info(&self) -> Result<String, AfcError> {
         let mut info = unsafe { std::mem::zeroed() };
         let mut info_ptr: *mut *mut c_char = &mut info;
@@ -64,6 +92,13 @@ impl AfcClient<'_> {
             .into_owned())
     }
 
+    /// Read a directory on the device
+    /// # Arguments
+    /// * `directory` - The directory to read
+    /// # Returns
+    /// A vector of strings containing the directory contents
+    ///
+    /// ***Verified:*** False
     pub fn read_directory(&self, directory: String) -> Result<String, AfcError> {
         let directory_ptr: *const c_char = directory.as_ptr() as *const c_char;
         let mut entries = unsafe { std::mem::zeroed() };
@@ -80,6 +115,13 @@ impl AfcClient<'_> {
             .into_owned())
     }
 
+    /// Get information about a file on the device
+    /// # Arguments
+    /// * `path` - The path to the file
+    /// # Returns
+    /// A string containing the file information
+    ///
+    /// ***Verified:*** False
     pub fn get_file_info(&self, path: String) -> Result<String, AfcError> {
         let path_ptr: *const c_char = path.as_ptr() as *const c_char;
         let mut info = unsafe { std::mem::zeroed() };
@@ -95,8 +137,16 @@ impl AfcClient<'_> {
             .into_owned())
     }
 
-    pub fn file_open(&self, file_name: String, mode: AfcFileMode) -> Result<u64, AfcError> {
-        let file_name_ptr: *const c_char = file_name.as_ptr() as *const c_char;
+    /// Open a file on the device and return a handle to it
+    /// # Arguments
+    /// * `path` - The path to the file
+    /// * `mode` - The mode to open the file in
+    /// # Returns
+    /// The file handle
+    ///
+    /// ***Verified:*** False
+    pub fn file_open(&self, path: String, mode: AfcFileMode) -> Result<u64, AfcError> {
+        let file_name_ptr: *const c_char = path.as_ptr() as *const c_char;
         let mut handle = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_file_open(self.pointer, file_name_ptr, mode.into(), &mut handle)
@@ -108,6 +158,13 @@ impl AfcClient<'_> {
         Ok(handle)
     }
 
+    /// Closes a file on the device
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// # Returns
+    /// An error code
+    ///
+    /// ***Verified:*** False
     pub fn file_close(&self, handle: u64) -> Result<(), AfcError> {
         let result = unsafe { unsafe_bindings::afc_file_close(self.pointer, handle) }.into();
         if result != AfcError::Success {
@@ -116,6 +173,14 @@ impl AfcClient<'_> {
         Ok(())
     }
 
+    /// Locks a file on the device
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// * `lock_type` - The type of lock to lock the file with
+    /// # Returns
+    /// An error code
+    ///
+    /// ***Verified:*** False
     pub fn file_lock(&self, handle: u64, lock_type: AfcLockOp) -> Result<(), AfcError> {
         let result =
             unsafe { unsafe_bindings::afc_file_lock(self.pointer, handle, lock_type.into()) }
@@ -126,7 +191,15 @@ impl AfcClient<'_> {
         Ok(())
     }
 
-    pub fn file_read(&self, handle: u64, length: u32) -> Result<String, AfcError> {
+    /// Reads out a file from the device
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// * `length` - The length of the data to read
+    /// # Returns
+    /// A vector of bytes containing the data read
+    ///
+    /// ***Verified:*** False
+    pub fn file_read(&self, handle: u64, length: u32) -> Result<Vec<i8>, AfcError> {
         let mut buffer = unsafe { std::mem::zeroed() };
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {
@@ -143,11 +216,25 @@ impl AfcClient<'_> {
             return Err(result);
         }
 
-        Ok(unsafe { CStr::from_ptr(&mut buffer) }
-            .to_string_lossy()
-            .into_owned())
+        let vec = unsafe {
+            Vec::from_raw_parts(
+                buffer as *mut i8,
+                bytes_written as usize,
+                bytes_written as usize,
+            )
+        };
+
+        Ok(vec)
     }
 
+    /// Writes data to a file on the device
+    /// # Arguments
+    /// * `handle` - The handle to the file
+    /// * `data` - The data to write
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn file_write(&self, handle: u64, data: String) -> Result<(), AfcError> {
         let data_ptr: *const c_char = data.as_ptr() as *const c_char;
         let mut bytes_written = unsafe { std::mem::zeroed() };
