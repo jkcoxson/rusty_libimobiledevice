@@ -4,17 +4,26 @@ use std::os::raw::{c_char, c_uint};
 
 use crate::{
     bindings as unsafe_bindings, error::SbservicesError, idevice::Device,
-    services::lockdownd::LockdowndService
+    services::lockdownd::LockdowndService,
 };
 
 use plist_plus::Plist;
 
+/// A service to manage Springboard on iOS
 pub struct SpringboardServicesClient<'a> {
     pub(crate) pointer: unsafe_bindings::sbservices_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
 impl SpringboardServicesClient<'_> {
+    /// Creates a preboard client from a springboard service
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `descriptor` - The lockdown service to connect on
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -32,6 +41,14 @@ impl SpringboardServicesClient<'_> {
         })
     }
 
+    /// Starts a new connection and adds a springboard service client to it
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `label` - The label for the connection
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
     pub fn start_service(device: &Device, label: String) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -53,6 +70,13 @@ impl SpringboardServicesClient<'_> {
         })
     }
 
+    /// Gets the icon states on the device
+    /// # Arguments
+    /// * `format_version` - Usage unknown. Not needed for iOS <4.0
+    /// # Returns
+    /// A plist with the icon state
+    ///
+    /// ***Verified:*** False
     pub fn get_icon_state(&self, format_version: Option<String>) -> Result<Plist, SbservicesError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
@@ -74,10 +98,18 @@ impl SpringboardServicesClient<'_> {
         Ok(plist.into())
     }
 
+    /// Sets the icon state on the homescreen
+    /// # Arguments
+    /// * `state` - The state of the icons as a plist
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn set_icon_state(&self, state: Plist) -> Result<(), SbservicesError> {
-        let result =
-            unsafe { unsafe_bindings::sbservices_set_icon_state(self.pointer, state.get_pointer()) }
-                .into();
+        let result = unsafe {
+            unsafe_bindings::sbservices_set_icon_state(self.pointer, state.get_pointer())
+        }
+        .into();
 
         if result != SbservicesError::Success {
             return Err(result);
@@ -86,7 +118,14 @@ impl SpringboardServicesClient<'_> {
         Ok(())
     }
 
-    pub fn get_icon_png_data(&self, bundle_id: String) -> Result<Vec<i8>, SbservicesError> {
+    /// Get the icon of an app
+    /// # Arguments
+    /// * `bundle_id` - The bundle ID of the app to take the icon from
+    /// # Returns
+    /// A vector of bytes containing the .png
+    ///
+    /// ***Verified:*** False
+    pub fn get_icon_png_data(&self, bundle_id: String) -> Result<Vec<c_char>, SbservicesError> {
         let mut data = std::ptr::null_mut();
         let mut size = 0;
         let result = unsafe {
@@ -111,6 +150,13 @@ impl SpringboardServicesClient<'_> {
         Ok(vec)
     }
 
+    /// Gets the orientation of the device
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// An orientation
+    ///
+    /// ***Verified:*** False
     pub fn get_interface_orientation(&self) -> Result<Orientation, SbservicesError> {
         let mut orientation: c_uint = unsafe { std::mem::zeroed() };
         let result = unsafe {
@@ -125,7 +171,14 @@ impl SpringboardServicesClient<'_> {
         Ok(orientation.into())
     }
 
-    pub fn get_home_screen_wallpaper_pngdata(&self) -> Result<Vec<i8>, SbservicesError> {
+    /// Gets the wallpaper of the homescreen
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A vector of bytes containing the .png
+    ///
+    /// ***Verified:*** False
+    pub fn get_home_screen_wallpaper_pngdata(&self) -> Result<Vec<c_char>, SbservicesError> {
         let mut data = std::ptr::null_mut();
         let mut size = 0;
         let result = unsafe {
@@ -150,6 +203,7 @@ impl SpringboardServicesClient<'_> {
     }
 }
 
+/// A device orientation
 pub enum Orientation {
     Unknown,
     Portrait,

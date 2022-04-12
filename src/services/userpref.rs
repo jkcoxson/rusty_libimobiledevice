@@ -7,6 +7,11 @@ use crate::error::UserPrefError;
 
 use plist_plus::Plist;
 
+/// Read the pair record from usbmuxd into a plist
+/// # Arguments
+/// * `udid` - The UDID of the device to fetch the pairing record of
+/// # Returns
+/// A plist containing the pair record
 pub fn read_pair_record(udid: String) -> Result<Plist, UserPrefError> {
     let udid = CString::new(udid).unwrap();
     let mut to_fill = unsafe { std::mem::zeroed() };

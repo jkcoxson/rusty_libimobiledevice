@@ -4,17 +4,27 @@ use std::os::raw::c_char;
 
 use crate::{
     bindings as unsafe_bindings, error::PreboardError, idevice::Device,
-    services::lockdownd::LockdowndService
+    services::lockdownd::LockdowndService,
 };
 
 use plist_plus::Plist;
 
+/// A service that manages data at the first unlock screen after boot.
+/// Prepare to be boarded!
 pub struct PreboardClient<'a> {
     pub(crate) pointer: unsafe_bindings::preboard_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
 impl PreboardClient<'_> {
+    /// Creates a preboard client from a lockdown service
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `descriptor` - The lockdown service to connect on
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, PreboardError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -32,6 +42,14 @@ impl PreboardClient<'_> {
         })
     }
 
+    /// Starts a new connection and adds a preboard client to it
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `label` - The label for the connection
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
     pub fn start_service(device: &Device, label: String) -> Result<Self, PreboardError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -53,8 +71,16 @@ impl PreboardClient<'_> {
         })
     }
 
+    /// Sends data to the client
+    /// # Arguments
+    /// * `data` - The data to send
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn send(&self, data: Plist) -> Result<(), PreboardError> {
-        let result = unsafe { unsafe_bindings::preboard_send(self.pointer, data.get_pointer()) }.into();
+        let result =
+            unsafe { unsafe_bindings::preboard_send(self.pointer, data.get_pointer()) }.into();
 
         if result != PreboardError::Success {
             return Err(result);
@@ -63,10 +89,24 @@ impl PreboardClient<'_> {
         Ok(())
     }
 
-    pub fn receive(&self) -> Result<Plist, PreboardError> {
+    /// Receives data from the client
+    /// Blocks until a full plist is sent
+    /// # Arguments
+    /// * `timeout` - How long to wait for the data. If 0, this will block indefinitely
+    /// # Returns
+    /// A plist containing the data
+    ///
+    /// ***Verified:*** False
+    pub fn receive(&self, timeout: u32) -> Result<Plist, PreboardError> {
         let mut plist = std::ptr::null_mut();
-        let result = unsafe { unsafe_bindings::preboard_receive(self.pointer, &mut plist) }
-            .into();
+        let result = if timeout == 0 {
+            unsafe { unsafe_bindings::preboard_receive(self.pointer, &mut plist) }.into()
+        } else {
+            unsafe {
+                unsafe_bindings::preboard_receive_with_timeout(self.pointer, &mut plist, timeout)
+            }
+            .into()
+        };
 
         if result != PreboardError::Success {
             return Err(result);
@@ -75,29 +115,18 @@ impl PreboardClient<'_> {
         Ok(plist.into())
     }
 
-    pub fn receive_with_timeout(&self, timeout: u32) -> Result<Plist, PreboardError> {
-        let mut plist = std::ptr::null_mut();
-        let result = unsafe {
-            unsafe_bindings::preboard_receive_with_timeout(
-                self.pointer,
-                &mut plist,
-                timeout,
-            )
-        }
-        .into();
-
-        if result != PreboardError::Success {
-            return Err(result);
-        }
-
-        Ok(plist.into())
-    }
-
+    /// Creates a stashbag on the device
+    /// # Arguments
+    /// * `manifest` - The options to use while creating the stashbag
+    /// # Returns
+    /// *none*
     pub fn create_stashbag(&self, manifest: Option<Plist>) -> Result<(), PreboardError> {
         let result = unsafe {
             unsafe_bindings::preboard_create_stashbag(
                 self.pointer,
-                manifest.map(|p| p.get_pointer()).unwrap_or(std::ptr::null_mut()),
+                manifest
+                    .map(|p| p.get_pointer())
+                    .unwrap_or(std::ptr::null_mut()),
                 None,
                 std::ptr::null_mut(),
             )
@@ -111,11 +140,20 @@ impl PreboardClient<'_> {
         Ok(())
     }
 
+    /// Commands preboard to commit a previously created stashbag
+    /// # Arguments
+    /// * `manifest` - The manifest used for creating the stashbag
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn commit_stashbag(&self, manifest: Option<Plist>) -> Result<(), PreboardError> {
         let result = unsafe {
             unsafe_bindings::preboard_commit_stashbag(
                 self.pointer,
-                manifest.map(|p| p.get_pointer()).unwrap_or(std::ptr::null_mut()),
+                manifest
+                    .map(|p| p.get_pointer())
+                    .unwrap_or(std::ptr::null_mut()),
                 None,
                 std::ptr::null_mut(),
             )

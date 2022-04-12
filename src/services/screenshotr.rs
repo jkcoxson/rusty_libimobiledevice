@@ -13,6 +13,14 @@ pub struct ScreenshotrClient<'a> {
 }
 
 impl ScreenshotrClient<'_> {
+    /// Creates a preboard client from a screenshotr service
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `descriptor` - The lockdown service to connect on
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, descriptor: LockdowndService) -> Result<Self, ScreenshotrError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -34,6 +42,14 @@ impl ScreenshotrClient<'_> {
         })
     }
 
+    /// Starts a new connection and adds a screenshotr client to it
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `label` - The label for the connection
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
     pub fn start_service(device: &Device, label: String) -> Result<Self, ScreenshotrError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
@@ -55,6 +71,13 @@ impl ScreenshotrClient<'_> {
         })
     }
 
+    /// Takes a screenshot on the device
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A vector of bytes containing a .png
+    ///
+    /// ***Verified:*** False
     pub fn take_screenshot(&self) -> Result<Vec<c_char>, ScreenshotrError> {
         let mut data = std::ptr::null_mut();
         let mut size = 0;
