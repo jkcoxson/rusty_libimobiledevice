@@ -1,13 +1,12 @@
 // jkcoxson
 
-use std::{ffi::CString, os::raw::c_char};
+use std::ffi::CString;
 
-use crate::{
-    bindings as unsafe_bindings, debug, error::InstProxyError, idevice::Device,
-};
+use crate::{bindings as unsafe_bindings, debug, error::InstProxyError, idevice::Device};
 
 use plist_plus::Plist;
 
+/// Manages installing, removing and modifying applications on the device
 pub struct InstProxyClient<'a> {
     pub(crate) pointer: unsafe_bindings::instproxy_client_t,
     pub label: String,
@@ -18,6 +17,14 @@ unsafe impl Send for InstProxyClient<'_> {}
 unsafe impl Sync for InstProxyClient<'_> {}
 
 impl InstProxyClient<'_> {
+    /// Starts a new service with house arrest
+    /// # Arguments
+    /// * `device` - The device to create the sevice with
+    /// * `label` - The label to give the connection
+    /// # Returns
+    /// A struct containing the handle to the service
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, label: String) -> Result<Self, InstProxyError> {
         let mut instproxy_client = unsafe { std::mem::zeroed() };
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
@@ -42,6 +49,13 @@ impl InstProxyClient<'_> {
         })
     }
 
+    /// Lists installed applications on the device
+    /// # Arguments
+    /// * `option` - The browse options to use
+    /// # Returns
+    /// A plist with a list of applications
+    ///
+    /// ***Verified:*** False
     pub fn browse(&self, option: BrowseOption) -> Result<Plist, InstProxyError> {
         let mut plist = std::ptr::null_mut();
 
@@ -52,7 +66,11 @@ impl InstProxyClient<'_> {
         } else {
             let option_plist: Plist = option.into();
             unsafe {
-                unsafe_bindings::instproxy_browse(self.pointer, option_plist.get_pointer(), &mut plist)
+                unsafe_bindings::instproxy_browse(
+                    self.pointer,
+                    option_plist.get_pointer(),
+                    &mut plist,
+                )
             }
         }
         .into();
@@ -64,38 +82,46 @@ impl InstProxyClient<'_> {
         Ok(plist.into())
     }
 
-    pub fn options_new() -> Plist {
-        debug!("Generating new options plist");
-        unsafe { unsafe_bindings::instproxy_client_options_new() }.into() // insert sunglasses emoji
-    }
-
-    /// A rough translation of what I think the C library does.
-    /// Rust doesn't support function overloading...
-    pub fn options_add(options: &mut Plist, args: Vec<(String, Plist)>) {
-        for (key, value) in args {
-            options.dict_set_item(&key, value).unwrap();
-        }
-    }
-
-    /// A rough translation of what I think the C library does.
-    /// Rust doesn't support function overloading...
-    pub fn options_set_return_attributes(options: &mut Plist, args: Vec<String>) {
+    /// Creates a Plist containing return attributes for lookup
+    /// # Arguments
+    /// * `options` - The options for lookup
+    /// * `args` - The items to return in the lookup
+    /// # Returns
+    /// A plist containing the apps found
+    ///
+    /// ***Verified:*** False
+    pub fn create_return_attributes(options: Vec<(String, Plist)>, args: Vec<String>) -> Plist {
         debug!("Setting return attributes");
+        let mut pointer: Plist = unsafe { unsafe_bindings::instproxy_client_options_new() }.into();
+
+        for (key, value) in options {
+            pointer.dict_set_item(&key, value).unwrap();
+        }
+
         let mut return_attributes = Plist::new_array();
         for i in args {
             let t = Plist::new_string(&i);
             return_attributes.array_append_item(t).unwrap();
         }
-        match options.dict_insert_item("ReturnAttributes", return_attributes) {
-            Ok(_) => {}
-            Err(_) => panic!("It's brokey!"),
+        match pointer.dict_insert_item("ReturnAttributes", return_attributes) {
+            _ => {}
         };
+
+        pointer
     }
 
+    /// Looks up information about apps on the device
+    /// # Arguments
+    /// * `app_ids` - The bundle ID's of apps to lookup information about
+    /// * `client_options` - A plist containing options for the lookup. Create with `create_return_attributes`
+    /// # Returns
+    /// A plist with the lookup results
+    ///
+    /// ***Verified:*** False
     pub fn lookup(
         &self,
         app_ids: Vec<String>,
-        client_options: Plist,
+        client_options: Option<Plist>,
     ) -> Result<Plist, InstProxyError> {
         // Convert vector of strings to a slice
         let cstrings = app_ids
@@ -109,13 +135,22 @@ impl InstProxyClient<'_> {
             cstring_pointers_ptr = std::ptr::null_mut();
         }
 
+        let opt_ptr = if client_options.is_some() {
+            let client_options = client_options.unwrap();
+            let ptr = client_options.get_pointer();
+            client_options.false_drop();
+            ptr
+        } else {
+            std::ptr::null_mut()
+        };
+
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         debug!("Instproxy lookup");
         let result = unsafe {
             unsafe_bindings::instproxy_lookup(
                 self.pointer,
                 cstring_pointers_ptr,
-                client_options.get_pointer(),
+                opt_ptr,
                 &mut res_plist,
             )
         }
@@ -124,24 +159,39 @@ impl InstProxyClient<'_> {
             return Err(result);
         }
 
-        // todo make this not a hack (which means it'll never happen)
-        // This is because when the default plist impl drop fires, it will segfault on this specific plist type
-        debug!("Hack dropping the options");
-        unsafe { unsafe_bindings::instproxy_client_options_free(client_options.get_pointer()) };
-        std::mem::forget(client_options);
+        unsafe { unsafe_bindings::instproxy_client_options_free(opt_ptr) };
 
         debug!("Instproxy lookup done");
         Ok(res_plist.into())
     }
 
-    pub fn install(&self, pkg_path: String, client_options: Plist) -> Result<(), InstProxyError> {
-        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+    /// Installs a package on the device
+    /// # Arguments
+    /// * `pkg_path` - The path to the .ipa or other package bundle
+    /// * `client_options` - The options in a plist dictionary for install
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn install(
+        &self,
+        pkg_path: String,
+        client_options: Option<Plist>,
+    ) -> Result<(), InstProxyError> {
         debug!("Instproxy install");
+        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::instproxy_install(
                 self.pointer,
                 pkg_path_c_str.as_ptr(),
-                client_options.get_pointer(),
+                ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -154,14 +204,33 @@ impl InstProxyClient<'_> {
         Ok(())
     }
 
-    pub fn upgrade(&self, pkg_path: String, client_options: Plist) -> Result<(), InstProxyError> {
-        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+    /// Updates a package on the device
+    /// # Arguments
+    /// * `pkg_path` - The path to the new package
+    /// * `client_options` - The options in a plist dictionary for install
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn upgrade(
+        &self,
+        pkg_path: String,
+        client_options: Option<Plist>,
+    ) -> Result<(), InstProxyError> {
         debug!("Instproxy upgrade");
+        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::instproxy_upgrade(
                 self.pointer,
                 pkg_path_c_str.as_ptr(),
-                client_options.get_pointer(),
+                ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -174,14 +243,33 @@ impl InstProxyClient<'_> {
         Ok(())
     }
 
-    pub fn uninstall(&self, app_id: String, client_options: Plist) -> Result<(), InstProxyError> {
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+    /// Uninstalls an app on the device
+    /// # Arguments
+    /// * `app_id` - The bundle ID of the app to uninstall
+    /// * `client_options` - The options in a plist dictionary for uninstall
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn uninstall(
+        &self,
+        app_id: String,
+        client_options: Option<Plist>,
+    ) -> Result<(), InstProxyError> {
         debug!("Instproxy uninstall");
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::instproxy_uninstall(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.get_pointer(),
+                ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -194,15 +282,24 @@ impl InstProxyClient<'_> {
         Ok(())
     }
 
-    pub fn lookup_archives(&self, client_options: Plist) -> Result<Plist, InstProxyError> {
+    /// Gets a list of all the archives on the device
+    /// # Arguments
+    /// * `client_options` - Currently no known use for this, pass None if unsure.
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn lookup_archives(&self, client_options: Option<Plist>) -> Result<Plist, InstProxyError> {
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         debug!("Instproxy lookup archives");
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
         let result = unsafe {
-            unsafe_bindings::instproxy_lookup_archives(
-                self.pointer,
-                client_options.get_pointer(),
-                &mut res_plist,
-            )
+            unsafe_bindings::instproxy_lookup_archives(self.pointer, ptr, &mut res_plist)
         }
         .into();
         if result != InstProxyError::Success {
@@ -211,14 +308,34 @@ impl InstProxyClient<'_> {
         Ok(res_plist.into())
     }
 
-    pub fn archive(&self, app_id: String, client_options: Plist) -> Result<(), InstProxyError> {
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+    /// Creates an archive of the app
+    /// # Arguments
+    /// * `app_id` - The bundle ID of the app to archive
+    /// * `client_options` - The options for archive.
+    ///     Current known options for plist dictionaries are `SkipUninstall: bool` and `ArchiveType: "ApplicationOnly"`
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn archive(
+        &self,
+        app_id: String,
+        client_options: Option<Plist>,
+    ) -> Result<(), InstProxyError> {
         debug!("Instproxy archive");
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::instproxy_archive(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.get_pointer(),
+                ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -230,14 +347,33 @@ impl InstProxyClient<'_> {
         Ok(())
     }
 
-    pub fn restore(&self, app_id: String, client_options: Plist) -> Result<(), InstProxyError> {
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+    /// Restore an archived application back to the device
+    /// # Arguments
+    /// * `app_id` - The bundle ID of the app to restore
+    /// * `client_options` - The options for restoring the app
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn restore(
+        &self,
+        app_id: String,
+        client_options: Option<Plist>,
+    ) -> Result<(), InstProxyError> {
         debug!("Instproxy restore");
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::instproxy_restore(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.get_pointer(),
+                ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -249,18 +385,33 @@ impl InstProxyClient<'_> {
         Ok(())
     }
 
+    /// Removes an archive from the device
+    /// # Arguments
+    /// * `app_id` - The app bundle ID of the archive to remove
+    /// * `client_options` - The options to use for removal. There are no known options, so pass None if unsure.
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn remove_archive(
         &self,
         app_id: String,
-        client_options: Plist,
+        client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
         debug!("Instproxy remove archive");
+        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::instproxy_remove_archive(
                 self.pointer,
                 app_id_c_str.as_ptr(),
-                client_options.get_pointer(),
+                ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
             )
@@ -272,23 +423,43 @@ impl InstProxyClient<'_> {
         Ok(())
     }
 
+    /// Check if the device has certain capabilities
+    /// # Arguments
+    /// * `capabilities` - A list of capabilities to check
+    /// * `client_options` - The options for checking. There are no known uses of this, pass None.
+    /// # Returns
+    /// A plist with the results of the check
+    ///
+    /// ***Verified:*** False
     pub fn check_capabilities_match(
         &self,
         capabilities: Vec<String>,
-        client_options: Plist,
+        client_options: Option<Plist>,
     ) -> Result<Plist, InstProxyError> {
         let mut res_plist = unsafe { std::mem::zeroed() };
         let mut capabilities_c_str = vec![];
         for capability in capabilities {
             capabilities_c_str.push(std::ffi::CString::new(capability).unwrap());
         }
-        let capabilities_c_str_ptr = capabilities_c_str.as_mut_ptr();
-        let cap_ptr_ptr = capabilities_c_str_ptr as *mut *const c_char;
+
+        let mut capabilities_c_str_ptrs = vec![];
+        for capability in capabilities_c_str {
+            capabilities_c_str_ptrs.push(capability.as_ptr())
+        }
+        capabilities_c_str_ptrs.push(std::ptr::null());
+
+        let ptr = if client_options.is_some() {
+            client_options.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
+        let cap_ptr = capabilities_c_str_ptrs.as_mut_ptr();
         let result = unsafe {
             unsafe_bindings::instproxy_check_capabilities_match(
                 self.pointer,
-                cap_ptr_ptr,
-                client_options.get_pointer(),
+                cap_ptr,
+                ptr,
                 &mut res_plist,
             )
         }
@@ -299,6 +470,13 @@ impl InstProxyClient<'_> {
         Ok(res_plist.into())
     }
 
+    /// Gets the path for an app's bundle ID
+    /// # Arguments
+    /// * `bundle_identifier` - The bundle identifier of the app
+    /// # Returns
+    /// The path as a string
+    ///
+    /// ***Verified:*** False
     pub fn get_path_for_bundle_identifier(
         &self,
         bundle_identifier: String,
@@ -328,6 +506,7 @@ impl InstProxyClient<'_> {
     }
 }
 
+/// The options that can be used when browsing installed apps
 #[derive(PartialEq, Debug)]
 pub enum BrowseOption {
     System,
