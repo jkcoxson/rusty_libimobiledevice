@@ -5,9 +5,11 @@ Rusty Libimobiledevice - An ergonomic library to communicate with iOS devices.
 **Tested level: 0.00%** - Contribute to this library by battle testing methods!
 All functions should be tested for possible segfaults and memory leaks.
 
+If you see the `Verified: False`, that means that function needs your help to make sure it's safe.
+Open a PR with your testing code to change a function's status.
+
 ## Building
 Build or install the following packages:
-- libplist
 - libusbmuxd
 - libimobiledevice
 - libimobiledevice-glue
@@ -105,4 +107,3 @@ fn print_apps(udid: String) {
 }
 ```
 
-Plist will be moving to its own library soon for ease of use

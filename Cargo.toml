@@ -1,18 +1,25 @@
 [package]
 name = "rusty_libimobiledevice"
-version = "0.1.1"
-edition = "2018"
+version = "0.1.2"
+edition = "2021"
+authors = [ "Jackson Coxson" ]
+description = "An ergonomic library to communicate with iOS devices"
+homepage = "https://github.com/jkcoxson/rusty_libimobiledevice"
+repository = "https://github.com/jkcoxson/rusty_libimobiledevice"
+license = "LGPL-2.1-or-later"
+keywords = [ "libimobiledevice", "ios", "lockdown", "developer-tools" ]
+readme = "README.md"
+documentation = "https://docs.rs/rusty_libimobiledevice"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libc = "*"
-rand = "*"
-plist_plus = { version = "*", features = [ "static" ] }
+libc = "0.2.14"
+plist_plus = { version = "0.1.0", features = [ "static" ] }
 
 [build-dependencies]
-bindgen = "*"
-cc  = "*"
+bindgen = "0.59.2"
+cc  = "1.0.73"
 
 [features]
 pls-generate = []
