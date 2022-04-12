@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::os::raw::{c_char, c_int};
+use std::os::raw::{c_char, c_int, c_uint};
 
 use crate::{
     bindings as unsafe_bindings,
@@ -11,18 +11,28 @@ use crate::{
 
 use plist_plus::Plist;
 
+/// Manages backups on older devices
 /// This is only for old versions of iOS, you are probably looking for MobileBackup2
 pub struct MobileBackupClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobilebackup_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
+/// Manages backups on new devices
 pub struct MobileBackup2Client<'a> {
     pub(crate) pointer: unsafe_bindings::mobilebackup2_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
 impl MobileBackupClient<'_> {
+    /// Creates a new mobile backup service connection to the device
+    /// The use of this function is unknown
+    /// # Arguments
+    /// * `device` - The device to create the service with
+    /// # Returns
+    /// The lockdownd service
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, service: LockdowndService) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
 
@@ -41,6 +51,14 @@ impl MobileBackupClient<'_> {
         })
     }
 
+    /// Starts an afc service connection to the device
+    /// # Arguments
+    /// * `device` - The device to create the service with
+    /// * `service_name` - The name of the service to start
+    /// # Returns
+    /// An afc service connection
+    ///
+    /// ***Verified:*** False
     pub fn start_service(device: &Device, label: String) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
 
@@ -63,7 +81,15 @@ impl MobileBackupClient<'_> {
         })
     }
 
-    pub fn recieve(&self) -> Result<Plist, MobileBackupError> {
+    /// Receives a plist from the service
+    /// Blocks until a full plist is received
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A plist containing the message
+    ///
+    /// ***Verified:*** False
+    pub fn receive(&self) -> Result<Plist, MobileBackupError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
         let result =
@@ -76,9 +102,17 @@ impl MobileBackupClient<'_> {
         Ok(plist.into())
     }
 
-    pub fn send(&self, plist: &Plist) -> Result<(), MobileBackupError> {
+    /// Sends a message to the service
+    /// # Arguments
+    /// * `plist` - The message to send as a plist
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn send(&self, message: Plist) -> Result<(), MobileBackupError> {
         let result =
-            unsafe { unsafe_bindings::mobilebackup_send(self.pointer, plist.get_pointer()) }.into();
+            unsafe { unsafe_bindings::mobilebackup_send(self.pointer, message.get_pointer()) }
+                .into();
 
         if result != MobileBackupError::Success {
             return Err(result);
@@ -87,16 +121,27 @@ impl MobileBackupClient<'_> {
         Ok(())
     }
 
+    /// Request a backup from the device
+    /// # Arguments
+    /// * `manifest` - The backup manifest containing the backup state and last backup time. For a first backup, pass None.
+    /// * `base_path` - The path to use as the backup's base path, usually '/'.
+    /// * `backup_verion` - The version of backup to use. The latest version is 1.6.
     pub fn request_backup(
         &self,
-        manifest: Plist,
+        manifest: Option<Plist>,
         base_path: String,
         backup_version: String,
     ) -> Result<(), MobileBackupError> {
+        let ptr = if manifest.is_some() {
+            manifest.unwrap().get_pointer()
+        } else {
+            std::ptr::null_mut()
+        };
+
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_backup(
                 self.pointer,
-                manifest.get_pointer(),
+                ptr,
                 base_path.as_ptr() as *const std::os::raw::c_char,
                 backup_version.as_ptr() as *const std::os::raw::c_char,
             )
@@ -110,6 +155,13 @@ impl MobileBackupClient<'_> {
         Ok(())
     }
 
+    /// Sends a confirmation that the backup file was received
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn send_backup_file_received(&self) -> Result<(), MobileBackupError> {
         let result =
             unsafe { unsafe_bindings::mobilebackup_send_backup_file_received(self.pointer) }.into();
@@ -121,17 +173,22 @@ impl MobileBackupClient<'_> {
         Ok(())
     }
 
+    /// Request the device restore a backup
+    /// # Arguments
+    /// * `manifest` - The backup manifest containing the backup version
+    /// * `flags` - The flag to choose for restoring
+    /// * `backup_version` - The backup version to use. The latest known version is 1.6.
     pub fn request_restore(
         &self,
         manifest: Plist,
-        flags: unsafe_bindings::mobilebackup_flags_t,
+        flags: MobileBackupRestoreFlags,
         backup_version: String,
     ) -> Result<(), MobileBackupError> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_restore(
                 self.pointer,
                 manifest.get_pointer(),
-                flags,
+                flags.into(),
                 backup_version.as_ptr() as *const std::os::raw::c_char,
             )
         }
@@ -144,6 +201,14 @@ impl MobileBackupClient<'_> {
         Ok(())
     }
 
+    /// Receive a confirmation that the restore file was received
+    /// Blocks until the full plist is received
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A plist with the confirmation
+    ///
+    /// ***Verified:*** False
     pub fn receive_restore_file_received(&self) -> Result<Plist, MobileBackupError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
@@ -159,6 +224,14 @@ impl MobileBackupClient<'_> {
         Ok(plist.into())
     }
 
+    /// Receive a confirmation that the restore file was received
+    /// Blocks until the full plist is received
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A plist with the confirmation
+    ///
+    /// ***Verified:*** False
     pub fn receive_restore_application_received(&self) -> Result<Plist, MobileBackupError> {
         let mut plist = unsafe { std::mem::zeroed() };
 
@@ -177,6 +250,14 @@ impl MobileBackupClient<'_> {
         Ok(plist.into())
     }
 
+    /// Tells the device that the restore is complete.
+    /// The device will close the connection and reboot.
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn send_restore_complete(&self) -> Result<(), MobileBackupError> {
         let result =
             unsafe { unsafe_bindings::mobilebackup_send_restore_complete(self.pointer) }.into();
@@ -188,6 +269,13 @@ impl MobileBackupClient<'_> {
         Ok(())
     }
 
+    /// Sends an error message to the device
+    /// # Arguments
+    /// * `error` - The error message to show on the device
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn send_error(&self, error: String) -> Result<(), MobileBackupError> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_send_error(
@@ -206,6 +294,14 @@ impl MobileBackupClient<'_> {
 }
 
 impl MobileBackup2Client<'_> {
+    /// Creates a new mobile backup service connection to the device
+    /// The use of this function is unknown
+    /// # Arguments
+    /// * `device` - The device to create the service with
+    /// # Returns
+    /// The lockdownd service
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, service: LockdowndService) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };
 
@@ -224,6 +320,14 @@ impl MobileBackup2Client<'_> {
         })
     }
 
+    /// Starts an afc service connection to the device
+    /// # Arguments
+    /// * `device` - The device to create the service with
+    /// * `service_name` - The name of the service to start
+    /// # Returns
+    /// An afc service connection
+    ///
+    /// ***Verified:*** False
     pub fn start_service(device: &Device, label: String) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };
 
@@ -246,13 +350,26 @@ impl MobileBackup2Client<'_> {
         })
     }
 
-    pub fn send_message(&self, message: String, options: Plist) -> Result<(), MobileBackup2Error> {
+    /// Sends a message to the service
+    /// # Arguments
+    /// * `message` - The message to send
+    /// * `options` - The options to send the message with
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn send_message(
+        &self,
+        message: Option<String>,
+        options: Plist,
+    ) -> Result<(), MobileBackup2Error> {
+        let ptr = if message.is_some() {
+            message.unwrap().as_ptr() as *const c_char
+        } else {
+            std::ptr::null()
+        };
         let result = unsafe {
-            unsafe_bindings::mobilebackup2_send_message(
-                self.pointer,
-                message.as_ptr() as *const std::os::raw::c_char,
-                options.get_pointer(),
-            )
+            unsafe_bindings::mobilebackup2_send_message(self.pointer, ptr, options.get_pointer())
         }
         .into();
 
@@ -263,6 +380,13 @@ impl MobileBackup2Client<'_> {
         Ok(())
     }
 
+    /// Receives a message from the service
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// Receives the DL* string and the message
+    ///
+    /// ***Verified:*** False
     pub fn receive_message(&self) -> Result<(String, Plist), MobileBackup2Error> {
         let mut message = unsafe { std::mem::zeroed() };
         let mut options = unsafe { std::mem::zeroed() };
@@ -284,6 +408,13 @@ impl MobileBackup2Client<'_> {
         ))
     }
 
+    /// Sends raw data through the service connection
+    /// # Arguments
+    /// * `data` - A vector of bytes to send
+    /// # Returns
+    /// The bytes sent
+    ///
+    /// ***Verified:*** False
     pub fn send_raw(&self, data: Vec<u8>) -> Result<u32, MobileBackup2Error> {
         let mut sent = 0;
         let result = unsafe {
@@ -303,6 +434,13 @@ impl MobileBackup2Client<'_> {
         Ok(sent)
     }
 
+    /// Receives raw data from the connection
+    /// # Arguments
+    /// * `len` - How many bytes to receive
+    /// # Returns
+    /// A vector of bytes containing the received data
+    ///
+    /// ***Verified:*** False
     pub fn recieve_raw(&self, len: u32) -> Result<Vec<i8>, MobileBackup2Error> {
         let mut data = unsafe { std::mem::zeroed() };
         let mut received = 0;
@@ -319,6 +457,13 @@ impl MobileBackup2Client<'_> {
         Ok(unsafe { std::slice::from_raw_parts(&data as *const i8, received as usize).to_vec() })
     }
 
+    /// Exchanges version with the service
+    /// # Arguments
+    /// * `versions` - The versions to exchange
+    /// # Returns
+    /// * The version of the iOS device
+    ///
+    /// ***Verified:*** False
     pub fn version_exchange(&self, mut versions: Vec<f64>) -> Result<f64, MobileBackup2Error> {
         let mut version = 0.0;
         let result = unsafe {
@@ -338,6 +483,15 @@ impl MobileBackup2Client<'_> {
         Ok(version)
     }
 
+    /// Sends a request to the service
+    /// # Arguments
+    /// * `request` - The type of request to send
+    /// * `target` - The UDID of the target device
+    /// * `source` - The UDID of the source device
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn send_request(
         &self,
         request: MobileBackupRequest,
@@ -363,6 +517,11 @@ impl MobileBackup2Client<'_> {
         Ok(())
     }
 
+    /// Sends a status response to the service
+    /// # Arguments
+    /// * `code` - The status code to send
+    /// * `status_string` - The string for the status
+    /// * `status_plist` - The plist containing status data
     pub fn send_status_response(
         &self,
         code: c_int,
@@ -396,6 +555,26 @@ pub enum MobileBackupRequest {
     Restore,
     Info,
     List,
+}
+
+/// Choose what to restore
+pub enum MobileBackupRestoreFlags {
+    /// Show a restore screen on the device
+    Springboard,
+    /// Don't overwrite any settings
+    Settings,
+    /// Don't overwrite the cameraroll
+    CameraRoll,
+}
+
+impl From<MobileBackupRestoreFlags> for c_uint {
+    fn from(flag: MobileBackupRestoreFlags) -> Self {
+        match flag {
+            MobileBackupRestoreFlags::Springboard => 1,
+            MobileBackupRestoreFlags::Settings => 2,
+            MobileBackupRestoreFlags::CameraRoll => 4,
+        }
+    }
 }
 
 impl From<MobileBackupRequest> for *const c_char {
