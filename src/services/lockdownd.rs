@@ -10,12 +10,15 @@ use crate::idevice::Device;
 
 use plist_plus::Plist;
 
+/// A jumping point for other services.
+/// Lockdownd is in charge of starting other services and opening ports for them.
+/// Lockdown can be used for simple data transactions, but most requests will be done through other services.
 pub struct LockdowndClient<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_client_t,
-    pub label: String,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
+/// A pair record for lockdown
 pub struct LockdowndPairRecord {
     pub device_certificate: String,
     pub host_certificate: String,
@@ -29,7 +32,6 @@ unsafe impl Sync for LockdowndClient<'_> {}
 
 pub struct LockdowndService<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_service_descriptor_t,
-    pub label: String,
     pub port: u32,
     pub(crate) phantom: std::marker::PhantomData<&'a LockdowndClient<'a>>,
 }
@@ -38,11 +40,19 @@ unsafe impl Send for LockdowndService<'_> {}
 unsafe impl Sync for LockdowndService<'_> {}
 
 impl LockdowndClient<'_> {
+    /// Creates a new lockdown service and starts initial handshake
+    /// # Arguments
+    /// * `device` - The device to start the service on
+    /// * `label` - The label to give the connection
+    /// # Returns
+    /// A struct containing the handle to the service
+    ///
+    /// ***Verified:*** False
     pub fn new(device: &Device, label: String) -> Result<Self, LockdowndError> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
-        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
+        let label_c_str = std::ffi::CString::new(label).unwrap();
 
         debug!("Creating lockdownd client for {}", device.get_udid());
         let result = unsafe {
@@ -60,12 +70,18 @@ impl LockdowndClient<'_> {
 
         Ok(LockdowndClient {
             pointer: unsafe { *client_ptr },
-            label: label,
             phantom: std::marker::PhantomData,
         })
     }
 
-    /// Gets a value from the device
+    /// Gets a preference value from the lockdown service
+    /// # Arguments
+    /// * `key` - The key of the value to fetch. Pass "" to query all keys.
+    /// * `domain` - The domain that the value exists in. Pass "" to query the gloabl domain.
+    /// # Returns
+    /// A plist containing the value
+    ///
+    /// ***Verified:*** False
     pub fn get_value(&self, key: String, domain: String) -> Result<Plist, LockdowndError> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
@@ -95,10 +111,19 @@ impl LockdowndClient<'_> {
         Ok(value.into())
     }
 
+    /// Sets a preference value on the device
+    /// # Arguments
+    /// * `key` - The key of the value to set
+    /// * `domain` - The domain to set the value in. Pass "" for the global domain.
+    /// * `value` - The value to set
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:***
     pub fn set_value(
         &self,
-        domain: String,
         key: String,
+        domain: String,
         value: Plist,
     ) -> Result<(), LockdowndError> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
@@ -132,7 +157,15 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
-    pub fn remove_value(&self, domain: String, key: String) -> Result<(), LockdowndError> {
+    /// Removes a preference value from the device
+    /// # Arguments
+    /// * `key` - The key to remove. Pass "" to remove all keys in the current domain.
+    /// * 'domain' - The domain to remove the key in. Pass "" for the global domain.
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn remove_value(&self, key: String, domain: String) -> Result<(), LockdowndError> {
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()
@@ -159,41 +192,22 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
-    pub fn start_service(&mut self, label: String) -> Result<LockdowndService, LockdowndError> {
-        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
-        let label_c_str = if label == "".to_string() {
-            std::ptr::null()
-        } else {
-            label_c_str.as_ptr()
-        };
-
-        let mut service: unsafe_bindings::lockdownd_service_descriptor_t =
-            unsafe { std::mem::zeroed() };
-
-        debug!("Starting lockdown service");
-        let result = unsafe {
-            unsafe_bindings::lockdownd_start_service(self.pointer, label_c_str, &mut service)
-        }
-        .into();
-
-        if result != LockdowndError::Success {
-            return Err(result);
-        }
-
-        Ok(LockdowndService {
-            pointer: service,
-            label: label,
-            port: 0,
-            phantom: std::marker::PhantomData,
-        })
-    }
-
-    pub fn start_service_with_escrow_bag(
+    /// Commands lockdownd to start a service.
+    /// This will not have a Rust type, and will only be able to use basic methods.
+    /// # Arguments
+    /// * `service` - The identifier of the service to start
+    /// * `escrow_bag` - Whether to start the service with escrow_bag
+    /// # Returns
+    /// A raw lockdownd service
+    ///
+    /// ***Verified:*** False
+    pub fn start_service(
         &mut self,
-        label: String,
+        service: String,
+        escrow_bag: bool,
     ) -> Result<LockdowndService, LockdowndError> {
-        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
-        let label_c_str = if label == "".to_string() {
+        let label_c_str = std::ffi::CString::new(service.clone()).unwrap();
+        let label_c_str = if service == "".to_string() {
             std::ptr::null()
         } else {
             label_c_str.as_ptr()
@@ -203,14 +217,21 @@ impl LockdowndClient<'_> {
             unsafe { std::mem::zeroed() };
 
         debug!("Starting lockdown service");
-        let result = unsafe {
-            unsafe_bindings::lockdownd_start_service_with_escrow_bag(
-                self.pointer,
-                label_c_str,
-                &mut service,
-            )
-        }
-        .into();
+        let result = if escrow_bag {
+            unsafe {
+                unsafe_bindings::lockdownd_start_service(self.pointer, label_c_str, &mut service)
+            }
+            .into()
+        } else {
+            unsafe {
+                unsafe_bindings::lockdownd_start_service_with_escrow_bag(
+                    self.pointer,
+                    label_c_str,
+                    &mut service,
+                )
+            }
+            .into()
+        };
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -218,12 +239,18 @@ impl LockdowndClient<'_> {
 
         Ok(LockdowndService {
             pointer: service,
-            label: label,
             port: 0,
             phantom: std::marker::PhantomData,
         })
     }
 
+    /// Opens a session with lockdownd and switches to SSL if requested by the device
+    /// # Arguments
+    /// * `host_id` - The ID of the host
+    /// # Returns
+    /// The session ID and whether SSL was enabled
+    ///
+    /// ***Verified:*** False
     pub fn start_session(&self, host_id: String) -> Result<(String, bool), LockdowndError> {
         let host_id_c_str = std::ffi::CString::new(host_id.clone()).unwrap();
         let mut session_id = unsafe { std::mem::zeroed() };
@@ -253,6 +280,13 @@ impl LockdowndClient<'_> {
         }
     }
 
+    /// Stops a lockdownd session started by `start_session`
+    /// # Arguments
+    /// * `session` - The ID of the session created to stop
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn stop_session(&self, session_id: String) -> Result<(), LockdowndError> {
         let session_id_c_str = std::ffi::CString::new(session_id.clone()).unwrap();
         let session_id_c_str = if session_id == "".to_string() {
@@ -272,9 +306,16 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
-    pub fn send(&self, plist: Plist) -> Result<(), LockdowndError> {
+    /// Sends a message to lockdownd
+    /// # Arguments
+    /// * `message` - The message to send
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn send(&self, message: Plist) -> Result<(), LockdowndError> {
         let result =
-            unsafe { unsafe_bindings::lockdownd_send(self.pointer, plist.get_pointer()) }.into();
+            unsafe { unsafe_bindings::lockdownd_send(self.pointer, message.get_pointer()) }.into();
 
         if result != LockdowndError::Success {
             return Err(result);
@@ -283,6 +324,14 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
+    /// Receives a message from lockdownd.
+    /// Blocks until a full plist is received
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A plist with the message received
+    ///
+    /// ***Verified:*** False
     pub fn receive(&self) -> Result<Plist, LockdowndError> {
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
@@ -295,74 +344,56 @@ impl LockdowndClient<'_> {
         Ok(plist.into())
     }
 
-    pub fn pair(&self, pairing_record: Option<LockdowndPairRecord>) -> Result<(), LockdowndError> {
-        if let Some(pairing_record) = pairing_record {
-            let mut pairing_record = pairing_record.into();
-            let result =
-                unsafe { unsafe_bindings::lockdownd_pair(self.pointer, &mut pairing_record) }
-                    .into();
-            if result != LockdowndError::Success {
-                return Err(result);
-            }
-
-            Ok(())
-        } else {
-            let to_fill = unsafe { std::mem::zeroed() };
-            let result = unsafe { unsafe_bindings::lockdownd_pair(self.pointer, to_fill) }.into();
-            if result != LockdowndError::Success {
-                return Err(result);
-            }
-
-            Ok(())
-        }
-    }
-
-    pub fn pair_with_options(
+    /// Attempts to pair with the device.
+    /// This will only succeed on USB devices, and will add the pairing file to usbmuxd's pairing file storage.
+    /// # Arguments
+    /// * `pair_record` - A pair record for the host. If None, usbmuxd will fetch the host's record.
+    /// * `options` - The options for pairing
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn pair(
         &self,
         pairing_record: Option<LockdowndPairRecord>,
-        options: Plist,
-    ) -> Result<Plist, LockdowndError> {
-        if let Some(pairing_record) = pairing_record {
-            let mut pairing_record = pairing_record.into();
-            let mut response = unsafe { std::mem::zeroed() };
-
-            let result = unsafe {
-                unsafe_bindings::lockdownd_pair_with_options(
-                    self.pointer,
-                    &mut pairing_record,
-                    options.get_pointer(),
-                    &mut response,
-                )
-            }
-            .into();
-
-            if result != LockdowndError::Success {
-                return Err(result);
-            }
-
-            Ok(response.into())
+        options: Option<Plist>,
+    ) -> Result<(), LockdowndError> {
+        let pair_ptr: unsafe_bindings::lockdownd_pair_record_t = if pairing_record.is_some() {
+            &mut pairing_record.unwrap().into()
         } else {
-            let to_fill = unsafe { std::mem::zeroed() };
-            let mut response = unsafe { std::mem::zeroed() };
+            std::ptr::null_mut()
+        };
 
-            let result = unsafe {
+        let mut response = unsafe { std::mem::zeroed() };
+
+        let result = if options.is_none() {
+            unsafe { unsafe_bindings::lockdownd_pair(self.pointer, pair_ptr) }.into()
+        } else {
+            unsafe {
                 unsafe_bindings::lockdownd_pair_with_options(
                     self.pointer,
-                    to_fill,
-                    options.get_pointer(),
+                    pair_ptr,
+                    options.unwrap().get_pointer(),
                     &mut response,
                 )
             }
-            .into();
+            .into()
+        };
 
-            if result != LockdowndError::Success {
-                return Err(result);
-            }
-
-            Ok(response.into())
+        if result != LockdowndError::Success {
+            return Err(result);
         }
+
+        Ok(())
     }
 
+    /// Validates that the device is paired with a specified host
+    /// # Arguments
+    /// * `pairing_record` - The host pairing record
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn validate_pair(&self, pairing_record: LockdowndPairRecord) -> Result<(), LockdowndError> {
         let mut pairing_record = pairing_record.into();
         let result =
@@ -376,6 +407,13 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
+    /// Unpairs the device from the host
+    /// # Arguments
+    /// * `pairing_record` - The host pairing record
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn unpair(&self, pairing_record: LockdowndPairRecord) -> Result<(), LockdowndError> {
         let mut pairing_record = pairing_record.into();
         let result =
@@ -388,6 +426,13 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
+    /// Activates the device. You will need an activation record from Apple's servers. Only works with an open session.
+    /// # Arguments
+    /// * `activation_record` - The activation record from Apple's servers
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn activate(&self, activation_record: Plist) -> Result<(), LockdowndError> {
         let result = unsafe {
             unsafe_bindings::lockdownd_activate(self.pointer, activation_record.get_pointer())
@@ -401,6 +446,13 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
+    /// Deactivates a device, forcing it to show the "Activate with iTunes screen".
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn deactivate(&self) -> Result<(), LockdowndError> {
         let result = unsafe { unsafe_bindings::lockdownd_deactivate(self.pointer) }.into();
 
@@ -411,6 +463,13 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
+    /// Forces the device to enter recovery mode immediately
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn enter_recovery(&self) -> Result<(), LockdowndError> {
         let result = unsafe { unsafe_bindings::lockdownd_enter_recovery(self.pointer) }.into();
 
@@ -421,7 +480,14 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
-    pub fn goodbye(&self) -> Result<(), LockdowndError> {
+    /// Sends a goodbye to lockdown, terminating the connection
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
+    pub fn goodbye(self) -> Result<(), LockdowndError> {
         let result = unsafe { unsafe_bindings::lockdownd_goodbye(self.pointer) }.into();
 
         if result != LockdowndError::Success {
@@ -431,6 +497,13 @@ impl LockdowndClient<'_> {
         Ok(())
     }
 
+    /// Sets the label for lockdownd requests
+    /// # Arguments
+    /// * `label` - The label to use
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn client_set_label(&self, label: String) {
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
         let label_c_str = if label == "".to_string() {
@@ -442,6 +515,13 @@ impl LockdowndClient<'_> {
         unsafe { unsafe_bindings::lockdownd_client_set_label(self.pointer, label_c_str) };
     }
 
+    /// Get the UDID of the device
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// The UDID as a string
+    ///
+    /// ***Verified:*** False
     pub fn get_device_udid(&self) -> Result<String, LockdowndError> {
         let mut udid_c_str = unsafe { std::mem::zeroed() };
 
@@ -460,6 +540,13 @@ impl LockdowndClient<'_> {
         })
     }
 
+    /// Gets the device's name
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn get_device_name(&self) -> Result<String, LockdowndError> {
         let mut name_c_str = unsafe { std::mem::zeroed() };
 
@@ -478,6 +565,13 @@ impl LockdowndClient<'_> {
         })
     }
 
+    /// Get the data classes the device supports
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A list of class names that are supported
+    ///
+    /// ***Verified:*** False
     pub fn get_sync_data_classes(&self) -> Result<Vec<String>, LockdowndError> {
         let mut classes_c_str = unsafe { std::mem::zeroed() };
         let mut count = unsafe { std::mem::zeroed() };
@@ -511,6 +605,13 @@ impl LockdowndClient<'_> {
         Ok(classes)
     }
 
+    /// Get the current type of the service daemon
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// The daemon type as a string
+    ///
+    /// ***Verified:*** False
     pub fn query_type(&self) -> Result<String, LockdowndError> {
         let mut type_c_str: *mut c_char = std::ptr::null_mut();
         let result =

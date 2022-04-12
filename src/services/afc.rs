@@ -39,7 +39,6 @@ impl AfcClient<'_> {
             LockdowndService {
                 pointer: &mut pointer,
                 port: pointer.port as u32,
-                label: "afc_internal".to_string(),
                 phantom: std::marker::PhantomData,
             },
         ))
