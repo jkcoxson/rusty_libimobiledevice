@@ -27,6 +27,8 @@ pub mod mobile_activation;
 /// Manages backups of the iOS device's data
 /// Contains mobilebackup for < iOS 4 and mobilebackup2 for >= iOS 4
 pub mod mobile_backup;
+/// A service for mounting developer disk images on devices
+pub mod mobile_image_mounter;
 /// iTunes mobile sync service
 pub mod mobile_sync;
 /// Sends and watches for notifications on the iDevice

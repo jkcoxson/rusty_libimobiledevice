@@ -9,7 +9,8 @@ use crate::error::{
     MobileImageMounterError,
 };
 use crate::services::heartbeat::HeartbeatClient;
-use crate::services::lockdownd::{LockdowndClient, LockdowndService, MobileImageMounter};
+use crate::services::lockdownd::{LockdowndClient, LockdowndService};
+use crate::services::mobile_image_mounter::MobileImageMounter;
 use core::fmt;
 use libc::c_void;
 use std::ffi::CStr;
