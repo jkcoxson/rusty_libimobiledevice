@@ -1,16 +1,17 @@
 // jkcoxson
 
-use std::io::Read;
+use std::{io::Read, os::raw::c_char};
 
 use libc::c_void;
 use plist_plus::Plist;
 
 use super::lockdownd::LockdowndService;
-use crate::{bindings as unsafe_bindings, debug, error::MobileImageMounterError};
+use crate::{bindings as unsafe_bindings, debug, error::MobileImageMounterError, idevice::Device};
 
+/// A service for mounting developer disk images on the device
 pub struct MobileImageMounter<'a> {
     pub(crate) pointer: unsafe_bindings::mobile_image_mounter_client_t,
-    pub(crate) phantom: std::marker::PhantomData<&'a LockdowndService<'a>>,
+    pub(crate) phantom: std::marker::PhantomData<&'a Device>,
 }
 
 unsafe impl Send for MobileImageMounter<'_> {}
@@ -22,7 +23,78 @@ type ImageMounterPointerSize = u64;
 type ImageMounterReturnType = i64;
 
 impl MobileImageMounter<'_> {
+    /// Creates a new mobile image mounter service from a lockdown service
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `descriptor` - The lockdown service to connect on
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
+    pub fn new(
+        device: &Device,
+        descriptor: LockdowndService,
+    ) -> Result<Self, MobileImageMounterError> {
+        let mut client = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::mobile_image_mounter_new(
+                device.pointer,
+                descriptor.pointer,
+                &mut client,
+            )
+        }
+        .into();
+
+        if result != MobileImageMounterError::Success {
+            return Err(result);
+        }
+
+        Ok(MobileImageMounter {
+            pointer: client,
+            phantom: std::marker::PhantomData,
+        })
+    }
+
+    /// Starts a new connection and adds a mobile image mounter to it
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `label` - The label for the connection
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
+    pub fn start_service(device: &Device, label: String) -> Result<Self, MobileImageMounterError> {
+        let mut client = unsafe { std::mem::zeroed() };
+
+        let result = unsafe {
+            unsafe_bindings::mobile_image_mounter_start_service(
+                device.pointer,
+                &mut client,
+                label.as_ptr() as *const c_char,
+            )
+        }
+        .into();
+
+        if result != MobileImageMounterError::Success {
+            return Err(result);
+        }
+
+        Ok(MobileImageMounter {
+            pointer: client,
+            phantom: std::marker::PhantomData,
+        })
+    }
+
     /// Uploads an image from a path to the device
+    /// # Arguments
+    /// * `image_path` - The path on the host to the image. Cannot contain spaces. TODO: fix this
+    /// * `image_type` - The type of the image to upload, usually "Developer"
+    /// * `signature_path` - The path to the signature
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn upload_image(
         &self,
         image_path: String,
@@ -86,6 +158,14 @@ impl MobileImageMounter<'_> {
     }
 
     /// Mounts the image on the device
+    /// # Arguments
+    /// * `image_path` - The path on the host to the image. Cannot contain spaces. TODO: fix this
+    /// * `image_type` - The type of the image to upload, usually "Developer"
+    /// * `signature_path` - The path to the signature
+    /// # Returns
+    /// *none*
+    ///
+    /// ***Verified:*** False
     pub fn mount_image(
         &self,
         image_path: String,
@@ -142,6 +222,13 @@ impl MobileImageMounter<'_> {
         Ok(plist.into())
     }
 
+    /// Fetches all images mounted on the device
+    /// # Arguments
+    /// * `image_type` - The type of images to look for. Pass "" for all images.
+    /// # Returns
+    /// A plist containing the results. This may return Ok even if failed, check the plist.
+    ///
+    /// ***Verified:*** False
     pub fn lookup_image(&self, image_type: String) -> Result<Plist, MobileImageMounterError> {
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
         let image_type_c_str = if image_type == "".to_string() {
