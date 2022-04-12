@@ -14,6 +14,7 @@ pub struct DebugServer<'a> {
 unsafe impl Send for DebugServer<'_> {}
 unsafe impl Sync for DebugServer<'_> {}
 
+/// A command that can be sent to the debug server service
 pub struct DebugServerCommand {
     command: unsafe_bindings::debugserver_command_t,
 }
@@ -166,6 +167,13 @@ impl DebugServer<'_> {
         Ok(())
     }
 
+    /// Sets the environment with a hex value
+    /// # Arguments
+    /// * `env` - The environment variable as 'KEY=VALUE'
+    /// # Returns
+    /// The response to the request
+    ///
+    /// ***Verified:*** False
     pub fn set_environment_hex_encoded(&self, env: String) -> Result<String, DebugServerError> {
         let env_c_str = std::ffi::CString::new(env).unwrap();
         let mut response = unsafe { std::mem::zeroed() };
@@ -188,6 +196,13 @@ impl DebugServer<'_> {
         })
     }
 
+    /// Sends a command to the debug server
+    /// # Arguments
+    /// * `command` - The command to send as a debug server command
+    /// # Returns
+    /// The response from the command, usually 'OK'
+    ///
+    /// ***Verified:*** False
     pub fn send_command(&self, command: DebugServerCommand) -> Result<String, DebugServerError> {
         let mut response: std::os::raw::c_char = unsafe { std::mem::zeroed() };
         let mut response_ptr: *mut std::os::raw::c_char = &mut response;
@@ -221,6 +236,13 @@ impl DebugServer<'_> {
         Ok(response_str)
     }
 
+    /// Sets the argument value for a command
+    /// # Arguments
+    /// * `args` - A list of arguments
+    /// # Returns
+    /// The response from the command, usually 'OK'
+    ///
+    /// ***Verified:*** False
     pub fn set_argv(&self, args: Vec<String>) -> Result<String, DebugServerError> {
         let mut argv: Vec<*mut std::os::raw::c_char> = Vec::new();
         let mut c_strings = vec![];
@@ -259,7 +281,14 @@ impl DebugServer<'_> {
         Ok(response_str)
     }
 
-    pub fn encode_string(buffer: String) -> (String, u32) {
+    /// Encodes a string into hex notation
+    /// # Arguments
+    /// * `buffer` - The string to encode
+    /// # Returns
+    /// The encoded bytes
+    ///
+    /// ***Verified:*** False
+    pub fn encode_string(buffer: String) -> Vec<i8> {
         let mut encoded_buffer = unsafe { std::mem::zeroed() };
         let mut encoded_buffer_size = 0;
         let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
@@ -271,14 +300,18 @@ impl DebugServer<'_> {
                 &mut encoded_buffer_size,
             );
         }
-        let encoded_buffer_str = unsafe {
-            std::ffi::CStr::from_ptr(encoded_buffer)
-                .to_string_lossy()
-                .to_string()
-        };
-        (encoded_buffer_str, encoded_buffer_size as u32)
+        unsafe {
+            std::vec::Vec::from_raw_parts(
+                encoded_buffer,
+                encoded_buffer_size as usize,
+                encoded_buffer_size as usize,
+            )
+        }
     }
 
+    /// Decodes a string encoded in hex
+    /// # Arguments
+    /// * `buffer` - The string to decode
     pub fn decode_string(buffer: String) -> String {
         let mut decoded_buffer = unsafe { std::mem::zeroed() };
         let buffer_len = buffer.len() as unsafe_bindings::size_t;
@@ -297,6 +330,14 @@ impl DebugServer<'_> {
 }
 
 impl DebugServerCommand {
+    /// Assembles a new debug server command
+    /// # Arguments
+    /// * `command` - The command to run
+    /// * `arguments` - A list of arguments for the command
+    /// # Returns
+    /// The struct containing the command
+    ///
+    /// ***Verified:*** False
     pub fn new(command: String, arguments: Vec<String>) -> Result<DebugServerCommand, String> {
         let mut command_ptr: unsafe_bindings::debugserver_command_t = unsafe { std::mem::zeroed() };
         let command_ptr_ptr: *mut unsafe_bindings::debugserver_command_t = &mut command_ptr;
