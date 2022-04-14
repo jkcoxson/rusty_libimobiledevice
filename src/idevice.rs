@@ -249,7 +249,7 @@ impl Device {
                     // SAFETY: ip_addr has capacity for 28 bytes, and only need
                     // contain valid u8s
                     unsafe {
-                        ip_addr.write_bytes(0, 28);
+                        ip_addr.write_bytes(0, 29);
                     }
 
                     // SAFETY: ip_addr points to 29 bytes, initialized to zero
