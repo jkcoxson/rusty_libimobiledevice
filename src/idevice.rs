@@ -199,6 +199,7 @@ impl Device {
         }
 
         // Convert the udid to a C string
+        debug!("Converting udid to C string");
         let mut udid_bytes = udid.into_bytes();
         udid_bytes.push(0);
         // Ensure valid C string
@@ -208,17 +209,21 @@ impl Device {
 
         // SAFETY: udid_cstring has capacity for udid_len bytes, and only need
         // contain valid u8s
+        debug!("Creating udid ptr");
         unsafe { udid_ptr.write_bytes(0, udid_len) };
 
         // SAFETY: udid_cstring points to udid_len bytes, initialized to zero
+        println!("Creating udid slice");
         let udid_slice = unsafe { std::slice::from_raw_parts_mut(udid_ptr, udid_len) };
 
         udid_slice.copy_from_slice(&udid_bytes);
 
         // Convert the ip_addr into bytes
+        debug!("Converting ip address into bytes");
         let ip_addr_ptr = match network {
             true => match ip_addr.unwrap() {
                 IpAddr::V4(ip) => {
+                    debug!("Encodings ipv4 address");
                     let ip_addr = unsafe { libc::malloc(16) as *mut u8 };
 
                     // SAFETY: ip_addr has capacity for 16 bytes, and only need
@@ -238,6 +243,7 @@ impl Device {
                     ip_addr
                 }
                 IpAddr::V6(ip) => {
+                    debug!("Encodings ipv6 address");
                     let ip_addr = unsafe { libc::malloc(29) as *mut u8 };
 
                     // SAFETY: ip_addr has capacity for 28 bytes, and only need
