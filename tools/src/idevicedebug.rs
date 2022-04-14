@@ -1,8 +1,8 @@
 // jkcoxson
 
-use rusty_libimobiledevice::services::instproxy::InstProxyClient;
+use plist_plus::Plist;
 use rusty_libimobiledevice::idevice;
-use rusty_libimobiledevice::plist::Plist;
+use rusty_libimobiledevice::services::instproxy::InstProxyClient;
 
 fn main() {
     const VERSION: &str = "0.1.0";
@@ -68,20 +68,15 @@ fn main() {
         }
     };
 
-    let mut client_opts = InstProxyClient::options_new();
-    InstProxyClient::options_add(
-        &mut client_opts,
+    let client_opts = InstProxyClient::create_return_attributes(
         vec![("ApplicationType".to_string(), Plist::new_string("Any"))],
-    );
-    InstProxyClient::options_set_return_attributes(
-        &mut client_opts,
         vec![
             "CFBundleIdentifier".to_string(),
             "CFBundleExecutable".to_string(),
             "Container".to_string(),
         ],
     );
-    let lookup_results = match instproxy_client.lookup(vec![app.clone()], client_opts) {
+    let lookup_results = match instproxy_client.lookup(vec![app.clone()], Some(client_opts)) {
         Ok(apps) => {
             println!("Successfully looked up apps");
             apps

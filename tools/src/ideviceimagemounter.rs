@@ -104,20 +104,21 @@ fn main() {
         return;
     }
 
-    let service =
-        match lockdown_client.start_service("com.apple.mobile.mobile_image_mounter".to_string()) {
-            Ok(service) => {
-                println!("Successfully started com.apple.mobile.mobile_image_mounter");
-                service
-            }
-            Err(e) => {
-                println!(
-                    "Error starting com.apple.mobile.mobile_image_mounter: {:?}",
-                    e
-                );
-                return;
-            }
-        };
+    let service = match lockdown_client
+        .start_service("com.apple.mobile.mobile_image_mounter".to_string(), false)
+    {
+        Ok(service) => {
+            println!("Successfully started com.apple.mobile.mobile_image_mounter");
+            service
+        }
+        Err(e) => {
+            println!(
+                "Error starting com.apple.mobile.mobile_image_mounter: {:?}",
+                e
+            );
+            return;
+        }
+    };
 
     let mim = match device.new_mobile_image_mounter(&service) {
         Ok(mim) => {
