@@ -70,7 +70,7 @@ impl HeartbeatClient {
     /// Receive data from the heartbeat service.
     /// If the error is a MuxError, this usually means that the device has disconnected.
     /// # Arguments
-    /// # `timeout` - How long to wait for a message. If 0, this will block indefinitely.
+    /// * `timeout` - How long to wait for a message. If 0, this will block indefinitely.
     /// # Returns
     /// The message as a plist
     ///

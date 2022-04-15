@@ -213,7 +213,6 @@ impl Device {
         unsafe { udid_ptr.write_bytes(0, udid_len) };
 
         // SAFETY: udid_cstring points to udid_len bytes, initialized to zero
-        println!("Creating udid slice");
         let udid_slice = unsafe { std::slice::from_raw_parts_mut(udid_ptr, udid_len) };
 
         udid_slice.copy_from_slice(&udid_bytes);
