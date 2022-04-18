@@ -81,6 +81,6 @@ fn main() {
     );
 
     // Link ancient tech deps
-    println!("cargo:rustc-link-lib={}=crypto", location_determinator);
-    println!("cargo:rustc-link-lib={}=ssl", location_determinator);
+    // println!("cargo:rustc-link-lib={}=crypto", location_determinator);
+    // println!("cargo:rustc-link-lib={}=ssl", location_determinator);
 }

@@ -1,6 +1,9 @@
 // jkcoxson
 
-use std::{io::Read, os::raw::c_char};
+use std::{
+    io::Read,
+    os::raw::{c_char, c_long, c_ulong},
+};
 
 use libc::c_void;
 use plist_plus::Plist;
@@ -16,11 +19,6 @@ pub struct MobileImageMounter<'a> {
 
 unsafe impl Send for MobileImageMounter<'_> {}
 unsafe impl Sync for MobileImageMounter<'_> {}
-
-#[cfg(not(target_os = "windows"))]
-type ImageMounterPointerSize = u64;
-#[cfg(not(target_os = "windows"))]
-type ImageMounterReturnType = i64;
 
 impl MobileImageMounter<'_> {
     /// Creates a new mobile image mounter service from a lockdown service
@@ -141,7 +139,7 @@ impl MobileImageMounter<'_> {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 self.pointer,
                 image_type_c_str,
-                dmg_size as ImageMounterPointerSize,
+                dmg_size as c_ulong,
                 signature_buffer as *const c_char,
                 signature_size as u16,
                 Some(image_mounter_callback),
@@ -256,14 +254,9 @@ impl MobileImageMounter<'_> {
     }
 }
 
-extern "C" fn image_mounter_callback(
-    a: *mut c_void,
-    b: ImageMounterPointerSize,
-    c: *mut c_void,
-) -> ImageMounterReturnType {
+extern "C" fn image_mounter_callback(a: *mut c_void, b: c_ulong, c: *mut c_void) -> c_long {
     debug!("image_mounter_callback called");
-    return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) }
-        as ImageMounterReturnType;
+    return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) } as c_long;
 }
 
 impl Drop for MobileImageMounter<'_> {
