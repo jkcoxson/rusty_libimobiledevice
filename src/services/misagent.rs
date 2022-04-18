@@ -1,5 +1,7 @@
 // jkcoxson
 
+use std::os::raw::c_char;
+
 use crate::{
     bindings as unsafe_bindings, error::MisagentError, idevice::Device,
     services::lockdownd::LockdowndService,
@@ -52,7 +54,7 @@ impl MisagentClient<'_> {
             unsafe_bindings::misagent_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const i8,
+                label.as_ptr() as *const c_char,
             )
         }
         .into();
@@ -114,7 +116,7 @@ impl MisagentClient<'_> {
     /// ***Verified:*** False
     pub fn remove(&self, id: String) -> Result<(), MisagentError> {
         let result =
-            unsafe { unsafe_bindings::misagent_remove(self.pointer, id.as_ptr() as *const i8) }
+            unsafe { unsafe_bindings::misagent_remove(self.pointer, id.as_ptr() as *const c_char) }
                 .into();
         if result != MisagentError::Success {
             return Err(result);

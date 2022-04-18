@@ -82,12 +82,6 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 
     let mut to_return = vec![];
     for i in device_list_slice.iter_mut() {
-        // Print pointer address
-        let udid = unsafe {
-            std::ffi::CStr::from_ptr((*(*i)).udid)
-                .to_string_lossy()
-                .to_string()
-        };
         let network = unsafe {
             if (*(*i)).conn_type == 1 {
                 false
@@ -98,7 +92,6 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 
         let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
         let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
-        debug!("Creating device struct connection to {}", udid);
         let result = unsafe {
             unsafe_bindings::idevice_new_with_options(
                 device_info_ptr,
@@ -111,7 +104,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             )
         };
         if result != 0 {
-            debug!("Failed to create device struct to {}", udid);
+            debug!("Failed to create device struct");
             continue;
         }
         let to_push = device_info.into();

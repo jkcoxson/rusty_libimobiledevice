@@ -226,8 +226,6 @@ checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 [[package]]
 name = "plist_plus"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d68110e1841c6953bed636d8ba264491e798e4bb03d108f5f1c01331fbd72dda"
 dependencies = [
  "bindgen",
  "cc",

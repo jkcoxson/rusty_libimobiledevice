@@ -142,7 +142,7 @@ impl MobileImageMounter<'_> {
                 self.pointer,
                 image_type_c_str,
                 dmg_size as ImageMounterPointerSize,
-                signature_buffer as *const i8,
+                signature_buffer as *const c_char,
                 signature_size as u16,
                 Some(image_mounter_callback),
                 image_buffer as *mut c_void,
@@ -207,8 +207,8 @@ impl MobileImageMounter<'_> {
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_mount_image(
                 self.pointer,
-                image_path.as_ptr() as *const i8,
-                signature_buffer.as_ptr() as *const i8,
+                image_path.as_ptr() as *const c_char,
+                signature_buffer.as_ptr() as *const c_char,
                 signature_buffer.len() as u16,
                 image_type_c_str,
                 &mut plist,

@@ -94,7 +94,7 @@ impl DebugServer<'_> {
             let result = unsafe {
                 unsafe_bindings::debugserver_client_receive(
                     self.pointer,
-                    data.as_mut_ptr() as *mut i8,
+                    data.as_mut_ptr() as *mut c_char,
                     size,
                     &mut received,
                 )
@@ -107,7 +107,7 @@ impl DebugServer<'_> {
             let result = unsafe {
                 unsafe_bindings::debugserver_client_receive_with_timeout(
                     self.pointer,
-                    data.as_mut_ptr() as *mut i8,
+                    data.as_mut_ptr() as *mut c_char,
                     size,
                     &mut received,
                     timeout,
@@ -288,11 +288,11 @@ impl DebugServer<'_> {
     /// The encoded bytes
     ///
     /// ***Verified:*** False
-    pub fn encode_string(buffer: String) -> Vec<i8> {
+    pub fn encode_string(buffer: String) -> Vec<c_char> {
         let mut encoded_buffer = unsafe { std::mem::zeroed() };
         let mut encoded_buffer_size = 0;
         let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
-        let buffer_ptr = buffer_c_str.as_ptr() as *mut i8;
+        let buffer_ptr = buffer_c_str.as_ptr() as *mut c_char;
         unsafe {
             unsafe_bindings::debugserver_encode_string(
                 buffer_ptr,
@@ -316,7 +316,7 @@ impl DebugServer<'_> {
         let mut decoded_buffer = unsafe { std::mem::zeroed() };
         let buffer_len = buffer.len() as unsafe_bindings::size_t;
         let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
-        let buffer_ptr = buffer_c_str.as_ptr() as *mut i8;
+        let buffer_ptr = buffer_c_str.as_ptr() as *mut c_char;
         unsafe {
             unsafe_bindings::debugserver_decode_string(buffer_ptr, buffer_len, &mut decoded_buffer);
         }

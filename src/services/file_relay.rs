@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::ffi::CString;
+use std::{ffi::CString, os::raw::c_char};
 
 use crate::{
     bindings as unsafe_bindings, connection::DeviceConnection, error::FileRelayError,
@@ -53,7 +53,7 @@ impl FileRelay<'_> {
             unsafe_bindings::file_relay_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const i8,
+                label.as_ptr() as *const c_char,
             )
         }
         .into();
@@ -86,7 +86,7 @@ impl FileRelay<'_> {
         let mut source_ptrs = vec![];
         for source in sources {
             let source: CString = source.into();
-            source_ptrs.push(source.into_raw() as *const i8);
+            source_ptrs.push(source.into_raw() as *const c_char);
         }
         let ptrs_ptr = source_ptrs.as_mut_ptr();
 

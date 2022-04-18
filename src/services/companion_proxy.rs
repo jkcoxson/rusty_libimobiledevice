@@ -1,5 +1,7 @@
 // jkcoxson
 
+use std::os::raw::c_char;
+
 use crate::{
     bindings as unsafe_bindings, error::CompanionProxyError, idevice::Device,
     services::lockdownd::LockdowndService,
@@ -57,7 +59,7 @@ impl CompanionProxy<'_> {
             unsafe_bindings::companion_proxy_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const i8,
+                label.as_ptr() as *const c_char,
             )
         }
         .into();
@@ -143,8 +145,8 @@ impl CompanionProxy<'_> {
         let result = unsafe {
             unsafe_bindings::companion_proxy_get_value_from_registry(
                 self.pointer,
-                udid.as_ptr() as *const i8,
-                key.as_ptr() as *const i8,
+                udid.as_ptr() as *const c_char,
+                key.as_ptr() as *const c_char,
                 &mut plist,
             )
         }
@@ -176,7 +178,7 @@ impl CompanionProxy<'_> {
             unsafe_bindings::companion_proxy_start_forwarding_service_port(
                 self.pointer,
                 port,
-                service_name.as_ptr() as *const i8,
+                service_name.as_ptr() as *const c_char,
                 &mut result_port,
                 options.get_pointer(),
             )
