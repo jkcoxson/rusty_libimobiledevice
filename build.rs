@@ -44,15 +44,6 @@ fn main() {
             .expect("Couldn't write bindings!");
     }
 
-    // Check if folder ./override exists
-    let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());
-    if override_path.exists() {
-        println!(
-            "cargo:rustc-link-search={}",
-            canonicalize(&override_path).unwrap().display()
-        );
-    }
-
     let location_determinator;
     if cfg!(feature = "static") {
         location_determinator = "static";
@@ -60,6 +51,15 @@ fn main() {
         location_determinator = "dylib";
     } else {
         location_determinator = "dylib";
+    }
+
+    // Check if folder ./override exists
+    let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());
+    if override_path.exists() {
+        println!(
+            "cargo:rustc-link-search={}",
+            canonicalize(&override_path).unwrap().display()
+        );
     }
 
     println!("cargo:rustc-link-search=/usr/local/lib");
@@ -80,7 +80,6 @@ fn main() {
         location_determinator
     );
 
-    // Link ancient tech deps
-    // println!("cargo:rustc-link-lib={}=crypto", location_determinator);
-    // println!("cargo:rustc-link-lib={}=ssl", location_determinator);
+    println!("cargo:rustc-link-lib=static=ssl");
+    println!("cargo:rustc-link-lib=static=crypto");
 }
