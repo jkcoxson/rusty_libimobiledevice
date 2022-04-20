@@ -16,7 +16,6 @@ documentation = "https://docs.rs/rusty_libimobiledevice"
 [dependencies]
 libc = "0.2.14"
 plist_plus = { version = "*", path = "../plist_plus", features = [ "static" ] }
-openssl-sys = { version = "*", features = [ "vendored" ]}
 
 [build-dependencies]
 bindgen = "0.59.2"
