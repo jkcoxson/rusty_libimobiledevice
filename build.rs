@@ -49,49 +49,64 @@ fn main() {
         // Change current directory to OUT_DIR
         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
         env::set_current_dir(&out_path).unwrap();
-        let mut lib_path = out_path
-            .join("lib")
-            .canonicalize()
-            .unwrap()
-            .display()
-            .to_string();
-        let mut include_path = out_path
-            .join("include")
-            .canonicalize()
-            .unwrap()
-            .display()
-            .to_string();
+
+        // Lib path setup
+        let lib_path = out_path.join("lib");
+        if !lib_path.exists() {
+            // Create lib directory
+            std::fs::create_dir(&lib_path).unwrap();
+        }
+        let mut lib_path = lib_path.canonicalize().unwrap().display().to_string();
+
+        // Include path setup
+        let include_path = out_path.join("include");
+        if !include_path.exists() {
+            // Create include directory
+            std::fs::create_dir(&include_path).unwrap();
+        }
+        let mut include_path = include_path.canonicalize().unwrap().display().to_string();
 
         // Search for where openssl-src placed my libs
         env::set_current_dir("../../").unwrap();
-        for path in std::fs::read_dir(".").unwrap() {
-            let path = path.unwrap().path();
-            if !path.is_dir() {
-                continue;
-            }
-            if path.to_str().unwrap().contains("openssl-sys") {
-                let install_path = path.join("out").join("openssl-build").join("install");
-                if install_path.exists() {
-                    println!(
-                        "cargo:rustc-link-search=native={}",
-                        install_path.join("lib").canonicalize().unwrap().display()
-                    );
-                    include_path = format!(
-                        "{} -I{}",
-                        include_path,
-                        install_path
-                            .join("include")
-                            .canonicalize()
-                            .unwrap()
-                            .display()
-                    );
-                    lib_path = format!(
-                        "{} -L{}",
-                        lib_path,
-                        install_path.join("lib").canonicalize().unwrap().display()
-                    );
+        let mut openssl_found = false;
+        for _ in 0..13 {
+            for path in std::fs::read_dir(".").unwrap() {
+                let path = path.unwrap().path();
+                if !path.is_dir() {
+                    continue;
+                }
+                if path.to_str().unwrap().contains("openssl-sys") {
+                    let install_path = path.join("out").join("openssl-build").join("install");
+                    if install_path.exists() {
+                        println!(
+                            "cargo:rustc-link-search=native={}",
+                            install_path.join("lib").canonicalize().unwrap().display()
+                        );
+                        include_path = format!(
+                            "{} -I{}",
+                            include_path,
+                            install_path
+                                .join("include")
+                                .canonicalize()
+                                .unwrap()
+                                .display()
+                        );
+                        lib_path = format!(
+                            "{} -L{}",
+                            lib_path,
+                            install_path.join("lib").canonicalize().unwrap().display()
+                        );
+                        openssl_found = true;
+                    }
                 }
             }
+            if openssl_found {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_secs(10));
+        }
+        if !openssl_found {
+            panic!("\nopenssl-src was not found, exiting\n");
         }
 
         // Clone the vendored libraries
