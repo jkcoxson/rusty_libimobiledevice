@@ -49,8 +49,18 @@ fn main() {
         // Change current directory to OUT_DIR
         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
         env::set_current_dir(&out_path).unwrap();
-        let lib_path = out_path.join("lib");
-        let include_path = out_path.join("include");
+        let mut lib_path = out_path
+            .join("lib")
+            .canonicalize()
+            .unwrap()
+            .display()
+            .to_string();
+        let mut include_path = out_path
+            .join("include")
+            .canonicalize()
+            .unwrap()
+            .display()
+            .to_string();
 
         // Search for where openssl-src placed my libs
         env::set_current_dir("../../").unwrap();
@@ -60,15 +70,25 @@ fn main() {
                 continue;
             }
             if path.to_str().unwrap().contains("openssl-sys") {
-                let lib_path = path
-                    .join("out")
-                    .join("openssl-build")
-                    .join("install")
-                    .join("lib");
-                if lib_path.exists() {
+                let install_path = path.join("out").join("openssl-build").join("install");
+                if install_path.exists() {
                     println!(
                         "cargo:rustc-link-search=native={}",
-                        lib_path.canonicalize().unwrap().display()
+                        install_path.join("lib").canonicalize().unwrap().display()
+                    );
+                    include_path = format!(
+                        "{} -I{}",
+                        include_path,
+                        install_path
+                            .join("include")
+                            .canonicalize()
+                            .unwrap()
+                            .display()
+                    );
+                    lib_path = format!(
+                        "{} -L{}",
+                        lib_path,
+                        install_path.join("lib").canonicalize().unwrap().display()
                     );
                 }
             }
@@ -107,13 +127,13 @@ fn main() {
 
         let dst = autotools::Config::new("libimobiledevice-glue")
             .without("cython", None)
-            .cflag(format!("-I{}", include_path.display()))
+            .cflag(format!("-I{}", include_path))
             .build();
 
         println!("cargo:rustc-link-search=native={}", dst.display());
 
         let dst = autotools::Config::new("libusbmuxd")
-            .cflag(format!("-L{}", lib_path.display()))
+            .cflag(format!("-L{}", lib_path))
             .build();
 
         println!(
@@ -123,11 +143,7 @@ fn main() {
 
         let dst = autotools::Config::new("libimobiledevice")
             .without("cython", None)
-            .cflag(format!(
-                "-I{} -L{}",
-                include_path.display(),
-                lib_path.display()
-            ))
+            .cflag(format!("-I{} -L{}", include_path, lib_path))
             .build();
 
         println!(
