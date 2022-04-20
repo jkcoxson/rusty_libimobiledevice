@@ -46,6 +46,9 @@ fn main() {
     }
 
     if cfg!(feature = "vendored") {
+        // Change current directory to OUT_DIR
+        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+        env::set_current_dir(out_path).unwrap();
         // Clone the vendored libraries
         repo_setup("https://github.com/Mbed-TLS/mbedtls.git");
         repo_setup("https://github.com/libimobiledevice/libplist.git");
@@ -54,21 +57,34 @@ fn main() {
         repo_setup("https://github.com/libimobiledevice/libimobiledevice.git");
 
         // If building for Windows, set the env var for mbedtls
-        if cfg!(target_os = "windows") {
+        if env::var("TARGET").unwrap().contains("windows") {
             env::set_var("WINDOWS_BUILD", "1");
+
+            // Windows needs extra crap
+            println!("cargo:rustc-link-lib=dylib=iphlpapi");
+            println!("cargo:rustc-link-lib=dylib=shell32");
+            println!("cargo:rustc-link-lib=dylib=ole32");
         }
 
         // Build mbedtls
+        let mbedtls_path = PathBuf::from("mbedtls");
+        env::set_current_dir(mbedtls_path).unwrap();
+        let mut cmd = std::process::Command::new("make");
+        cmd.arg("generated_files");
+        cmd.output().unwrap();
+        env::set_current_dir("..").unwrap();
         let dst = cmake::build("mbedtls");
         println!("cargo:rustc-link-search=native={}", dst.display());
 
         // Set the env var for mbedtls
         let mb_include = dst.join("include");
-        env::set_var("CFLAGS", format!("-I{}", mb_include.display()));
+        let mb_lib = dst.join("lib");
+        env::set_var(
+            "CFLAGS",
+            format!("-I{} -L{}", mb_include.display(), mb_lib.display()),
+        );
         env::set_var("mbedtls_INCLUDES", mb_include.display().to_string());
-        env::set_var("mbedtls_LIBDIR", dst.join("lib").display().to_string());
-
-        // Add the out include folder to the include path
+        env::set_var("mbedtls_LIBDIR", mb_lib.display().to_string());
 
         // Build those bad bois
         let dst = autotools::Config::new("libplist")
@@ -86,8 +102,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", dst.display());
 
         let dst = autotools::Config::new("libusbmuxd")
-            .without("cython", None)
-            .with("mbedtls", None)
+            .cflag(format!("-L{}", mb_lib.display()))
             .build();
 
         println!("cargo:rustc-link-search=native={}", dst.display());
@@ -95,6 +110,7 @@ fn main() {
         let dst = autotools::Config::new("libimobiledevice")
             .without("cython", None)
             .with("mbedtls", None)
+            .cflag(format!("-I{} -L{}", mb_include.display(), mb_lib.display()))
             .build();
 
         println!("cargo:rustc-link-search=native={}", dst.display());
@@ -145,9 +161,6 @@ fn repo_setup(url: &str) {
     cmd.arg(url);
     cmd.output().unwrap();
     env::set_current_dir(url.split("/").last().unwrap().replace(".git", "")).unwrap();
-    let mut cmd = std::process::Command::new("make");
-    cmd.arg("distclean");
-    cmd.output().unwrap();
     env::set_var("NOCONFIGURE", "1");
     let mut cmd = std::process::Command::new("./autogen.sh");
     match cmd.output() {
