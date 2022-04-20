@@ -4,10 +4,10 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 
 use crate::bindings as unsafe_bindings;
-use crate::debug;
 use crate::error::LockdowndError;
 use crate::idevice::Device;
 
+use log::info;
 use plist_plus::Plist;
 
 /// A jumping point for other services.
@@ -54,7 +54,7 @@ impl LockdowndClient<'_> {
 
         let label_c_str = std::ffi::CString::new(label).unwrap();
 
-        debug!("Creating lockdownd client for {}", device.get_udid());
+        info!("Creating lockdownd client for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::lockdownd_client_new_with_handshake(
                 device.pointer,
@@ -98,7 +98,7 @@ impl LockdowndClient<'_> {
 
         let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
-        debug!("Getting value for {}", key);
+        info!("Getting value for {}", key);
         let result = unsafe {
             unsafe_bindings::lockdownd_get_value(self.pointer, domain_c_str, key_c_str, &mut value)
         }
@@ -139,7 +139,7 @@ impl LockdowndClient<'_> {
             key_c_str.as_ptr()
         };
 
-        debug!("Setting value for {}", key);
+        info!("Setting value for {}", key);
         let result = unsafe {
             unsafe_bindings::lockdownd_set_value(
                 self.pointer,
@@ -179,7 +179,7 @@ impl LockdowndClient<'_> {
             key_c_str.as_ptr()
         };
 
-        debug!("Removing value for {}", key);
+        info!("Removing value for {}", key);
         let result = unsafe {
             unsafe_bindings::lockdownd_remove_value(self.pointer, domain_c_str, key_c_str)
         }
@@ -216,7 +216,7 @@ impl LockdowndClient<'_> {
         let mut service: unsafe_bindings::lockdownd_service_descriptor_t =
             unsafe { std::mem::zeroed() };
 
-        debug!("Starting lockdown service");
+        info!("Starting lockdown service");
         let result = if escrow_bag {
             unsafe {
                 unsafe_bindings::lockdownd_start_service(self.pointer, label_c_str, &mut service)
@@ -631,32 +631,32 @@ impl LockdowndClient<'_> {
 
 impl From<*mut unsafe_bindings::lockdownd_pair_record> for LockdowndPairRecord {
     fn from(l: *mut unsafe_bindings::lockdownd_pair_record) -> Self {
-        debug!("Converting device certificate");
+        info!("Converting device certificate");
         let device_certificate = unsafe { CStr::from_ptr((*l).device_certificate) }
             .to_str()
             .unwrap()
             .to_string();
-        debug!("Converting host certificate");
+        info!("Converting host certificate");
         let host_certificate = unsafe { CStr::from_ptr((*l).host_certificate) }
             .to_str()
             .unwrap()
             .to_string();
-        debug!("Converting root certificate");
+        info!("Converting root certificate");
         let root_certificate = unsafe { CStr::from_ptr((*l).root_certificate) }
             .to_str()
             .unwrap()
             .to_string();
-        debug!("Converting host id");
+        info!("Converting host id");
         let host_id = unsafe { CStr::from_ptr((*l).host_id) }
             .to_str()
             .unwrap()
             .to_string();
-        debug!("Converting system buid");
+        info!("Converting system buid");
         let system_buid = unsafe { CStr::from_ptr((*l).system_buid) }
             .to_str()
             .unwrap()
             .to_string();
-        debug!("Returning pair record");
+        info!("Returning pair record");
         Self {
             device_certificate,
             host_certificate,
@@ -669,18 +669,18 @@ impl From<*mut unsafe_bindings::lockdownd_pair_record> for LockdowndPairRecord {
 
 impl From<LockdowndPairRecord> for unsafe_bindings::lockdownd_pair_record {
     fn from(l: LockdowndPairRecord) -> Self {
-        debug!("Converting device certificate");
+        info!("Converting device certificate");
         let device_certificate = std::ffi::CString::new(l.device_certificate).unwrap();
-        debug!("Converting host certificate");
+        info!("Converting host certificate");
         let host_certificate = std::ffi::CString::new(l.host_certificate).unwrap();
-        debug!("Converting root certificate");
+        info!("Converting root certificate");
         let root_certificate = std::ffi::CString::new(l.root_certificate).unwrap();
-        debug!("Converting host id");
+        info!("Converting host id");
         let host_id = std::ffi::CString::new(l.host_id).unwrap();
-        debug!("Converting system buid");
+        info!("Converting system buid");
         let system_buid = std::ffi::CString::new(l.system_buid).unwrap();
 
-        debug!("Setting device certificate");
+        info!("Setting device certificate");
         Self {
             device_certificate: device_certificate.as_ptr() as *mut c_char,
             host_certificate: host_certificate.as_ptr() as *mut c_char,
@@ -693,14 +693,14 @@ impl From<LockdowndPairRecord> for unsafe_bindings::lockdownd_pair_record {
 
 impl Drop for LockdowndClient<'_> {
     fn drop(&mut self) {
-        debug!("Dropping LockdowndClient");
+        info!("Dropping LockdowndClient");
         unsafe { unsafe_bindings::lockdownd_client_free(self.pointer) };
     }
 }
 
 impl Drop for LockdowndService<'_> {
     fn drop(&mut self) {
-        debug!("Dropping LockdowndService");
+        info!("Dropping LockdowndService");
         unsafe {
             unsafe_bindings::lockdownd_service_descriptor_free(self.pointer);
         }

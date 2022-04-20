@@ -3,8 +3,9 @@
 use std::{convert::TryInto, os::raw::c_char};
 
 use libc::c_int;
+use log::info;
 
-use crate::{bindings as unsafe_bindings, debug, error::DebugServerError, idevice::Device};
+use crate::{bindings as unsafe_bindings, error::DebugServerError, idevice::Device};
 
 pub struct DebugServer<'a> {
     pub(crate) pointer: unsafe_bindings::debugserver_client_t,
@@ -33,7 +34,7 @@ impl DebugServer<'_> {
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
 
         let label_c_str = std::ffi::CString::new(label).unwrap();
-        debug!("Creating debug server for {}", device.get_udid());
+        info!("Creating debug server for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::debugserver_client_start_service(
                 device.pointer,
@@ -209,7 +210,7 @@ impl DebugServer<'_> {
         let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
 
         let response_size = std::ptr::null_mut();
-        debug!("Sending command to debug server");
+        info!("Sending command to debug server");
         let result = unsafe {
             unsafe_bindings::debugserver_client_send_command(
                 self.pointer,
@@ -257,7 +258,7 @@ impl DebugServer<'_> {
         let mut response_ptr: *mut std::os::raw::c_char = &mut response;
         let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
 
-        debug!("Setting argv for debug server");
+        info!("Setting argv for debug server");
         let result = unsafe {
             unsafe_bindings::debugserver_client_set_argv(
                 self.pointer,
@@ -358,7 +359,7 @@ impl DebugServerCommand {
             c_array_ptr_ptr = std::ptr::null_mut();
         }
 
-        debug!("Creating debug server command");
+        info!("Creating debug server command");
         let result = unsafe {
             unsafe_bindings::debugserver_command_new(
                 command_c_str.as_ptr(),

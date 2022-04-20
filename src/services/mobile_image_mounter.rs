@@ -6,10 +6,11 @@ use std::{
 };
 
 use libc::c_void;
+use log::{info, trace};
 use plist_plus::Plist;
 
 use super::lockdownd::LockdowndService;
-use crate::{bindings as unsafe_bindings, debug, error::MobileImageMounterError, idevice::Device};
+use crate::{bindings as unsafe_bindings, error::MobileImageMounterError, idevice::Device};
 
 /// A service for mounting developer disk images on the device
 pub struct MobileImageMounter<'a> {
@@ -119,11 +120,11 @@ impl MobileImageMounter<'_> {
         // Read the image into a buffer
         let image_path_c_str = &mut std::ffi::CString::new(image_path.clone()).unwrap();
         let mode_c_str = &mut std::ffi::CString::new("rb").unwrap();
-        debug!("Opening image file");
+        info!("Opening image file");
         let image_buffer = unsafe { libc::fopen(image_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
         // Read the signature into a buffer
         let signature_path_c_str = &mut std::ffi::CString::new(signature_path.clone()).unwrap();
-        debug!("Reading signature file");
+        info!("Reading signature file");
         let signature_buffer =
             unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
 
@@ -134,7 +135,7 @@ impl MobileImageMounter<'_> {
             image_type_c_str.as_ptr()
         };
 
-        debug!("Uploading image");
+        info!("Uploading image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 self.pointer,
@@ -201,7 +202,7 @@ impl MobileImageMounter<'_> {
 
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
-        debug!("Mounting image");
+        info!("Mounting image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_mount_image(
                 self.pointer,
@@ -237,7 +238,7 @@ impl MobileImageMounter<'_> {
 
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
-        debug!("Looking up image");
+        info!("Looking up image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_lookup_image(
                 self.pointer,
@@ -255,13 +256,13 @@ impl MobileImageMounter<'_> {
 }
 
 extern "C" fn image_mounter_callback(a: *mut c_void, b: c_ulong, c: *mut c_void) -> c_long {
-    debug!("image_mounter_callback called");
+    trace!("image_mounter_callback called");
     return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) } as c_long;
 }
 
 impl Drop for MobileImageMounter<'_> {
     fn drop(&mut self) {
-        debug!("Dropping MobileImageMounter");
+        info!("Dropping MobileImageMounter");
         unsafe {
             unsafe_bindings::mobile_image_mounter_free(self.pointer);
         }

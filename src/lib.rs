@@ -4,7 +4,6 @@ mod bindings;
 pub mod callback;
 /// A debug macro used throughout the crate
 pub mod connection;
-pub mod debug;
 /// A module containing all possible errors produced by the library
 pub mod error;
 /// Creates connections and manages high level interfaces for iOS devices

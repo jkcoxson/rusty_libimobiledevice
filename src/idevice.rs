@@ -3,7 +3,6 @@
 use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;
-use crate::debug;
 use crate::error::{
     self, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
     MobileImageMounterError,
@@ -13,6 +12,7 @@ use crate::services::lockdownd::{LockdowndClient, LockdowndService};
 use crate::services::mobile_image_mounter::MobileImageMounter;
 use core::fmt;
 use libc::c_void;
+use log::{info, trace, warn};
 use std::ffi::CStr;
 use std::net::IpAddr;
 use std::os::raw::c_char;
@@ -28,7 +28,7 @@ use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
-    debug!("Getting all devices from the muxer");
+    info!("Getting all devices from the muxer");
     let result: error::IdeviceError = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
     }
@@ -38,7 +38,7 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
     }
 
     // Create slice of mutable references to idevice_info_t from device_list and device_count
-    debug!("Getting device list from slice");
+    info!("Getting device list from slice");
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
 
@@ -50,7 +50,7 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
                 .into_owned()
         });
     }
-    debug!("Returning device list");
+    info!("Returning device list");
     Ok(to_return)
 }
 
@@ -65,7 +65,7 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
 pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let mut device_list: *mut idevice_info_t = null_mut();
     let mut device_count: i32 = 0;
-    debug!("Getting device list from the muxer");
+    info!("Getting device list from the muxer");
     let result: error::IdeviceError = unsafe {
         unsafe_bindings::idevice_get_device_list_extended(&mut device_list, &mut device_count)
     }
@@ -75,7 +75,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
         return Err(result);
     }
 
-    debug!("Determining devices from slice");
+    info!("Determining devices from slice");
     // Create slice of mutable references to idevice_info_t from device_list and device_count
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
@@ -104,7 +104,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
             )
         };
         if result != 0 {
-            debug!("Failed to create device struct");
+            trace!("Failed to create device struct");
             continue;
         }
         let to_push = device_info.into();
@@ -112,12 +112,12 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     }
 
     // Drop the memory that the C library allocated
-    debug!("Freeing device list");
+    info!("Freeing device list");
     let device_list_ptr = device_list as *mut *mut std::os::raw::c_char;
     unsafe {
         unsafe_bindings::idevice_device_list_free(device_list_ptr);
     }
-    debug!("Returning device structs");
+    info!("Returning device structs");
     Ok(to_return)
 }
 
@@ -153,7 +153,7 @@ pub fn set_debug(debug: bool) {
         true => 1,
         false => 0,
     };
-    debug!("Setting debug mode to {}", debug);
+    trace!("Setting debug mode to {}", debug);
     unsafe { unsafe_bindings::idevice_set_debug_level(debug) }
 }
 
@@ -192,7 +192,7 @@ impl Device {
         }
 
         // Convert the udid to a C string
-        debug!("Converting udid to C string");
+        info!("Converting udid to C string");
         let mut udid_bytes = udid.into_bytes();
         udid_bytes.push(0);
         // Ensure valid C string
@@ -202,7 +202,7 @@ impl Device {
 
         // SAFETY: udid_cstring has capacity for udid_len bytes, and only need
         // contain valid u8s
-        debug!("Creating udid ptr");
+        info!("Creating udid ptr");
         unsafe { udid_ptr.write_bytes(0, udid_len) };
 
         // SAFETY: udid_cstring points to udid_len bytes, initialized to zero
@@ -211,11 +211,11 @@ impl Device {
         udid_slice.copy_from_slice(&udid_bytes);
 
         // Convert the ip_addr into bytes
-        debug!("Converting ip address into bytes");
+        info!("Converting ip address into bytes");
         let ip_addr_ptr = match network {
             true => match ip_addr.unwrap() {
                 IpAddr::V4(ip) => {
-                    debug!("Encodings ipv4 address");
+                    info!("Encodings ipv4 address");
                     let ip_addr = unsafe { libc::malloc(16) as *mut u8 };
 
                     // SAFETY: ip_addr has capacity for 16 bytes, and only need
@@ -235,7 +235,7 @@ impl Device {
                     ip_addr
                 }
                 IpAddr::V6(ip) => {
-                    debug!("Encodings ipv6 address");
+                    info!("Encodings ipv6 address");
                     let ip_addr = unsafe { libc::malloc(29) as *mut u8 };
 
                     // SAFETY: ip_addr has capacity for 28 bytes, and only need
@@ -329,13 +329,13 @@ impl Device {
     /// ***Verified:*** False
     pub fn get_ip_address(&self) -> Option<String> {
         if !self.get_network() {
-            debug!("Requested an IP address, but device is not a network device");
+            warn!("Requested an IP address, but device is not a network device");
             return None;
         }
         let data_pointer = unsafe { (*(self.pointer)).conn_data } as *mut u8;
         // Determine how many bytes long the data is
         let data_length = unsafe { *(data_pointer) };
-        debug!("Data length is {}", data_length);
+        info!("Data length is {}", data_length);
         let data = unsafe { std::slice::from_raw_parts(data_pointer, data_length.into()) };
         // Determine if the data is IPv4 or IPv6
         match data[1] {
@@ -354,7 +354,7 @@ impl Device {
                 Some(ip_addr.to_string())
             }
             _ => {
-                debug!("Unknown IP address type");
+                warn!("Unknown IP address type");
                 None
             }
         }
@@ -388,7 +388,7 @@ impl Device {
         let data_pointer = unsafe { (*(self.pointer)).conn_data } as *mut u8;
         // Determine how many bytes long the data is
         let data_length = unsafe { *(data_pointer) };
-        debug!("Data length is {}", data_length);
+        info!("Data length is {}", data_length);
         let data = unsafe { std::slice::from_raw_parts(data_pointer, data_length.into()) };
         data.to_vec()
     }
@@ -430,7 +430,7 @@ impl Device {
         let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t =
             unsafe { std::mem::zeroed() };
 
-        debug!("Creating mobile image mounter for {}", self.get_udid());
+        info!("Creating mobile image mounter for {}", self.get_udid());
         let error = unsafe {
             unsafe_bindings::mobile_image_mounter_new(
                 self.pointer,
@@ -519,7 +519,7 @@ impl Debug for Device {
 
 impl Drop for Device {
     fn drop(&mut self) {
-        debug!("Dropping device {}", self.get_udid());
+        info!("Dropping device {}", self.get_udid());
         unsafe {
             unsafe_bindings::idevice_free(self.pointer);
         }

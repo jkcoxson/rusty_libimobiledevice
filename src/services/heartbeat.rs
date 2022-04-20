@@ -2,8 +2,9 @@
 
 use std::ffi::CString;
 
-use crate::{bindings as unsafe_bindings, debug, error::HeartbeatError, idevice::Device};
+use crate::{bindings as unsafe_bindings, error::HeartbeatError, idevice::Device};
 
+use log::info;
 use plist_plus::Plist;
 
 /// A required service for most other services.
@@ -104,7 +105,7 @@ impl HeartbeatClient {
 
 impl Drop for HeartbeatClient {
     fn drop(&mut self) {
-        debug!("Dropping heartbeat client");
+        info!("Dropping heartbeat client");
         unsafe {
             unsafe_bindings::heartbeat_client_free(self.pointer);
         }
