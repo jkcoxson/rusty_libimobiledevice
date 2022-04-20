@@ -48,9 +48,33 @@ fn main() {
     if cfg!(feature = "vendored") {
         // Change current directory to OUT_DIR
         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-        env::set_current_dir(out_path).unwrap();
+        env::set_current_dir(&out_path).unwrap();
+        let lib_path = out_path.join("lib");
+        let include_path = out_path.join("include");
+
+        // Search for where openssl-src placed my libs
+        env::set_current_dir("../../").unwrap();
+        for path in std::fs::read_dir(".").unwrap() {
+            let path = path.unwrap().path();
+            if !path.is_dir() {
+                continue;
+            }
+            if path.to_str().unwrap().contains("openssl-sys") {
+                let lib_path = path
+                    .join("out")
+                    .join("openssl-build")
+                    .join("install")
+                    .join("lib");
+                if lib_path.exists() {
+                    println!(
+                        "cargo:rustc-link-search=native={}",
+                        lib_path.canonicalize().unwrap().display()
+                    );
+                }
+            }
+        }
+
         // Clone the vendored libraries
-        repo_setup("https://github.com/Mbed-TLS/mbedtls.git");
         repo_setup("https://github.com/libimobiledevice/libplist.git");
         repo_setup("https://github.com/libimobiledevice/libimobiledevice-glue.git");
         repo_setup("https://github.com/libimobiledevice/libusbmuxd.git");
@@ -71,29 +95,6 @@ fn main() {
             println!("cargo:rustc-link-lib=dylib=ole32");
         }
 
-        // Build mbedtls
-        let mbedtls_path = PathBuf::from("mbedtls");
-        env::set_current_dir(mbedtls_path).unwrap();
-        let mut cmd = std::process::Command::new("make");
-        cmd.arg("generated_files");
-        cmd.output().unwrap();
-        env::set_current_dir("..").unwrap();
-        let dst = cmake::build("mbedtls");
-        println!("cargo:rustc-link-search=native={}", dst.display());
-
-        // Set the env var for mbedtls
-        let mb_include = dst.join("include");
-        let mb_lib = dst.join("lib");
-        env::set_var(
-            "CFLAGS",
-            format!("-I{} -L{}", mb_include.display(), mb_lib.display()),
-        );
-        env::set_var("mbedtls_INCLUDES", mb_include.display().to_string());
-        env::set_var("mbedtls_LIBDIR", mb_lib.display().to_string());
-        env::set_var("C_INCLUDE_PATH", mb_include.display().to_string());
-        env::set_var("LD_LIBRARY_PATH", mb_lib.display().to_string());
-        env::set_var("LDFLAGS", format!("-I{}", mb_include.display().to_string()));
-
         // Build those bad bois
         let dst = autotools::Config::new("libplist")
             .without("cython", None)
@@ -106,14 +107,13 @@ fn main() {
 
         let dst = autotools::Config::new("libimobiledevice-glue")
             .without("cython", None)
-            .with("mbedtls", None)
-            .cflag(format!("-I{}", mb_include.display()))
+            .cflag(format!("-I{}", include_path.display()))
             .build();
 
         println!("cargo:rustc-link-search=native={}", dst.display());
 
         let dst = autotools::Config::new("libusbmuxd")
-            .cflag(format!("-L{}", mb_lib.display()))
+            .cflag(format!("-L{}", lib_path.display()))
             .build();
 
         println!(
@@ -123,8 +123,11 @@ fn main() {
 
         let dst = autotools::Config::new("libimobiledevice")
             .without("cython", None)
-            .with("mbedtls", None)
-            .cflag(format!("-I{} -L{}", mb_include.display(), mb_lib.display()))
+            .cflag(format!(
+                "-I{} -L{}",
+                include_path.display(),
+                lib_path.display()
+            ))
             .build();
 
         println!(
@@ -132,9 +135,8 @@ fn main() {
             dst.join("lib").display()
         );
 
-        println!("cargo:rustc-link-lib=static=mbedcrypto");
-        println!("cargo:rustc-link-lib=static=mbedx509");
-        println!("cargo:rustc-link-lib=static=mbedtls");
+        println!("cargo:rustc-link-lib=static=crypto");
+        println!("cargo:rustc-link-lib=static=ssl");
     } else {
         // Check if folder ./override exists
         let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());

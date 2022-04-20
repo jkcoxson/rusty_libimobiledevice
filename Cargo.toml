@@ -22,6 +22,7 @@ bindgen = "0.59.2"
 cc  = "1.0.73"
 autotools = "0.2.5"
 cmake = "0.1.48"
+openssl = { version = "0.10.38", features = [ "vendored" ] }
 
 [features]
 pls-generate = []
