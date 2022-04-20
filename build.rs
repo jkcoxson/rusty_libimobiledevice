@@ -69,7 +69,7 @@ fn main() {
         // Search for where openssl-src placed my libs
         env::set_current_dir("../../").unwrap();
         let mut openssl_found = false;
-        for _ in 0..13 {
+        loop {
             for path in std::fs::read_dir(".").unwrap() {
                 let path = path.unwrap().path();
                 if !path.is_dir() {
