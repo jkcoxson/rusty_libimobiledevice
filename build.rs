@@ -56,6 +56,11 @@ fn main() {
         repo_setup("https://github.com/libimobiledevice/libusbmuxd.git");
         repo_setup("https://github.com/libimobiledevice/libimobiledevice.git");
 
+        // Remove tools from libimobiledevice's makefile. There's no point to build them, and they cause errors on MacOS.
+        let mut makefile = std::fs::read_to_string("libimobiledevice/Makefile.in").unwrap();
+        makefile = makefile.replace("tools", "");
+        std::fs::write("libimobiledevice/Makefile.in", makefile).unwrap();
+
         // If building for Windows, set the env var for mbedtls
         if env::var("TARGET").unwrap().contains("windows") {
             env::set_var("WINDOWS_BUILD", "1");
@@ -85,6 +90,9 @@ fn main() {
         );
         env::set_var("mbedtls_INCLUDES", mb_include.display().to_string());
         env::set_var("mbedtls_LIBDIR", mb_lib.display().to_string());
+        env::set_var("C_INCLUDE_PATH", mb_include.display().to_string());
+        env::set_var("LD_LIBRARY_PATH", mb_lib.display().to_string());
+        env::set_var("LDFLAGS", format!("-I{}", mb_include.display().to_string()));
 
         // Build those bad bois
         let dst = autotools::Config::new("libplist")
