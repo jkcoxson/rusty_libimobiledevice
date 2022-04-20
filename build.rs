@@ -133,7 +133,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", dst.display());
 
         let dst = autotools::Config::new("libusbmuxd")
-            .cflag(format!("-L{}", lib_path))
+            .cflag(format!("-L{} -I{}", lib_path, include_path))
             .build();
 
         println!(
