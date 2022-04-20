@@ -91,7 +91,10 @@ fn main() {
             .without("cython", None)
             .build();
 
-        println!("cargo:rustc-link-search=native={}", dst.display());
+        println!(
+            "cargo:rustc-link-search=native={}",
+            dst.join("lib").display()
+        );
 
         let dst = autotools::Config::new("libimobiledevice-glue")
             .without("cython", None)
@@ -105,7 +108,10 @@ fn main() {
             .cflag(format!("-L{}", mb_lib.display()))
             .build();
 
-        println!("cargo:rustc-link-search=native={}", dst.display());
+        println!(
+            "cargo:rustc-link-search=native={}",
+            dst.join("lib").display()
+        );
 
         let dst = autotools::Config::new("libimobiledevice")
             .without("cython", None)
@@ -113,7 +119,14 @@ fn main() {
             .cflag(format!("-I{} -L{}", mb_include.display(), mb_lib.display()))
             .build();
 
-        println!("cargo:rustc-link-search=native={}", dst.display());
+        println!(
+            "cargo:rustc-link-search=native={}",
+            dst.join("lib").display()
+        );
+
+        println!("cargo:rustc-link-lib=static=mbedcrypto");
+        println!("cargo:rustc-link-lib=static=mbedx509");
+        println!("cargo:rustc-link-lib=static=mbedtls");
     } else {
         // Check if folder ./override exists
         let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());
@@ -150,14 +163,12 @@ fn main() {
         "cargo:rustc-link-lib={}=imobiledevice-glue-1.0",
         location_determinator
     );
-
-    println!("cargo:rustc-link-lib=static=ssl");
-    println!("cargo:rustc-link-lib=static=crypto");
 }
 
 fn repo_setup(url: &str) {
     let mut cmd = std::process::Command::new("git");
     cmd.arg("clone");
+    cmd.arg("--depth=1");
     cmd.arg(url);
     cmd.output().unwrap();
     env::set_current_dir(url.split("/").last().unwrap().replace(".git", "")).unwrap();
