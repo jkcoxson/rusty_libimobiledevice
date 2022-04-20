@@ -21,8 +21,13 @@ openssl-sys = { version = "*", features = [ "vendored" ]}
 [build-dependencies]
 bindgen = "0.59.2"
 cc  = "1.0.73"
+autotools = "0.2.5"
+cmake = "0.1.48"
 
 [features]
 pls-generate = []
 dynamic = []
 static = []
+vendored = [
+    "static"
+]

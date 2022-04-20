@@ -5,8 +5,8 @@ publish = false
 edition = "2018"
 
 [dependencies]
-rusty_libimobiledevice = { version = "*", path = "../", features = ["static"] }
-plist_plus = { version = "*", features = ["static"] }
+rusty_libimobiledevice = { version = "*", path = "../", features = [ "static", "vendored" ] }
+plist_plus = { version = "*", path = "../../plist_plus", features = ["static"] }
 
 [[bin]]
 name = "idevice_id"

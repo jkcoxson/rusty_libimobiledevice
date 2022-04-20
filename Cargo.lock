@@ -38,6 +38,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "autotools"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8138adefca3e5d2e73bfba83bd6eeaf904b26a7ac1b4a19892cfe16cc7e1701"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "bindgen"
 version = "0.59.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -111,6 +120,15 @@ dependencies = [
  "textwrap",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "cmake"
+version = "0.1.48"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8ad8cef104ac57b68b89df3208164d228503abbdce70f6880ffa3d970e7443a"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
@@ -349,8 +367,10 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 name = "rusty_libimobiledevice"
 version = "0.1.2"
 dependencies = [
+ "autotools",
  "bindgen",
  "cc",
+ "cmake",
  "libc",
  "openssl-sys",
  "plist_plus",
