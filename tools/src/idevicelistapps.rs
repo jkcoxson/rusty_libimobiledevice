@@ -3,10 +3,13 @@
 
 use plist_plus::Plist;
 use rusty_libimobiledevice::idevice;
+use rusty_libimobiledevice::services::instproxy;
 use rusty_libimobiledevice::services::instproxy::InstProxyClient;
 
 fn main() {
     const VERSION: &str = "0.1.0";
+
+    env_logger::init();
 
     let mut udid = "".to_string();
 
@@ -71,8 +74,7 @@ fn main() {
         vec![("ApplicationType".to_string(), Plist::new_string("Any"))],
         vec![
             "CFBundleIdentifier".to_string(),
-            "CFBundleExecutable".to_string(),
-            "Container".to_string(),
+            "CFBundleDisplayName".to_string(),
         ],
     );
     let lookup_results = match instproxy_client.lookup(vec![], Some(client_opts)) {
@@ -86,5 +88,19 @@ fn main() {
         }
     };
 
-    println!("{}", lookup_results.to_string());
+    for app in lookup_results {
+        println!(
+            "{}: {}",
+            app.plist
+                .dict_get_item("CFBundleDisplayName")
+                .unwrap()
+                .get_string_val()
+                .unwrap(),
+            app.plist
+                .dict_get_item("CFBundleIdentifier")
+                .unwrap()
+                .get_string_val()
+                .unwrap()
+        );
+    }
 }
