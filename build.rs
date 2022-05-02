@@ -142,7 +142,7 @@ fn main() {
 
         let dst = autotools::Config::new("libimobiledevice-glue")
             .without("cython", None)
-            .cflag(format!("-I{}", include_path))
+            .cflag(format!("-L{} -I{}", lib_path, include_path))
             .build();
 
         println!("cargo:rustc-link-search=native={}", dst.display());
