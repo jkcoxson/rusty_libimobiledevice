@@ -58,6 +58,9 @@ fn main() {
         }
         let mut lib_path = lib_path.canonicalize().unwrap().display().to_string();
 
+        // Set the LD_LIBRARY_PATH environment variable to lib_path
+        env::set_var("LD_LIBRARY_PATH", lib_path.clone());
+
         // Include path setup
         let include_path = out_path.join("include");
         if !include_path.exists() {
