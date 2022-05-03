@@ -49,6 +49,7 @@ fn main() {
         // Change current directory to OUT_DIR
         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
         env::set_current_dir(&out_path).unwrap();
+        env::set_var("PKG_CONFIG_PATH", &out_path);
 
         // Lib path setup
         let lib_path = out_path.join("lib");
@@ -146,6 +147,7 @@ fn main() {
         let dst = autotools::Config::new("libimobiledevice-glue")
             .without("cython", None)
             .cflag(format!("-L{} -I{}", lib_path, include_path))
+            .env("PKG_CONFIG_PATH", &out_path)
             .build();
 
         println!("cargo:rustc-link-search=native={}", dst.display());
