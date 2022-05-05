@@ -25,6 +25,9 @@ pub struct HeartbeatClient {
 unsafe impl Send for HeartbeatClient {}
 unsafe impl Sync for HeartbeatClient {}
 
+unsafe impl Send for HeartbeatClientFuture {}
+unsafe impl Sync for HeartbeatClientFuture {}
+
 impl HeartbeatClient {
     /// Starts a new service with heartbeat
     /// # Arguments
@@ -143,34 +146,28 @@ impl Future for HeartbeatClientFuture {
 
     fn poll(
         self: Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Self::Output> {
-        match self.receive() {
-            Ok(plist) => std::task::Poll::Ready(Ok(plist)),
-            Err(e) => match e {
-                HeartbeatError::MuxError => {
-                    info!("Heartbeat client disconnected");
-                    std::task::Poll::Ready(Err(HeartbeatError::MuxError))
+        // Determine if we have passed the timeout + 5 seconds
+        let now = std::time::Instant::now();
+        let elapsed = now.duration_since(self.start_time);
+        let timeout = self.timeout as u128;
+        let elapsed_ms = elapsed.as_millis();
+        if elapsed_ms > timeout + 5000 {
+            // Query the heartbeat service for a message
+            match self.receive() {
+                Ok(plist) => {
+                    info!("Received heartbeat message");
+                    return std::task::Poll::Ready(Ok(plist));
                 }
-                HeartbeatError::PlistError => {
-                    info!("Heartbeat client disconnected");
-                    std::task::Poll::Ready(Err(HeartbeatError::PlistError))
+                Err(error) => {
+                    info!("Received heartbeat error: {:?}", error);
+                    return std::task::Poll::Ready(Err(error));
                 }
-                HeartbeatError::UnknownError => {
-                    info!("Heartbeat client disconnected");
-                    std::task::Poll::Ready(Err(HeartbeatError::UnknownError))
-                }
-                _ => {
-                    // Check if we have timed out
-                    if self.start_time.elapsed().as_millis() > self.timeout as u128 {
-                        info!("Heartbeat client timed out");
-                        return std::task::Poll::Ready(Err(HeartbeatError::Timeout));
-                    } else {
-                        return std::task::Poll::Pending;
-                    }
-                }
-            },
+            }
         }
+        cx.waker().wake_by_ref();
+        std::task::Poll::Pending
     }
 }
 
