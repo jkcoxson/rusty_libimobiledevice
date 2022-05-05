@@ -153,7 +153,7 @@ impl Future for HeartbeatClientFuture {
         let elapsed = now.duration_since(self.start_time);
         let timeout = self.timeout as u128;
         let elapsed_ms = elapsed.as_millis();
-        if elapsed_ms > timeout + 5000 {
+        if elapsed_ms > timeout + 2000 {
             // Query the heartbeat service for a message
             match self.receive() {
                 Ok(plist) => {
