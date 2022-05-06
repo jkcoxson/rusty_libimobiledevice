@@ -20,6 +20,9 @@ pub struct DebugServerCommand {
     command: unsafe_bindings::debugserver_command_t,
 }
 
+unsafe impl Send for DebugServerCommand {}
+unsafe impl Sync for DebugServerCommand {}
+
 impl DebugServer<'_> {
     /// Starts a new debug server on the device
     /// # Arguments
