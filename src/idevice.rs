@@ -378,6 +378,15 @@ impl Device {
         unsafe { (*self.pointer).version }
     }
 
+    /// Get the mux id of the device
+    /// # Returns
+    /// The mux id of the device as a `u32`
+    ///
+    /// ***Verified:*** False
+    pub fn get_mux_id(&self) -> u32 {
+        unsafe { (*self.pointer).mux_id }
+    }
+
     /// Returns the bytes containing the connection data
     /// This translates to the IP address of the device if connected over network
     /// # Returns
@@ -478,6 +487,16 @@ impl Device {
         label: &str,
     ) -> Result<crate::services::debug_server::DebugServer, DebugServerError> {
         crate::services::debug_server::DebugServer::new(self, label)
+    }
+}
+
+impl Clone for Device {
+    fn clone(&self) -> Self {
+        let ip = match self.get_ip_address() {
+            Some(ip) => Some(ip.parse().unwrap()),
+            None => None,
+        };
+        Device::new(self.get_udid(), self.get_network(), ip, self.get_mux_id()).unwrap()
     }
 }
 
