@@ -365,8 +365,8 @@ impl Device {
     /// The class of the device as a `i32`
     ///
     /// ***Verified:*** False
-    pub fn get_device_class(&self) -> i32 {
-        unsafe { (*self.pointer).device_class }
+    pub fn get_device_class(&self) -> DeviceClass {
+        unsafe { (*self.pointer).device_class }.into()
     }
 
     /// Get the version of the device
@@ -499,6 +499,41 @@ impl Clone for Device {
         Device::new(self.get_udid(), self.get_network(), ip, self.get_mux_id()).unwrap()
     }
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceClass {
+    IPhone,
+    IPad,
+    IPod,
+    AppleTV,
+    Watch,
+    Unknown,
+}
+
+impl From<i32> for DeviceClass {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => DeviceClass::IPhone,
+            2 => DeviceClass::IPad,
+            3 => DeviceClass::IPod,
+            4 => DeviceClass::AppleTV,
+            5 => DeviceClass::Watch,
+            _ => DeviceClass::Unknown,
+        }
+    }
+}
+
+impl From<DeviceClass> for i32 {
+    fn from(value: DeviceClass) -> Self {
+        match value {
+            DeviceClass::IPhone => 1,
+            DeviceClass::IPad => 2,
+            DeviceClass::IPod => 3,
+            DeviceClass::AppleTV => 4,
+            DeviceClass::Watch => 5,
+            DeviceClass::Unknown => 255,
+        }
+    }
+}
 
 pub struct IDeviceEvent {
     pub(crate) _pointer: unsafe_bindings::idevice_event_t,
@@ -530,7 +565,7 @@ impl Debug for Device {
             self.get_udid(),
             self.get_network(),
             self.get_ip_address(),
-            self.get_device_class(),
+            self.get_device_class() as i32,
             self.get_version()
         )
     }
