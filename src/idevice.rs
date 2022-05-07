@@ -535,6 +535,19 @@ impl From<DeviceClass> for i32 {
     }
 }
 
+impl From<DeviceClass> for String {
+    fn from(value: DeviceClass) -> Self {
+        match value {
+            DeviceClass::IPhone => "iPhone".to_string(),
+            DeviceClass::IPad => "iPad".to_string(),
+            DeviceClass::IPod => "iPod".to_string(),
+            DeviceClass::AppleTV => "AppleTV".to_string(),
+            DeviceClass::Watch => "Watch".to_string(),
+            DeviceClass::Unknown => "Unknown".to_string(),
+        }
+    }
+}
+
 pub struct IDeviceEvent {
     pub(crate) _pointer: unsafe_bindings::idevice_event_t,
 }
