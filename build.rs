@@ -100,6 +100,26 @@ fn main() {
                             lib_path,
                             install_path.join("lib").canonicalize().unwrap().display()
                         );
+                        // Copy the pkgconfig files to the OUT_DIR
+                        let ssl_pkg_config_path = install_path
+                            .join("lib")
+                            .join("pkgconfig")
+                            .canonicalize()
+                            .unwrap();
+                        let out_path = PathBuf::from(env::var("OUT_DIR").unwrap())
+                            .join("lib")
+                            .join("pkgconfig")
+                            .canonicalize()
+                            .unwrap();
+                        std::fs::create_dir_all(&out_path).unwrap();
+                        for path in std::fs::read_dir(&ssl_pkg_config_path).unwrap() {
+                            let path = path.unwrap().path();
+                            if !path.is_file() {
+                                continue;
+                            }
+                            let file_name = path.file_name().unwrap().to_str().unwrap();
+                            std::fs::copy(&path, out_path.join(file_name)).unwrap();
+                        }
                         openssl_found = true;
                     }
                 }
@@ -134,9 +154,13 @@ fn main() {
             println!("cargo:rustc-link-lib=dylib=ole32");
         }
 
+        println!("cargo:rustc-env=MACOSX_DEPLOYMENT_TARGET=10.13");
+
         // Build those bad bois
         let dst = autotools::Config::new("libplist")
             .without("cython", None)
+            .cflag("-mmacosx-version-min=10.13")
+            .cxxflag("-mmacosx-version-min=10.13")
             .build();
 
         println!(
@@ -147,6 +171,8 @@ fn main() {
         let dst = autotools::Config::new("libimobiledevice-glue")
             .without("cython", None)
             .cflag(format!("-L{} -I{}", lib_path, include_path))
+            .cflag("-mmacosx-version-min=10.13")
+            .cxxflag("-mmacosx-version-min=10.13")
             .env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"))
             .build();
 
@@ -154,6 +180,8 @@ fn main() {
 
         let dst = autotools::Config::new("libusbmuxd")
             .cflag(format!("-L{} -I{}", lib_path, include_path))
+            .cflag("-mmacosx-version-min=10.13")
+            .cxxflag("-mmacosx-version-min=10.13")
             .build();
 
         println!(
@@ -164,6 +192,8 @@ fn main() {
         let dst = autotools::Config::new("libimobiledevice")
             .without("cython", None)
             .cflag(format!("-I{} -L{}", include_path, lib_path))
+            .cflag("-mmacosx-version-min=10.13")
+            .cxxflag("-mmacosx-version-min=10.13")
             .env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"))
             .build();
 
@@ -210,6 +240,7 @@ fn main() {
         "cargo:rustc-link-lib={}=imobiledevice-glue-1.0",
         location_determinator
     );
+    println!("cargo:rustc-link-lib={}=plist-2.0", location_determinator);
 }
 
 fn repo_setup(url: &str) {
