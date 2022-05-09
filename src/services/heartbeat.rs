@@ -131,7 +131,7 @@ impl HeartbeatClientFuture {
     fn receive(&self) -> Result<Plist, HeartbeatError> {
         let mut plist_ptr = unsafe { std::mem::zeroed() };
         let result = unsafe {
-            unsafe_bindings::heartbeat_receive_with_timeout(self.pointer, &mut plist_ptr, 1)
+            unsafe_bindings::heartbeat_receive_with_timeout(self.pointer, &mut plist_ptr, 1000)
         }
         .into();
         if result != HeartbeatError::Success {
