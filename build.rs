@@ -101,11 +101,12 @@ fn main() {
                             install_path.join("lib").canonicalize().unwrap().display()
                         );
                         // Copy the pkgconfig files to the OUT_DIR
-                        let ssl_pkg_config_path = install_path
-                            .join("lib")
-                            .join("pkgconfig")
-                            .canonicalize()
-                            .unwrap();
+                        let ssl_pkg_config_path = install_path.join("lib").join("pkgconfig");
+
+                        // Create the path
+                        std::fs::create_dir_all(&ssl_pkg_config_path).unwrap();
+                        let ssl_pkg_config_path = ssl_pkg_config_path.canonicalize().unwrap();
+
                         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap())
                             .join("lib")
                             .join("pkgconfig");
