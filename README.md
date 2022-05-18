@@ -9,20 +9,19 @@ If you see the `Verified: False`, that means that function needs your help to ma
 Open a PR with your testing code to change a function's status.
 
 ## Building
-Build or install the following packages:
+Build and install the following packages:
 - libusbmuxd
 - libimobiledevice
 - libimobiledevice-glue
-- gnutls
 - openssl
-
-Either include these packages in a path where the linker can link them, or place them in ``./override/[platform-triple]``.
 
 **Note:** Package managers do not ship static libraries, so you will need to build them yourself
 if compiling statically.
 
+To cross compile this crate, you can use the ``vendored`` feature and the build script will attempt to clone and build them for the specified target.
+
 ## Usage
-Add the crate and path to your cargo.toml, and add either ``static`` or ``dynamic`` to the features list. This will determine how the library is linked. By default this is dynamic.
+Add the crate and path to your cargo.toml, and add either ``static`` or ``dynamic`` to the features list. This will determine how the library is linked. By default this is dynamic. You can also use the ``vendored`` feature to build libimobiledevice at compile time.
 
 To list devices detected by a usbmuxd daemon, you can use the following example.
 ```rust
