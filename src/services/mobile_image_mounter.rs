@@ -3,6 +3,7 @@
 use std::{
     io::Read,
     os::raw::{c_char, c_long, c_ulong},
+    path::PathBuf,
 };
 
 use libc::c_void;
@@ -149,6 +150,11 @@ impl MobileImageMounter<'_> {
         }
         .into();
 
+        unsafe {
+            libc::fclose(image_buffer);
+            libc::fclose(signature_buffer);
+        }
+
         if result != MobileImageMounterError::Success {
             return Err(result);
         }
@@ -171,17 +177,16 @@ impl MobileImageMounter<'_> {
         image_type: String,
         signature_path: String,
     ) -> Result<Plist, MobileImageMounterError> {
-        // Read the image into a buffer
-        let mut image_buffer = Vec::new();
-        let file = match std::fs::File::open(image_path.clone()) {
-            Ok(file) => file,
+        // Confirm that the image exists
+        let image_path: PathBuf = image_path.into();
+        if !image_path.exists() {
+            return Err(MobileImageMounterError::DmgNotFound);
+        }
+        let image_path = match image_path.canonicalize() {
+            Ok(path) => path.display().to_string(),
             Err(_) => return Err(MobileImageMounterError::DmgNotFound),
         };
-        let mut reader = std::io::BufReader::new(file);
-        match reader.read_to_end(&mut image_buffer) {
-            Ok(_) => (),
-            Err(_) => return Err(MobileImageMounterError::DmgNotFound),
-        };
+
         // Read the signature into a buffer
         let mut signature_buffer = Vec::new();
         let file = match std::fs::File::open(signature_path) {
