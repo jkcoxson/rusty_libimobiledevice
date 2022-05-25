@@ -92,17 +92,20 @@ impl InstProxyClient<'_> {
     /// A plist containing the apps found
     ///
     /// ***Verified:*** False
-    pub fn create_return_attributes(options: Vec<(String, Plist)>, args: Vec<String>) -> Plist {
+    pub fn create_return_attributes(
+        options: Vec<(impl Into<String>, Plist)>,
+        args: Vec<impl Into<String>>,
+    ) -> Plist {
         info!("Setting return attributes");
         let mut pointer: Plist = unsafe { unsafe_bindings::instproxy_client_options_new() }.into();
 
         for (key, value) in options {
-            pointer.dict_set_item(&key, value).unwrap();
+            pointer.dict_set_item(&key.into(), value).unwrap();
         }
 
         let mut return_attributes = Plist::new_array();
         for i in args {
-            let t = Plist::new_string(&i);
+            let t = Plist::new_string(&i.into());
             return_attributes.array_append_item(t).unwrap();
         }
         match pointer.dict_insert_item("ReturnAttributes", return_attributes) {
