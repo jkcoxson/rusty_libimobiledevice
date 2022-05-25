@@ -48,11 +48,11 @@ impl LockdowndClient<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: String) -> Result<Self, LockdowndError> {
+    pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, LockdowndError> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
-        let label_c_str = std::ffi::CString::new(label).unwrap();
+        let label_c_str = std::ffi::CString::new(label.into()).unwrap();
 
         info!("Creating lockdownd client for {}", device.get_udid());
         let result = unsafe {
@@ -82,7 +82,13 @@ impl LockdowndClient<'_> {
     /// A plist containing the value
     ///
     /// ***Verified:*** False
-    pub fn get_value(&self, key: String, domain: String) -> Result<Plist, LockdowndError> {
+    pub fn get_value(
+        &self,
+        key: impl Into<String>,
+        domain: impl Into<String>,
+    ) -> Result<Plist, LockdowndError> {
+        let domain = domain.into();
+        let key = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()
@@ -122,10 +128,12 @@ impl LockdowndClient<'_> {
     /// ***Verified:***
     pub fn set_value(
         &self,
-        key: String,
-        domain: String,
+        key: impl Into<String>,
+        domain: impl Into<String>,
         value: Plist,
     ) -> Result<(), LockdowndError> {
+        let domain = domain.into();
+        let key = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()
@@ -165,7 +173,13 @@ impl LockdowndClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn remove_value(&self, key: String, domain: String) -> Result<(), LockdowndError> {
+    pub fn remove_value(
+        &self,
+        key: impl Into<String>,
+        domain: impl Into<String>,
+    ) -> Result<(), LockdowndError> {
+        let domain = domain.into();
+        let key = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
         let domain_c_str = if domain == "".to_string() {
             std::ptr::null()
@@ -203,9 +217,10 @@ impl LockdowndClient<'_> {
     /// ***Verified:*** False
     pub fn start_service(
         &mut self,
-        service: String,
+        service: impl Into<String>,
         escrow_bag: bool,
     ) -> Result<LockdowndService, LockdowndError> {
+        let service = service.into();
         let label_c_str = std::ffi::CString::new(service.clone()).unwrap();
         let label_c_str = if service == "".to_string() {
             std::ptr::null()
@@ -251,7 +266,11 @@ impl LockdowndClient<'_> {
     /// The session ID and whether SSL was enabled
     ///
     /// ***Verified:*** False
-    pub fn start_session(&self, host_id: String) -> Result<(String, bool), LockdowndError> {
+    pub fn start_session(
+        &self,
+        host_id: impl Into<String>,
+    ) -> Result<(String, bool), LockdowndError> {
+        let host_id = host_id.into();
         let host_id_c_str = std::ffi::CString::new(host_id.clone()).unwrap();
         let mut session_id = unsafe { std::mem::zeroed() };
         let mut ssl_enabled = unsafe { std::mem::zeroed() };
@@ -287,7 +306,8 @@ impl LockdowndClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn stop_session(&self, session_id: String) -> Result<(), LockdowndError> {
+    pub fn stop_session(&self, session_id: impl Into<String>) -> Result<(), LockdowndError> {
+        let session_id = session_id.into();
         let session_id_c_str = std::ffi::CString::new(session_id.clone()).unwrap();
         let session_id_c_str = if session_id == "".to_string() {
             std::ptr::null()
@@ -504,7 +524,8 @@ impl LockdowndClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn client_set_label(&self, label: String) {
+    pub fn client_set_label(&self, label: impl Into<String>) {
+        let label = label.into();
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
         let label_c_str = if label == "".to_string() {
             std::ptr::null()

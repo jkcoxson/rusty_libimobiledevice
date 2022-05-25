@@ -56,13 +56,16 @@ impl MobileSyncClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: Device, label: String) -> Result<Self, MobileSyncError> {
+    pub fn start_service(
+        device: Device,
+        label: impl Into<String>,
+    ) -> Result<Self, MobileSyncError> {
         let mut pointer: unsafe_bindings::mobilesync_client_t = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::mobilesync_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *mut c_char,
+                label.into().as_ptr() as *mut c_char,
             )
         }
         .into();
@@ -127,11 +130,12 @@ impl MobileSyncClient<'_> {
     /// ***Verified:*** False
     pub fn start(
         &self,
-        data_class: String,
+        data_class: impl Into<String>,
         anchors: Vec<MobileSyncAnchor>,
         computer_data_class_version: u64,
         sync_type: MobileSyncType,
     ) -> Result<(), (String, MobileSyncError)> {
+        let data_class = data_class.into();
         let data_class = CString::new(data_class).unwrap();
         let data_class_ptr = data_class.as_ptr();
 
@@ -177,8 +181,8 @@ impl MobileSyncClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn cancel(&self, reason: String) -> Result<(), MobileSyncError> {
-        let reason = CString::new(reason).unwrap();
+    pub fn cancel(&self, reason: impl Into<String>) -> Result<(), MobileSyncError> {
+        let reason = CString::new(reason.into()).unwrap();
         let reason_ptr = reason.as_ptr();
 
         let result = unsafe { unsafe_bindings::mobilesync_cancel(self.pointer, reason_ptr) }.into();
@@ -388,10 +392,10 @@ impl MobileSyncClient<'_> {
 }
 
 impl MobileSyncAnchor {
-    pub fn new(device_anchor: String, computer_anchor: String) -> Self {
+    pub fn new(device_anchor: impl Into<String>, computer_anchor: impl Into<String>) -> Self {
         MobileSyncAnchor {
-            device_anchor,
-            computer_anchor,
+            device_anchor: device_anchor.into(),
+            computer_anchor: computer_anchor.into(),
         }
     }
 }

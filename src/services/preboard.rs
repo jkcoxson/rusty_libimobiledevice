@@ -50,13 +50,13 @@ impl PreboardClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, PreboardError> {
+    pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, PreboardError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::preboard_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();

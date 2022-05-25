@@ -48,13 +48,13 @@ impl MisagentClient<'_> {
     /// An afc service connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, MisagentError> {
+    pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, MisagentError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::misagent_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();
@@ -114,10 +114,11 @@ impl MisagentClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn remove(&self, id: String) -> Result<(), MisagentError> {
-        let result =
-            unsafe { unsafe_bindings::misagent_remove(self.pointer, id.as_ptr() as *const c_char) }
-                .into();
+    pub fn remove(&self, id: impl Into<String>) -> Result<(), MisagentError> {
+        let result = unsafe {
+            unsafe_bindings::misagent_remove(self.pointer, id.into().as_ptr() as *const c_char)
+        }
+        .into();
         if result != MisagentError::Success {
             return Err(result);
         }

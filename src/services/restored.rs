@@ -21,13 +21,13 @@ impl RestoredClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: String) -> Result<Self, RestoredError> {
+    pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, RestoredError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::restored_client_new(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();
@@ -73,12 +73,12 @@ impl RestoredClient<'_> {
     /// A plist with the returned value
     ///
     /// ***Verified:*** False
-    pub fn query_value(&self, key: String) -> Result<Plist, RestoredError> {
+    pub fn query_value(&self, key: impl Into<String>) -> Result<Plist, RestoredError> {
         let mut value = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::restored_query_value(
                 self.pointer,
-                key.as_ptr() as *const c_char,
+                key.into().as_ptr() as *const c_char,
                 &mut value,
             )
         }
@@ -97,12 +97,12 @@ impl RestoredClient<'_> {
     /// A plist with the returned value
     ///
     /// ***Verified:*** False
-    pub fn get_value(&self, key: String) -> Result<Plist, RestoredError> {
+    pub fn get_value(&self, key: impl Into<String>) -> Result<Plist, RestoredError> {
         let mut value = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::restored_get_value(
                 self.pointer,
-                key.as_ptr() as *const c_char,
+                key.into().as_ptr() as *const c_char,
                 &mut value,
             )
         }
@@ -210,11 +210,11 @@ impl RestoredClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn set_label(&self, label: String) {
+    pub fn set_label(&self, label: impl Into<String>) {
         unsafe {
             unsafe_bindings::restored_client_set_label(
                 self.pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         };
     }

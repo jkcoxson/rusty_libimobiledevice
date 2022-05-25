@@ -44,17 +44,17 @@ impl ServiceClient<'_> {
     /// ***Verified:*** False
     pub fn factory_start_service(
         device: &Device,
-        service_name: String,
-        label: String,
+        service_name: impl Into<String>,
+        label: impl Into<String>,
     ) -> Result<(Self, i32), ServiceError> {
         let mut pointer = std::ptr::null_mut();
         let mut error_code = 0;
         let result = unsafe {
             unsafe_bindings::service_client_factory_start_service(
                 device.pointer,
-                service_name.as_ptr() as *const c_char,
+                service_name.into().as_ptr() as *const c_char,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
                 None,
                 &mut error_code,
             )

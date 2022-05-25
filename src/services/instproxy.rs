@@ -26,7 +26,8 @@ impl InstProxyClient<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn new(device: &Device, label: String) -> Result<Self, InstProxyError> {
+    pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, InstProxyError> {
+        let label = label.into();
         let mut instproxy_client = unsafe { std::mem::zeroed() };
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
         info!("Creating instproxy client for {}", device.get_udid());
@@ -176,11 +177,11 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn install(
         &self,
-        pkg_path: String,
+        pkg_path: impl Into<String>,
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy install");
-        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+        let pkg_path_c_str = std::ffi::CString::new(pkg_path.into()).unwrap();
 
         let ptr = if client_options.is_some() {
             client_options.unwrap().get_pointer()
@@ -215,11 +216,11 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn upgrade(
         &self,
-        pkg_path: String,
+        pkg_path: impl Into<String>,
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy upgrade");
-        let pkg_path_c_str = std::ffi::CString::new(pkg_path).unwrap();
+        let pkg_path_c_str = std::ffi::CString::new(pkg_path.into()).unwrap();
 
         let ptr = if client_options.is_some() {
             client_options.unwrap().get_pointer()
@@ -254,11 +255,11 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn uninstall(
         &self,
-        app_id: String,
+        app_id: impl Into<String>,
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy uninstall");
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
         let ptr = if client_options.is_some() {
             client_options.unwrap().get_pointer()
@@ -320,11 +321,11 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn archive(
         &self,
-        app_id: String,
+        app_id: impl Into<String>,
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy archive");
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
         let ptr = if client_options.is_some() {
             client_options.unwrap().get_pointer()
@@ -358,11 +359,11 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn restore(
         &self,
-        app_id: String,
+        app_id: impl Into<String>,
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy restore");
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
         let ptr = if client_options.is_some() {
             client_options.unwrap().get_pointer()
@@ -396,11 +397,11 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn remove_archive(
         &self,
-        app_id: String,
+        app_id: impl Into<String>,
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy remove archive");
-        let app_id_c_str = std::ffi::CString::new(app_id).unwrap();
+        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
         let ptr = if client_options.is_some() {
             client_options.unwrap().get_pointer()
@@ -480,9 +481,9 @@ impl InstProxyClient<'_> {
     /// ***Verified:*** False
     pub fn get_path_for_bundle_identifier(
         &self,
-        bundle_identifier: String,
+        bundle_identifier: impl Into<String>,
     ) -> Result<String, InstProxyError> {
-        let bundle_id = std::ffi::CString::new(bundle_identifier).unwrap();
+        let bundle_id = std::ffi::CString::new(bundle_identifier.into()).unwrap();
         // This is kinda horrifying, could use a refractor
         let to_fill = CString::new("").unwrap();
         let mut to_fill_bytes = to_fill.into_raw();

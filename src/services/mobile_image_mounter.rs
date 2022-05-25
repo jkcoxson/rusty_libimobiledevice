@@ -64,14 +64,17 @@ impl MobileImageMounter<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, MobileImageMounterError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, MobileImageMounterError> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_start_service(
                 device.pointer,
                 &mut client,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();
@@ -97,10 +100,13 @@ impl MobileImageMounter<'_> {
     /// ***Verified:*** False
     pub fn upload_image(
         &self,
-        image_path: String,
-        image_type: String,
-        signature_path: String,
+        image_path: impl Into<String>,
+        image_type: impl Into<String>,
+        signature_path: impl Into<String>,
     ) -> Result<(), MobileImageMounterError> {
+        let image_path = image_path.into();
+        let image_type = image_type.into();
+        let signature_path = signature_path.into();
         // Determine if files exist
         let dmg_size = match std::fs::File::open(image_path.clone()) {
             Ok(mut file) => {
@@ -173,10 +179,13 @@ impl MobileImageMounter<'_> {
     /// ***Verified:*** False
     pub fn mount_image(
         &self,
-        image_path: String,
-        image_type: String,
-        signature_path: String,
+        image_path: impl Into<String>,
+        image_type: impl Into<String>,
+        signature_path: impl Into<String>,
     ) -> Result<Plist, MobileImageMounterError> {
+        let image_path = image_path.into();
+        let image_type = image_type.into();
+        let signature_path = signature_path.into();
         // Confirm that the image exists
         let image_path: PathBuf = image_path.into();
         if !image_path.exists() {
@@ -233,7 +242,11 @@ impl MobileImageMounter<'_> {
     /// A plist containing the results. This may return Ok even if failed, check the plist.
     ///
     /// ***Verified:*** False
-    pub fn lookup_image(&self, image_type: String) -> Result<Plist, MobileImageMounterError> {
+    pub fn lookup_image(
+        &self,
+        image_type: impl Into<String>,
+    ) -> Result<Plist, MobileImageMounterError> {
+        let image_type = image_type.into();
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
         let image_type_c_str = if image_type == "".to_string() {
             std::ptr::null()

@@ -50,13 +50,16 @@ impl ScreenshotrClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, ScreenshotrError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, ScreenshotrError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::screenshotr_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();

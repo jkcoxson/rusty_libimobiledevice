@@ -56,14 +56,17 @@ impl MobileActivationClient<'_> {
     /// An afc service connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, MobileActivationError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, MobileActivationError> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::mobileactivation_client_start_service(
                 device.pointer,
                 &mut client,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();

@@ -98,8 +98,8 @@ impl AfcClient<'_> {
     /// A vector of strings containing the directory contents
     ///
     /// ***Verified:*** False
-    pub fn read_directory(&self, directory: String) -> Result<String, AfcError> {
-        let directory_ptr: *const c_char = directory.as_ptr() as *const c_char;
+    pub fn read_directory(&self, directory: impl Into<String>) -> Result<String, AfcError> {
+        let directory_ptr: *const c_char = directory.into().as_ptr() as *const c_char;
         let mut entries = unsafe { std::mem::zeroed() };
         let mut entries_ptr: *mut *mut c_char = &mut entries;
         let result = unsafe {
@@ -121,8 +121,8 @@ impl AfcClient<'_> {
     /// A string containing the file information
     ///
     /// ***Verified:*** False
-    pub fn get_file_info(&self, path: String) -> Result<String, AfcError> {
-        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn get_file_info(&self, path: impl Into<String>) -> Result<String, AfcError> {
+        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let mut info = unsafe { std::mem::zeroed() };
         let mut info_ptr: *mut *mut c_char = &mut info;
         let result =
@@ -144,8 +144,8 @@ impl AfcClient<'_> {
     /// The file handle
     ///
     /// ***Verified:*** False
-    pub fn file_open(&self, path: String, mode: AfcFileMode) -> Result<u64, AfcError> {
-        let file_name_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn file_open(&self, path: impl Into<String>, mode: AfcFileMode) -> Result<u64, AfcError> {
+        let file_name_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let mut handle = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_file_open(self.pointer, file_name_ptr, mode.into(), &mut handle)
@@ -234,7 +234,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn file_write(&self, handle: u64, data: String) -> Result<(), AfcError> {
+    pub fn file_write(&self, handle: u64, data: impl Into<String>) -> Result<(), AfcError> {
+        let data = data.into();
         let data_ptr: *const c_char = data.as_ptr() as *const c_char;
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {
@@ -313,8 +314,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn remove_path(&self, path: String) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn remove_path(&self, path: impl Into<String>) -> Result<(), AfcError> {
+        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let result = unsafe { unsafe_bindings::afc_remove_path(self.pointer, path_ptr) }.into();
         if result != AfcError::Success {
             return Err(result);
@@ -330,9 +331,13 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn rename_path(&self, old_path: String, new_path: String) -> Result<(), AfcError> {
-        let old_path_ptr: *const c_char = old_path.as_ptr() as *const c_char;
-        let new_path_ptr: *const c_char = new_path.as_ptr() as *const c_char;
+    pub fn rename_path(
+        &self,
+        old_path: impl Into<String>,
+        new_path: impl Into<String>,
+    ) -> Result<(), AfcError> {
+        let old_path_ptr: *const c_char = old_path.into().as_ptr() as *const c_char;
+        let new_path_ptr: *const c_char = new_path.into().as_ptr() as *const c_char;
         let result =
             unsafe { unsafe_bindings::afc_rename_path(self.pointer, old_path_ptr, new_path_ptr) }
                 .into();
@@ -349,8 +354,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn make_directory(&self, path: String) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn make_directory(&self, path: impl Into<String>) -> Result<(), AfcError> {
+        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let result = unsafe { unsafe_bindings::afc_make_directory(self.pointer, path_ptr) }.into();
         if result != AfcError::Success {
             return Err(result);
@@ -366,8 +371,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn truncate(&self, path: String, length: u64) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn truncate(&self, path: impl Into<String>, length: u64) -> Result<(), AfcError> {
+        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let result =
             unsafe { unsafe_bindings::afc_truncate(self.pointer, path_ptr, length) }.into();
         if result != AfcError::Success {
@@ -387,12 +392,12 @@ impl AfcClient<'_> {
     /// ***Verified:*** False
     pub fn make_link(
         &self,
-        target: String,
+        target: impl Into<String>,
         link_type: LinkType,
-        link_path: String,
+        link_path: impl Into<String>,
     ) -> Result<(), AfcError> {
-        let target_ptr: *const c_char = target.as_ptr() as *const c_char;
-        let link_name_ptr: *const c_char = link_path.as_ptr() as *const c_char;
+        let target_ptr: *const c_char = target.into().as_ptr() as *const c_char;
+        let link_name_ptr: *const c_char = link_path.into().as_ptr() as *const c_char;
         let result = unsafe {
             unsafe_bindings::afc_make_link(
                 self.pointer,
@@ -416,8 +421,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn set_file_time(&self, path: String, mtime: u64) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn set_file_time(&self, path: impl Into<String>, mtime: u64) -> Result<(), AfcError> {
+        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let result =
             unsafe { unsafe_bindings::afc_set_file_time(self.pointer, path_ptr, mtime) }.into();
         if result != AfcError::Success {
@@ -433,8 +438,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn remove_path_and_contents(&self, path: String) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+    pub fn remove_path_and_contents(&self, path: impl Into<String>) -> Result<(), AfcError> {
+        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
         let result =
             unsafe { unsafe_bindings::afc_remove_path_and_contents(self.pointer, path_ptr) }.into();
         if result != AfcError::Success {
@@ -450,8 +455,8 @@ impl AfcClient<'_> {
     /// The info value of the lookup
     ///
     /// ***Verified:*** False
-    pub fn get_device_info_key(&self, key: String) -> Result<String, AfcError> {
-        let key_ptr: *const c_char = key.as_ptr() as *const c_char;
+    pub fn get_device_info_key(&self, key: impl Into<String>) -> Result<String, AfcError> {
+        let key_ptr: *const c_char = key.into().as_ptr() as *const c_char;
         let mut value_ptr = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_get_device_info_key(self.pointer, key_ptr, &mut value_ptr)

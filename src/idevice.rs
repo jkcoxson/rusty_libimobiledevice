@@ -128,7 +128,8 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 /// A device struct
 ///
 /// ***Verified:*** False
-pub fn get_device(udid: String) -> Result<Device, IdeviceError> {
+pub fn get_device(udid: impl Into<String>) -> Result<Device, IdeviceError> {
+    let udid = udid.into();
     let devices = match get_devices() {
         Ok(devices) => devices,
         Err(e) => return Err(e),
@@ -182,7 +183,7 @@ impl Device {
     ///
     /// ***Verified:*** True
     pub fn new(
-        udid: String,
+        udid: impl Into<String>,
         network: bool,
         ip_addr: Option<IpAddr>,
         mux_id: u32,
@@ -193,7 +194,7 @@ impl Device {
 
         // Convert the udid to a C string
         info!("Converting udid to C string");
-        let mut udid_bytes = udid.into_bytes();
+        let mut udid_bytes = udid.into().into_bytes();
         udid_bytes.push(0);
         // Ensure valid C string
         CStr::from_bytes_with_nul(&udid_bytes).unwrap();
@@ -410,8 +411,11 @@ impl Device {
     /// A lockdown service for the device
     ///
     /// ***Verified:*** False
-    pub fn new_lockdownd_client(&self, label: String) -> Result<LockdowndClient, LockdowndError> {
-        Ok(LockdowndClient::new(self, label)?)
+    pub fn new_lockdownd_client(
+        &self,
+        label: impl Into<String>,
+    ) -> Result<LockdowndClient, LockdowndError> {
+        Ok(LockdowndClient::new(self, label.into())?)
     }
 
     /// Starts the heartbeat service for the device
@@ -421,8 +425,11 @@ impl Device {
     /// A heartbeat service for the device
     ///
     /// ***Verified:*** False
-    pub fn new_heartbeat_client(&self, label: String) -> Result<HeartbeatClient, HeartbeatError> {
-        Ok(HeartbeatClient::new(self, label)?)
+    pub fn new_heartbeat_client(
+        &self,
+        label: impl Into<String>,
+    ) -> Result<HeartbeatClient, HeartbeatError> {
+        Ok(HeartbeatClient::new(self, label.into())?)
     }
 
     /// Creates an image mounter for the device
@@ -470,9 +477,9 @@ impl Device {
     /// ***Verified:*** False
     pub fn new_instproxy_client(
         &self,
-        label: String,
+        label: impl Into<String>,
     ) -> Result<crate::services::instproxy::InstProxyClient, InstProxyError> {
-        crate::services::instproxy::InstProxyClient::new(self, label)
+        crate::services::instproxy::InstProxyClient::new(self, label.into())
     }
 
     /// Creates a new debug server for the device

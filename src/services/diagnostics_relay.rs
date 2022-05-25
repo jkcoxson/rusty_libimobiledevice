@@ -53,13 +53,16 @@ impl DiagnosticsRelay<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, DiagnosticsRelayError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, DiagnosticsRelayError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const std::os::raw::c_char,
+                label.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -152,12 +155,15 @@ impl DiagnosticsRelay<'_> {
     /// A plist containing the diagnostics data
     ///
     /// ***Verified:*** False
-    pub fn request_diagnostics(&self, type_: String) -> Result<Plist, DiagnosticsRelayError> {
+    pub fn request_diagnostics(
+        &self,
+        type_: impl Into<String>,
+    ) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_request_diagnostics(
                 self.pointer,
-                type_.as_ptr() as *const std::os::raw::c_char,
+                type_.into().as_ptr() as *const std::os::raw::c_char,
                 &mut plist,
             )
         }
@@ -205,15 +211,15 @@ impl DiagnosticsRelay<'_> {
     /// ***Verified:*** False
     pub fn query_ioregistry_entry(
         &self,
-        entry_name: String,
-        entry_class: String,
+        entry_name: impl Into<String>,
+        entry_class: impl Into<String>,
     ) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_ioregistry_entry(
                 self.pointer,
-                entry_name.as_ptr() as *const std::os::raw::c_char,
-                entry_class.as_ptr() as *const std::os::raw::c_char,
+                entry_name.into().as_ptr() as *const std::os::raw::c_char,
+                entry_class.into().as_ptr() as *const std::os::raw::c_char,
                 &mut plist,
             )
         }
@@ -233,12 +239,15 @@ impl DiagnosticsRelay<'_> {
     /// A plist containing the requested data
     ///
     /// ***Verified:*** False
-    pub fn query_ioregistry_plane(&self, plane: String) -> Result<Plist, DiagnosticsRelayError> {
+    pub fn query_ioregistry_plane(
+        &self,
+        plane: impl Into<String>,
+    ) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_ioregistry_plane(
                 self.pointer,
-                plane.as_ptr() as *const std::os::raw::c_char,
+                plane.into().as_ptr() as *const std::os::raw::c_char,
                 &mut plist,
             )
         }

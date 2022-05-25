@@ -48,13 +48,16 @@ impl HouseArrest<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, HouseArrestError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, HouseArrestError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::house_arrest_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const std::os::raw::c_char,
+                label.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -106,12 +109,16 @@ impl HouseArrest<'_> {
     /// A plist containing the result of the request
     ///
     /// ***Verified:*** False
-    pub fn send_command(&self, command: String, app_id: String) -> Result<Plist, HouseArrestError> {
+    pub fn send_command(
+        &self,
+        command: impl Into<String>,
+        app_id: impl Into<String>,
+    ) -> Result<Plist, HouseArrestError> {
         let result = unsafe {
             unsafe_bindings::house_arrest_send_command(
                 self.pointer,
-                command.as_ptr() as *const std::os::raw::c_char,
-                app_id.as_ptr() as *const std::os::raw::c_char,
+                command.into().as_ptr() as *const std::os::raw::c_char,
+                app_id.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();

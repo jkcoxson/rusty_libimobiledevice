@@ -59,14 +59,17 @@ impl MobileBackupClient<'_> {
     /// An afc service connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, MobileBackupError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::mobilebackup_client_start_service(
                 device.pointer,
                 &mut client,
-                label.as_ptr() as *const std::os::raw::c_char,
+                label.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -129,8 +132,8 @@ impl MobileBackupClient<'_> {
     pub fn request_backup(
         &self,
         manifest: Option<Plist>,
-        base_path: String,
-        backup_version: String,
+        base_path: impl Into<String>,
+        backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
         let ptr = if manifest.is_some() {
             manifest.unwrap().get_pointer()
@@ -142,8 +145,8 @@ impl MobileBackupClient<'_> {
             unsafe_bindings::mobilebackup_request_backup(
                 self.pointer,
                 ptr,
-                base_path.as_ptr() as *const std::os::raw::c_char,
-                backup_version.as_ptr() as *const std::os::raw::c_char,
+                base_path.into().as_ptr() as *const std::os::raw::c_char,
+                backup_version.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -182,14 +185,14 @@ impl MobileBackupClient<'_> {
         &self,
         manifest: Plist,
         flags: MobileBackupRestoreFlags,
-        backup_version: String,
+        backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_restore(
                 self.pointer,
                 manifest.get_pointer(),
                 flags.into(),
-                backup_version.as_ptr() as *const std::os::raw::c_char,
+                backup_version.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -276,11 +279,11 @@ impl MobileBackupClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send_error(&self, error: String) -> Result<(), MobileBackupError> {
+    pub fn send_error(&self, error: impl Into<String>) -> Result<(), MobileBackupError> {
         let result = unsafe {
             unsafe_bindings::mobilebackup_send_error(
                 self.pointer,
-                error.as_ptr() as *const std::os::raw::c_char,
+                error.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -328,14 +331,17 @@ impl MobileBackup2Client<'_> {
     /// An afc service connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, MobileBackup2Error> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::mobilebackup2_client_start_service(
                 device.pointer,
                 &mut client,
-                label.as_ptr() as *const std::os::raw::c_char,
+                label.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
@@ -497,16 +503,16 @@ impl MobileBackup2Client<'_> {
     pub fn send_request(
         &self,
         request: MobileBackupRequest,
-        target: String,
-        source: String,
+        target: impl Into<String>,
+        source: impl Into<String>,
         options: Plist,
     ) -> Result<(), MobileBackup2Error> {
         let result = unsafe {
             unsafe_bindings::mobilebackup2_send_request(
                 self.pointer,
                 request.into(),
-                target.as_ptr() as *const std::os::raw::c_char,
-                source.as_ptr() as *const std::os::raw::c_char,
+                target.into().as_ptr() as *const std::os::raw::c_char,
+                source.into().as_ptr() as *const std::os::raw::c_char,
                 options.get_pointer(),
             )
         }

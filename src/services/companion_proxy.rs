@@ -53,13 +53,16 @@ impl CompanionProxy<'_> {
     /// A companion proxy struct
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, CompanionProxyError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, CompanionProxyError> {
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();
@@ -138,15 +141,15 @@ impl CompanionProxy<'_> {
     /// * `key` - The value to fetch from the registry
     pub fn get_value_from_registry(
         self,
-        udid: String,
-        key: String,
+        udid: impl Into<String>,
+        key: impl Into<String>,
     ) -> Result<Plist, CompanionProxyError> {
         let mut plist = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_get_value_from_registry(
                 self.pointer,
-                udid.as_ptr() as *const c_char,
-                key.as_ptr() as *const c_char,
+                udid.into().as_ptr() as *const c_char,
+                key.into().as_ptr() as *const c_char,
                 &mut plist,
             )
         }
@@ -170,7 +173,7 @@ impl CompanionProxy<'_> {
     pub fn start_forwarding_service_port(
         &self,
         port: u16,
-        service_name: String,
+        service_name: impl Into<String>,
         options: Plist,
     ) -> Result<u16, CompanionProxyError> {
         let mut result_port = 0;
@@ -178,7 +181,7 @@ impl CompanionProxy<'_> {
             unsafe_bindings::companion_proxy_start_forwarding_service_port(
                 self.pointer,
                 port,
-                service_name.as_ptr() as *const c_char,
+                service_name.into().as_ptr() as *const c_char,
                 &mut result_port,
                 options.get_pointer(),
             )

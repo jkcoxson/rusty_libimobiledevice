@@ -47,13 +47,16 @@ impl FileRelay<'_> {
     /// A struct containing the handle to the service
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, FileRelayError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, FileRelayError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::file_relay_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();

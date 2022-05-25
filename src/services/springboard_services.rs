@@ -49,13 +49,16 @@ impl SpringboardServicesClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, SbservicesError> {
+    pub fn start_service(
+        device: &Device,
+        label: impl Into<String>,
+    ) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::sbservices_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const c_char,
+                label.into().as_ptr() as *const c_char,
             )
         }
         .into();
@@ -125,13 +128,16 @@ impl SpringboardServicesClient<'_> {
     /// A vector of bytes containing the .png
     ///
     /// ***Verified:*** False
-    pub fn get_icon_png_data(&self, bundle_id: String) -> Result<Vec<c_char>, SbservicesError> {
+    pub fn get_icon_png_data(
+        &self,
+        bundle_id: impl Into<String>,
+    ) -> Result<Vec<c_char>, SbservicesError> {
         let mut data = std::ptr::null_mut();
         let mut size = 0;
         let result = unsafe {
             unsafe_bindings::sbservices_get_icon_pngdata(
                 self.pointer,
-                bundle_id.as_ptr() as *const c_char,
+                bundle_id.into().as_ptr() as *const c_char,
                 &mut data,
                 &mut size,
             )

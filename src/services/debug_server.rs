@@ -63,8 +63,8 @@ impl DebugServer<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: String) -> Result<(), DebugServerError> {
-        let data_c_str = std::ffi::CString::new(data).unwrap();
+    pub fn send(&self, data: impl Into<String>) -> Result<(), DebugServerError> {
+        let data_c_str = std::ffi::CString::new(data.into()).unwrap();
         let mut sent = 0;
         let result = unsafe {
             unsafe_bindings::debugserver_client_send(
@@ -178,8 +178,11 @@ impl DebugServer<'_> {
     /// The response to the request
     ///
     /// ***Verified:*** False
-    pub fn set_environment_hex_encoded(&self, env: String) -> Result<String, DebugServerError> {
-        let env_c_str = std::ffi::CString::new(env).unwrap();
+    pub fn set_environment_hex_encoded(
+        &self,
+        env: impl Into<String>,
+    ) -> Result<String, DebugServerError> {
+        let env_c_str = std::ffi::CString::new(env.into()).unwrap();
         let mut response = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::debugserver_client_set_environment_hex_encoded(
@@ -292,10 +295,10 @@ impl DebugServer<'_> {
     /// The encoded bytes
     ///
     /// ***Verified:*** False
-    pub fn encode_string(buffer: String) -> Vec<c_char> {
+    pub fn encode_string(buffer: impl Into<String>) -> Vec<c_char> {
         let mut encoded_buffer = unsafe { std::mem::zeroed() };
         let mut encoded_buffer_size = 0;
-        let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
+        let buffer_c_str = std::ffi::CString::new(buffer.into()).unwrap();
         let buffer_ptr = buffer_c_str.as_ptr() as *mut c_char;
         unsafe {
             unsafe_bindings::debugserver_encode_string(
@@ -316,7 +319,8 @@ impl DebugServer<'_> {
     /// Decodes a string encoded in hex
     /// # Arguments
     /// * `buffer` - The string to decode
-    pub fn decode_string(buffer: String) -> String {
+    pub fn decode_string(buffer: impl Into<String>) -> String {
+        let buffer = buffer.into();
         let mut decoded_buffer = unsafe { std::mem::zeroed() };
         let buffer_len = buffer.len() as unsafe_bindings::size_t;
         let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
@@ -342,11 +346,14 @@ impl DebugServerCommand {
     /// The struct containing the command
     ///
     /// ***Verified:*** False
-    pub fn new(command: String, arguments: Vec<String>) -> Result<DebugServerCommand, String> {
+    pub fn new(
+        command: impl Into<String>,
+        arguments: Vec<String>,
+    ) -> Result<DebugServerCommand, String> {
         let mut command_ptr: unsafe_bindings::debugserver_command_t = unsafe { std::mem::zeroed() };
         let command_ptr_ptr: *mut unsafe_bindings::debugserver_command_t = &mut command_ptr;
 
-        let command_c_str = std::ffi::CString::new(command).unwrap();
+        let command_c_str = std::ffi::CString::new(command.into()).unwrap();
 
         // Create C array
         let mut arguments_c_array: Vec<c_char> = Vec::new();

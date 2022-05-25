@@ -45,13 +45,13 @@ impl NotificationProxyClient<'_> {
     /// A struct containing the handle to the connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, label: String) -> Result<Self, NpError> {
+    pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, NpError> {
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::np_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.as_ptr() as *const std::os::raw::c_char,
+                label.into().as_ptr() as *const std::os::raw::c_char,
             )
         }
         .into();
