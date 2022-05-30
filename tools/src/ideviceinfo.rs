@@ -39,43 +39,25 @@ fn main() {
         i += 1;
     }
 
-    if udid == "" {
-        let devices = match idevice::get_devices() {
-            Ok(devices) => devices,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                return;
-            }
-        };
-        if devices.len() == 0 {
-            println!("Error: No devices found.");
-            return;
-        }
-        let lckd = match devices[0].new_lockdownd_client("ideviceinfo".to_string()) {
-            Ok(lckd) => lckd,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                return;
-            }
-        };
-        let output = match lckd.get_value("".to_string(), "".to_string()) {
-            Ok(output) => output,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                return;
-            }
-        };
-        let output: String = output.into();
-        println!("{}", output);
-    } else {
-        let device = match idevice::get_device(udid.to_string()) {
+    let device = if udid == "" {
+        match idevice::get_first_device() {
             Ok(device) => device,
             Err(e) => {
-                println!("Error: {:?}", e);
+                println!("Error: Could not find device: {:?}", e);
                 return;
             }
-        };
-        let lckd = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
+        }
+    } else {
+        match idevice::get_device(udid) {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error: Could not find device: {:?}", e);
+                return;
+            }
+        }
+    };
+
+    let lckd = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
             Ok(lckd) => {
                 println!("Successfully connected to lockdownd.");
                 lckd
@@ -92,7 +74,7 @@ fn main() {
                 return;
             }
         };
-        let output: String = output.into();
-        println!("{}", output);
-    }
+        for line in output.into_iter() {
+            println!("{}: {}", line.key.unwrap(), line.plist.clone().get_display_value().unwrap());
+        }
 }

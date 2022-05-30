@@ -1,10 +1,13 @@
 // jkcoxson
 
+use std::io::Write;
+
 use rusty_libimobiledevice::idevice;
 
 fn main() {
     const VERSION: &str = "0.1.0";
     let mut udid = "".to_string();
+    let mut file_name = "".to_string();
 
     // Collect options
     let mut i = 1;
@@ -29,30 +32,63 @@ fn main() {
                 return;
             }
             _ => {
-                panic!("Unknown argument: {}", &arguments[i]);
+                if arguments[i].starts_with("-") {
+                    println!("Unknown flag: {}", arguments[i]);
+                    return;
+                }
+                file_name = arguments[i].clone();
             }
         }
         i += 1;
     }
-    if udid == "".to_string() {
-        panic!("No device UDID specified");
-    }
+    
+    let device = if udid == "" {
+        match idevice::get_first_device() {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error: Could not find device: {:?}", e);
+                return;
+            }
+        }
+    } else {
+        match idevice::get_device(udid) {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error: Could not find device: {:?}", e);
+                return;
+            }
+        }
+    };
+    println!("Using device: {}", device.get_udid());
 
-    let device = match idevice::get_device(udid) {
-        Ok(d) => d,
+    let ss = match device.new_screenshot_service("idevicescreenshot") {
+        Ok(ss) => ss,
         Err(e) => {
-            println!("Error: {:?}", e);
+            println!("Error: Could not connect to screenshot service: {:?}", e);
+            return;
+        }
+    };
+    
+    let image = match ss.take_screenshot() {
+        Ok(image) => image,
+        Err(e) => {
+            println!("Error: Could not take screenshot: {:?}", e);
+            return;
+        }
+    };
+    println!("Got {} bytes of image data", image.len());
+    let mut converted = vec![];
+    for i in image {
+        converted.push(i as u8);
+    }
+    
+    let mut file = match std::fs::File::create(file_name) {
+        Ok(file) => file,
+        Err(e) => {
+            println!("Error: Could not create file: {:?}", e);
             return;
         }
     };
 
-    match device.new_lockdownd_client("yeet".to_string()) {
-        Ok(_) => {}
-        Err(e) => {
-            println!("Error starting lockdown service: {:?}", e);
-            return;
-        }
-    }
-
-    todo!();
+   file.write(&converted).unwrap();
 }

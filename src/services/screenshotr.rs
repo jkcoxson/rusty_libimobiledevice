@@ -2,6 +2,8 @@
 
 use std::os::raw::c_char;
 
+use log::info;
+
 use crate::{
     bindings as unsafe_bindings, error::ScreenshotrError, idevice::Device,
     services::lockdownd::LockdowndService,
@@ -81,8 +83,8 @@ impl ScreenshotrClient<'_> {
     /// A vector of bytes containing a .png
     ///
     /// ***Verified:*** False
-    pub fn take_screenshot(&self) -> Result<Vec<c_char>, ScreenshotrError> {
-        let mut data = std::ptr::null_mut();
+    pub fn take_screenshot(&self) -> Result<Vec<u8>, ScreenshotrError> {
+        let mut data = unsafe { std::mem::zeroed() };
         let mut size = 0;
         let result = unsafe {
             unsafe_bindings::screenshotr_take_screenshot(self.pointer, &mut data, &mut size)
@@ -93,12 +95,9 @@ impl ScreenshotrClient<'_> {
             return Err(result);
         }
 
-        let mut buffer = Vec::with_capacity(size as usize);
-        unsafe {
-            std::ptr::copy_nonoverlapping(data, buffer.as_mut_ptr(), size as usize);
-        }
+        info!("Screenshot size: {}", size);
 
-        Ok(buffer)
+        Ok(unsafe { std::vec::Vec::from_raw_parts(data as *mut u8, size as usize, size as usize) })
     }
 }
 

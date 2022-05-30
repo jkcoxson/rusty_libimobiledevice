@@ -3,7 +3,6 @@
 
 use plist_plus::Plist;
 use rusty_libimobiledevice::idevice;
-use rusty_libimobiledevice::services::instproxy;
 use rusty_libimobiledevice::services::instproxy::InstProxyClient;
 
 fn main() {
@@ -12,6 +11,7 @@ fn main() {
     env_logger::init();
 
     let mut udid = "".to_string();
+    let mut all = false;
 
     // Parse arguments
     let mut args: Vec<String> = std::env::args().collect();
@@ -32,6 +32,9 @@ fn main() {
                 println!("  -v, --version        : display version");
                 return;
             }
+            "-a" | "--all" => {
+                all = true;
+            }
             "-v" | "--version" => {
                 println!("v{}", VERSION);
                 return;
@@ -45,19 +48,24 @@ fn main() {
         }
         i += 1;
     }
-    if udid == "" {
-        println!("Error: No UDID specified. Use -u or --udid to specify a device.");
-        return;
-    }
-
-    // Get the device
-    let device = match idevice::get_device(udid.to_string()) {
-        Ok(device) => device,
-        Err(e) => {
-            println!("Error: Could not find device: {:?}", e);
-            return;
+    let device = if udid == "" {
+        match idevice::get_first_device() {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error getting devices: {:?}", e);
+                return;
+            }
+        }
+    } else {
+        match idevice::get_device(udid) {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error getting devices: {:?}", e);
+                return;
+            }
         }
     };
+    
 
     let instproxy_client = match device.new_instproxy_client("idevicelistapps".to_string()) {
         Ok(instproxy) => {
@@ -89,6 +97,15 @@ fn main() {
     };
 
     for app in lookup_results {
+        let id = app
+            .plist
+            .dict_get_item("CFBundleIdentifier")
+            .unwrap()
+            .get_string_val()
+            .unwrap();
+        if id.contains("com.apple") && !all {
+            continue;
+        }
         println!(
             "{}: {}",
             app.plist
@@ -96,11 +113,7 @@ fn main() {
                 .unwrap()
                 .get_string_val()
                 .unwrap(),
-            app.plist
-                .dict_get_item("CFBundleIdentifier")
-                .unwrap()
-                .get_string_val()
-                .unwrap()
+            id
         );
     }
 }

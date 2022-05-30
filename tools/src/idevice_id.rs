@@ -21,6 +21,5 @@ fn main() {
                 false => "USB",
             }
         );
-        println!("{:?}", i);
     }
 }

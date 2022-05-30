@@ -5,7 +5,7 @@ use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;
 use crate::error::{
     self, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
-    MobileImageMounterError,
+    MobileImageMounterError, ScreenshotrError,
 };
 use crate::services::heartbeat::HeartbeatClient;
 use crate::services::lockdownd::{LockdowndClient, LockdowndService};
@@ -140,6 +140,24 @@ pub fn get_device(udid: impl Into<String>) -> Result<Device, IdeviceError> {
         }
     }
     Err(error::IdeviceError::NoDevice)
+}
+
+/// Fetches the first device from the muxer
+/// # Arguments
+/// *none*
+/// # Returns
+/// A device struct
+///
+/// ***Verified:*** False
+pub fn get_first_device() -> Result<Device, IdeviceError> {
+    let devices = match get_devices() {
+        Ok(devices) => devices,
+        Err(e) => return Err(e),
+    };
+    if devices.len() == 0 {
+        return Err(error::IdeviceError::NoDevice);
+    }
+    Ok(devices[0].clone())
 }
 
 /// Toggles usbmuxd's debug mode
@@ -494,6 +512,20 @@ impl Device {
         label: &str,
     ) -> Result<crate::services::debug_server::DebugServer, DebugServerError> {
         crate::services::debug_server::DebugServer::new(self, label)
+    }
+
+    /// Creates a new screenshotr service for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// A screenshot service for the device
+    /// 
+    /// ***Verified:*** False
+    pub fn new_screenshot_service(
+        &self,
+        label: impl Into<String>,
+    ) -> Result<crate::services::screenshotr::ScreenshotrClient, ScreenshotrError> {
+        crate::services::screenshotr::ScreenshotrClient::start_service(self, label)
     }
 }
 

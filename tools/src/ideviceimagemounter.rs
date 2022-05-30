@@ -54,10 +54,6 @@ fn main() {
         }
         i += 1;
     }
-    if udid == "" {
-        println!("Error: No UDID specified. Use -u or --udid to specify a device.");
-        return;
-    }
     if dmg_path == "" && !list_mode {
         println!("Error: No DMG specified. Use -h for help.");
         return;
@@ -65,11 +61,21 @@ fn main() {
     println!("{}", dmg_path);
 
     // Get the device
-    let device = match idevice::get_device(udid.to_string()) {
-        Ok(device) => device,
-        Err(e) => {
-            println!("Error: Could not find device: {:?}", e);
-            return;
+    let device = if udid == "" {
+        match idevice::get_first_device() {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error getting devices: {:?}", e);
+                return;
+            }
+        }
+    } else {
+        match idevice::get_device(udid) {
+            Ok(device) => device,
+            Err(e) => {
+                println!("Error getting devices: {:?}", e);
+                return;
+            }
         }
     };
 
@@ -134,7 +140,8 @@ fn main() {
     if list_mode {
         match mim.lookup_image(image_type.to_string()) {
             Ok(plist) => {
-                println!("{:?}", plist.to_string());
+                println!("{:?}", plist);
+                println!("{:?}", plist.get_display_value().unwrap());
             }
             Err(e) => {
                 println!("Error listing images: {:?}", e);
