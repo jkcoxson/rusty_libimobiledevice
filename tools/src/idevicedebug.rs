@@ -137,7 +137,8 @@ fn main() {
                     "Container".to_string(),
                 ],
             );
-            let lookup_results = match instproxy_client.lookup(vec![app.clone()], Some(client_opts)) {
+            let lookup_results = match instproxy_client.lookup(vec![app.clone()], Some(client_opts))
+            {
                 Ok(apps) => {
                     println!("Successfully looked up apps");
                     apps
@@ -187,7 +188,8 @@ fn main() {
                 }
             }
 
-            match debug_server.send_command(format!("QSetWorkingDir: {}", working_directory).into()) {
+            match debug_server.send_command(format!("QSetWorkingDir: {}", working_directory).into())
+            {
                 Ok(res) => println!("Successfully set working directory: {:?}", res),
                 Err(e) => {
                     println!("Error setting working directory: {:?}", e);
@@ -225,11 +227,8 @@ fn main() {
                     }
                 }
             }
-            
         }
     }
-
-    
 }
 
 #[derive(PartialEq)]
