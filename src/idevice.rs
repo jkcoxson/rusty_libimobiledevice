@@ -9,7 +9,7 @@ use crate::error::{
 };
 use crate::services::afc::AfcClient;
 use crate::services::heartbeat::HeartbeatClient;
-use crate::services::lockdownd::{LockdowndClient, LockdowndService};
+use crate::services::lockdownd::LockdowndClient;
 use crate::services::mobile_image_mounter::MobileImageMounter;
 use core::fmt;
 use libc::c_void;
@@ -460,31 +460,9 @@ impl Device {
     /// ***Verified:*** False
     pub fn new_mobile_image_mounter(
         &self,
-        service: &LockdowndService,
+        label: impl Into<String>,
     ) -> Result<MobileImageMounter, MobileImageMounterError> {
-        let mut mobile_image_mounter: unsafe_bindings::mobile_image_mounter_client_t =
-            unsafe { std::mem::zeroed() };
-
-        info!("Creating mobile image mounter for {}", self.get_udid());
-        let error = unsafe {
-            unsafe_bindings::mobile_image_mounter_new(
-                self.pointer,
-                service.pointer,
-                &mut mobile_image_mounter,
-            )
-        }
-        .into();
-
-        if error != MobileImageMounterError::Success {
-            return Err(error);
-        }
-
-        let mobile_image_mounter = MobileImageMounter {
-            pointer: mobile_image_mounter,
-            phantom: std::marker::PhantomData,
-        };
-
-        Ok(mobile_image_mounter)
+        crate::services::mobile_image_mounter::MobileImageMounter::start_service(self, label)
     }
 
     /// Creates an instproxy client for the device
