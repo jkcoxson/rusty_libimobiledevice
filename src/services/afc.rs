@@ -2,6 +2,8 @@
 
 use std::{convert::TryFrom, ffi::CStr, os::raw::c_char};
 
+use log::warn;
+
 use crate::{
     bindings as unsafe_bindings, error::AfcError, idevice::Device,
     services::house_arrest::HouseArrest, services::lockdownd::LockdowndService,
@@ -52,7 +54,11 @@ impl AfcClient<'_> {
     /// An afc service connection
     ///
     /// ***Verified:*** False
-    pub fn start_service(device: &Device, service_name: &str) -> Result<Self, AfcError> {
+    pub fn start_service(
+        device: &Device,
+        service_name: impl Into<String>,
+    ) -> Result<Self, AfcError> {
+        let service_name = service_name.into();
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_client_start_service(
@@ -98,20 +104,34 @@ impl AfcClient<'_> {
     /// A vector of strings containing the directory contents
     ///
     /// ***Verified:*** False
-    pub fn read_directory(&self, directory: impl Into<String>) -> Result<String, AfcError> {
-        let directory_ptr: *const c_char = directory.into().as_ptr() as *const c_char;
-        let mut entries = unsafe { std::mem::zeroed() };
-        let mut entries_ptr: *mut *mut c_char = &mut entries;
-        let result = unsafe {
-            unsafe_bindings::afc_read_directory(self.pointer, directory_ptr, &mut entries_ptr)
+    pub fn read_directory(&self, directory: impl Into<String>) -> Result<Vec<String>, AfcError> {
+        let directory = directory.into();
+        if directory == "" {
+            warn!("Cannot use empty string as directory");
+            return Err(AfcError::InvalidArg);
         }
-        .into();
+        let directory_ptr: *const c_char = directory.as_ptr() as *const c_char;
+        let mut list: *mut *mut libc::c_char = 0 as *mut *mut libc::c_char;
+
+        let result =
+            unsafe { unsafe_bindings::afc_read_directory(self.pointer, directory_ptr, &mut list) }
+                .into();
         if result != AfcError::Success {
             return Err(result);
         }
-        Ok(unsafe { CStr::from_ptr(entries) }
-            .to_string_lossy()
-            .into_owned())
+
+        let mut list_vec: Vec<String> = Vec::new();
+        let mut list_ptr: *mut *mut libc::c_char = list;
+        while !list_ptr.is_null() {
+            if unsafe { *list_ptr }.is_null() {
+                break;
+            }
+            let list_str = unsafe { CStr::from_ptr(*list_ptr).to_string_lossy().into_owned() };
+            list_vec.push(list_str);
+            list_ptr = unsafe { list_ptr.offset(1) };
+        }
+        unsafe { unsafe_bindings::afc_dictionary_free(list) };
+        Ok(list_vec)
     }
 
     /// Get information about a file on the device
@@ -123,17 +143,20 @@ impl AfcClient<'_> {
     /// ***Verified:*** False
     pub fn get_file_info(&self, path: impl Into<String>) -> Result<String, AfcError> {
         let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
-        let mut info = unsafe { std::mem::zeroed() };
-        let mut info_ptr: *mut *mut c_char = &mut info;
+
+        let mut info = Vec::new();
+        let mut info_ptr: *mut *mut libc::c_char = &mut info.as_mut_ptr();
+
         let result =
             unsafe { unsafe_bindings::afc_get_file_info(self.pointer, path_ptr, &mut info_ptr) }
                 .into();
         if result != AfcError::Success {
             return Err(result);
         }
-        Ok(unsafe { CStr::from_ptr(info) }
-            .to_string_lossy()
-            .into_owned())
+        println!("got here 2: {:?}", info);
+        println!("ptr: {:?}", info_ptr);
+
+        todo!();
     }
 
     /// Open a file on the device and return a handle to it

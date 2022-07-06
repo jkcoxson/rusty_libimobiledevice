@@ -32,3 +32,11 @@ path = "src/idevicedebug.rs"
 [[bin]]
 name = "idevicelistapps"
 path = "src/idevicelistapps.rs"
+
+[[bin]]
+name = "ideviceinstaller"
+path = "src/ideviceinstaller.rs"
+
+[[bin]]
+name = "test"
+path = "src/test.rs"

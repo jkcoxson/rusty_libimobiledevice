@@ -58,23 +58,27 @@ fn main() {
     };
 
     let lckd = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
-            Ok(lckd) => {
-                println!("Successfully connected to lockdownd.");
-                lckd
-            }
-            Err(e) => {
-                println!("Error starting lockdown service: {:?}", e);
-                return;
-            }
-        };
-        let output = match lckd.get_value("".to_string(), "".to_string()) {
-            Ok(output) => output,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                return;
-            }
-        };
-        for line in output.into_iter() {
-            println!("{}: {}", line.key.unwrap(), line.plist.clone().get_display_value().unwrap());
+        Ok(lckd) => {
+            println!("Successfully connected to lockdownd.");
+            lckd
         }
+        Err(e) => {
+            println!("Error starting lockdown service: {:?}", e);
+            return;
+        }
+    };
+    let output = match lckd.get_value("".to_string(), "".to_string()) {
+        Ok(output) => output,
+        Err(e) => {
+            println!("Error: {:?}", e);
+            return;
+        }
+    };
+    for line in output.into_iter() {
+        println!(
+            "{}: {}",
+            line.key.unwrap(),
+            line.plist.clone().get_display_value().unwrap()
+        );
+    }
 }

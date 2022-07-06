@@ -4,9 +4,10 @@ use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;
 use crate::error::{
-    self, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
+    self, AfcError, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
     MobileImageMounterError, ScreenshotrError,
 };
+use crate::services::afc::AfcClient;
 use crate::services::heartbeat::HeartbeatClient;
 use crate::services::lockdownd::{LockdowndClient, LockdowndService};
 use crate::services::mobile_image_mounter::MobileImageMounter;
@@ -519,13 +520,24 @@ impl Device {
     /// * `label` - The label to give the underlying service as it starts
     /// # Returns
     /// A screenshot service for the device
-    /// 
+    ///
     /// ***Verified:*** False
     pub fn new_screenshot_service(
         &self,
         label: impl Into<String>,
     ) -> Result<crate::services::screenshotr::ScreenshotrClient, ScreenshotrError> {
         crate::services::screenshotr::ScreenshotrClient::start_service(self, label)
+    }
+
+    /// Creates a new AFC client for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// An AFC client for the device
+    ///
+    /// ***Verified:*** False
+    pub fn new_afc_client(&self, label: impl Into<String>) -> Result<AfcClient, AfcError> {
+        AfcClient::start_service(self, label)
     }
 }
 
