@@ -89,16 +89,16 @@ impl DeviceConnection<'_> {
                 unsafe_bindings::idevice_connection_receive_timeout(
                     self.pointer,
                     &mut buffer,
-                    len.try_into().unwrap(),
+                    len,
                     &mut recieved,
-                    timeout.try_into().unwrap(),
+                    timeout,
                 )
             },
             false => unsafe {
                 unsafe_bindings::idevice_connection_receive(
                     self.pointer,
                     &mut buffer,
-                    len.try_into().unwrap(),
+                    len,
                     &mut recieved,
                 )
             },

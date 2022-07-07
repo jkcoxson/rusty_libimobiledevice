@@ -169,18 +169,18 @@ impl MobileActivationClient<'_> {
         record: Plist,
         session: Option<Plist>,
     ) -> Result<(), MobileActivationError> {
-        let result = if session.is_none() {
-            unsafe {
-                unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
-            }
-            .into()
-        } else {
+        let result = if let Some(session) = session {
             unsafe {
                 unsafe_bindings::mobileactivation_activate_with_session(
                     self.pointer,
                     record.get_pointer(),
-                    session.unwrap().get_pointer(),
+                    session.get_pointer(),
                 )
+            }
+            .into()
+        } else {
+            unsafe {
+                unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
             }
             .into()
         };

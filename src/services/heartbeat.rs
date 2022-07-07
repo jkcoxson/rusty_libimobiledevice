@@ -49,7 +49,7 @@ impl HeartbeatClient {
             return Err(result);
         }
         Ok(Self {
-            pointer: pointer,
+            pointer,
             // phantom: std::marker::PhantomData,
         })
     }

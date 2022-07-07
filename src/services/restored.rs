@@ -173,8 +173,8 @@ impl RestoredClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_restore(&self, options: Option<Plist>, version: u64) -> Result<(), RestoredError> {
-        let ptr = if options.is_some() {
-            options.unwrap().get_pointer()
+        let ptr = if let Some(options) = options {
+            options.get_pointer()
         } else {
             std::ptr::null_mut()
         };

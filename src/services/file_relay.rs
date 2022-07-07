@@ -85,7 +85,7 @@ impl FileRelay<'_> {
         mut connection: DeviceConnection,
         timeout: u32,
     ) -> Result<(), FileRelayError> {
-        let sources: Vec<FileRelaySources> = sources.into();
+        let sources: Vec<FileRelaySources> = sources;
         let mut source_ptrs = vec![];
         for source in sources {
             let source: CString = source.into();

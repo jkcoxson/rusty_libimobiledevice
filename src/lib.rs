@@ -1,4 +1,5 @@
 #[doc = include_str!("../README.md")]
+#[allow(clippy::all)]
 mod bindings;
 /// TODO
 pub mod callback;

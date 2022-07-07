@@ -135,8 +135,8 @@ impl MobileBackupClient<'_> {
         base_path: impl Into<String>,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
-        let ptr = if manifest.is_some() {
-            manifest.unwrap().get_pointer()
+        let ptr = if let Some(manifest) = manifest {
+            manifest.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -369,8 +369,8 @@ impl MobileBackup2Client<'_> {
         message: Option<String>,
         options: Plist,
     ) -> Result<(), MobileBackup2Error> {
-        let ptr = if message.is_some() {
-            message.unwrap().as_ptr() as *const c_char
+        let ptr = if let Some(message) = message {
+            message.as_ptr() as *const c_char
         } else {
             std::ptr::null()
         };
@@ -545,7 +545,7 @@ impl MobileBackup2Client<'_> {
                     .unwrap_or(std::ptr::null()),
                 status_plist
                     .map(|p| p.get_pointer())
-                    .unwrap_or(0 as *mut std::os::raw::c_void), // idk
+                    .unwrap_or(std::ptr::null_mut::<std::os::raw::c_void>()), // idk
             )
         }
         .into();

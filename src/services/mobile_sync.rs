@@ -226,7 +226,7 @@ impl MobileSyncClient<'_> {
             return Err(result);
         }
 
-        Ok(self.receive_changes()?)
+        self.receive_changes()
     }
 
     /// Gets all the changes from the device
@@ -244,7 +244,7 @@ impl MobileSyncClient<'_> {
             return Err(result);
         }
 
-        Ok(self.receive_changes()?)
+        self.receive_changes()
     }
 
     /// Clears the records on the device

@@ -243,14 +243,11 @@ fn main() {
         println!("cargo:rustc-link-search=/usr/local/opt/libusbmuxd/lib");
         println!("cargo:rustc-link-search=/usr/local/opt/libimobiledevice-glue/lib");
     }
-    let location_determinator;
-    if cfg!(feature = "static") {
-        location_determinator = "static";
-    } else if cfg!(feature = "dynamic") {
-        location_determinator = "dylib";
+    let location_determinator = if cfg!(feature = "static") {
+        "static"
     } else {
-        location_determinator = "dylib";
-    }
+        "dylib"
+    };
 
     // Link libi* deps
     println!(
@@ -271,12 +268,10 @@ fn repo_setup(url: &str) {
     cmd.arg("--depth=1");
     cmd.arg(url);
     cmd.output().unwrap();
-    env::set_current_dir(url.split("/").last().unwrap().replace(".git", "")).unwrap();
+    env::set_current_dir(url.split('/').last().unwrap().replace(".git", "")).unwrap();
     env::set_var("NOCONFIGURE", "1");
     let mut cmd = std::process::Command::new("./autogen.sh");
-    match cmd.output() {
-        _ => (),
-    }
+    let _ = cmd.output();
     env::remove_var("NOCONFIGURE");
     env::set_current_dir("..").unwrap();
 }

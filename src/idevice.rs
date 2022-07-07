@@ -83,13 +83,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
 
     let mut to_return = vec![];
     for i in device_list_slice.iter_mut() {
-        let network = unsafe {
-            if (*(*i)).conn_type == 1 {
-                false
-            } else {
-                true
-            }
-        };
+        let network = unsafe { (*(*i)).conn_type != 1 };
 
         let mut device_info: unsafe_bindings::idevice_t = unsafe { std::mem::zeroed() };
         let device_info_ptr: *mut unsafe_bindings::idevice_t = &mut device_info;
@@ -155,7 +149,7 @@ pub fn get_first_device() -> Result<Device, IdeviceError> {
         Ok(devices) => devices,
         Err(e) => return Err(e),
     };
-    if devices.len() == 0 {
+    if devices.is_empty() {
         return Err(error::IdeviceError::NoDevice);
     }
     Ok(devices[0].clone())
@@ -201,16 +195,7 @@ impl Device {
     /// A device struct
     ///
     /// ***Verified:*** True
-    pub fn new(
-        udid: impl Into<String>,
-        network: bool,
-        ip_addr: Option<IpAddr>,
-        mux_id: u32,
-    ) -> Result<Device, ()> {
-        if network && ip_addr.is_none() {
-            return Err(());
-        }
-
+    pub fn new(udid: impl Into<String>, ip_addr: Option<IpAddr>, mux_id: u32) -> Device {
         // Convert the udid to a C string
         trace!("Converting udid to C string");
         let mut udid_bytes = udid.into().into_bytes();
@@ -232,8 +217,8 @@ impl Device {
 
         // Convert the ip_addr into bytes
         trace!("Converting ip address into bytes");
-        let ip_addr_ptr = match network {
-            true => match ip_addr.unwrap() {
+        let ip_addr_ptr = if let Some(ip_addr) = ip_addr {
+            match ip_addr {
                 IpAddr::V4(ip) => {
                     trace!("Encodings ipv4 address");
                     let ip_addr = unsafe { libc::malloc(16) as *mut u8 };
@@ -274,8 +259,10 @@ impl Device {
 
                     ip_addr
                 }
-            },
-            false => 0 as *mut u8,
+            }
+        } else {
+            trace!("No ip address given");
+            std::ptr::null_mut()
         };
 
         let i_private_ptr = unsafe {
@@ -288,17 +275,14 @@ impl Device {
             i_private_ptr.write(unsafe_bindings::idevice_private {
                 udid: udid_ptr as *mut c_char,
                 mux_id,
-                conn_type: match network {
-                    true => 2,
-                    false => 1,
-                },
+                conn_type: if ip_addr.is_some() { 2 } else { 1 },
                 conn_data: ip_addr_ptr as *mut c_void,
                 version: 0,
                 device_class: 0,
             });
         }
 
-        Ok(i_private_ptr.into())
+        i_private_ptr.into()
     }
 
     /// Get the raw handle to the device
@@ -333,13 +317,7 @@ impl Device {
     /// # Returns
     /// Whether the device is connected via network as a `bool`
     pub fn get_network(&self) -> bool {
-        unsafe {
-            if (*self.pointer).conn_type == 1 {
-                false
-            } else {
-                true
-            }
-        }
+        unsafe { (*self.pointer).conn_type != 1 }
     }
 
     /// Get the ip address of the device if connected over network
@@ -434,7 +412,7 @@ impl Device {
         &self,
         label: impl Into<String>,
     ) -> Result<LockdowndClient, LockdowndError> {
-        Ok(LockdowndClient::new(self, label.into())?)
+        LockdowndClient::new(self, label.into())
     }
 
     /// Starts the heartbeat service for the device
@@ -448,7 +426,7 @@ impl Device {
         &self,
         label: impl Into<String>,
     ) -> Result<HeartbeatClient, HeartbeatError> {
-        Ok(HeartbeatClient::new(self, label.into())?)
+        HeartbeatClient::new(self, label.into())
     }
 
     /// Creates an image mounter for the device
@@ -521,11 +499,8 @@ impl Device {
 
 impl Clone for Device {
     fn clone(&self) -> Self {
-        let ip = match self.get_ip_address() {
-            Some(ip) => Some(ip.parse().unwrap()),
-            None => None,
-        };
-        Device::new(self.get_udid(), self.get_network(), ip, self.get_mux_id()).unwrap()
+        let ip = self.get_ip_address().map(|ip| ip.parse().unwrap());
+        Device::new(self.get_udid(), ip, self.get_mux_id())
     }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -595,7 +570,7 @@ pub enum EventType {
 
 impl From<unsafe_bindings::idevice_t> for Device {
     fn from(device: unsafe_bindings::idevice_t) -> Device {
-        return Device { pointer: device };
+        Device { pointer: device }
     }
 }
 

@@ -106,12 +106,12 @@ impl AfcClient<'_> {
     /// ***Verified:*** False
     pub fn read_directory(&self, directory: impl Into<String>) -> Result<Vec<String>, AfcError> {
         let directory = directory.into();
-        if directory == "" {
+        if directory.is_empty() {
             warn!("Cannot use empty string as directory");
             return Err(AfcError::InvalidArg);
         }
         let directory_ptr: *const c_char = directory.as_ptr() as *const c_char;
-        let mut list: *mut *mut libc::c_char = 0 as *mut *mut libc::c_char;
+        let mut list: *mut *mut libc::c_char = std::ptr::null_mut::<*mut libc::c_char>();
 
         let result =
             unsafe { unsafe_bindings::afc_read_directory(self.pointer, directory_ptr, &mut list) }

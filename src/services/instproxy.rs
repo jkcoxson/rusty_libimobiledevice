@@ -108,9 +108,7 @@ impl InstProxyClient<'_> {
             let t = Plist::new_string(&i.into());
             return_attributes.array_append_item(t).unwrap();
         }
-        match pointer.dict_insert_item("ReturnAttributes", return_attributes) {
-            _ => {}
-        };
+        let _ = pointer.dict_insert_item("ReturnAttributes", return_attributes);
 
         pointer
     }
@@ -136,12 +134,12 @@ impl InstProxyClient<'_> {
         let mut cstring_pointers = cstrings.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
         cstring_pointers.push(std::ptr::null());
         let mut cstring_pointers_ptr = cstring_pointers.as_mut_ptr();
-        if app_ids.len() == 0 {
+        if app_ids.is_empty() {
             cstring_pointers_ptr = std::ptr::null_mut();
         }
 
-        let opt_ptr = if client_options.is_some() {
-            let client_options = client_options.unwrap();
+        let opt_ptr = if let Some(client_options) = client_options {
+            let client_options = client_options;
             let ptr = client_options.get_pointer();
             client_options.false_drop();
             ptr
@@ -186,8 +184,8 @@ impl InstProxyClient<'_> {
         info!("Instproxy install");
         let pkg_path_c_str = std::ffi::CString::new(pkg_path.into()).unwrap();
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -225,8 +223,8 @@ impl InstProxyClient<'_> {
         info!("Instproxy upgrade");
         let pkg_path_c_str = std::ffi::CString::new(pkg_path.into()).unwrap();
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -264,8 +262,8 @@ impl InstProxyClient<'_> {
         info!("Instproxy uninstall");
         let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -298,8 +296,8 @@ impl InstProxyClient<'_> {
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         info!("Instproxy lookup archives");
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -330,8 +328,8 @@ impl InstProxyClient<'_> {
         info!("Instproxy archive");
         let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -368,8 +366,8 @@ impl InstProxyClient<'_> {
         info!("Instproxy restore");
         let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -406,8 +404,8 @@ impl InstProxyClient<'_> {
         info!("Instproxy remove archive");
         let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };
@@ -453,8 +451,8 @@ impl InstProxyClient<'_> {
         }
         capabilities_c_str_ptrs.push(std::ptr::null());
 
-        let ptr = if client_options.is_some() {
-            client_options.unwrap().get_pointer()
+        let ptr = if let Some(client_options) = client_options {
+            client_options.get_pointer()
         } else {
             std::ptr::null_mut()
         };

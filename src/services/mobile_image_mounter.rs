@@ -125,18 +125,18 @@ impl MobileImageMounter<'_> {
             Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
         };
         // Read the image into a buffer
-        let image_path_c_str = &mut std::ffi::CString::new(image_path.clone()).unwrap();
+        let image_path_c_str = &mut std::ffi::CString::new(image_path).unwrap();
         let mode_c_str = &mut std::ffi::CString::new("rb").unwrap();
         info!("Opening image file");
         let image_buffer = unsafe { libc::fopen(image_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
         // Read the signature into a buffer
-        let signature_path_c_str = &mut std::ffi::CString::new(signature_path.clone()).unwrap();
+        let signature_path_c_str = &mut std::ffi::CString::new(signature_path).unwrap();
         info!("Reading signature file");
         let signature_buffer =
             unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
 
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
-        let image_type_c_str = if image_type == "".to_string() {
+        let image_type_c_str = if image_type == *"" {
             std::ptr::null()
         } else {
             image_type_c_str.as_ptr()
@@ -208,7 +208,7 @@ impl MobileImageMounter<'_> {
             Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
         };
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
-        let image_type_c_str = if image_type == "".to_string() {
+        let image_type_c_str = if image_type == *"" {
             std::ptr::null()
         } else {
             image_type_c_str.as_ptr()
@@ -248,7 +248,7 @@ impl MobileImageMounter<'_> {
     ) -> Result<Plist, MobileImageMounterError> {
         let image_type = image_type.into();
         let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
-        let image_type_c_str = if image_type == "".to_string() {
+        let image_type_c_str = if image_type == *"" {
             std::ptr::null()
         } else {
             image_type_c_str.as_ptr()
@@ -275,7 +275,7 @@ impl MobileImageMounter<'_> {
 
 extern "C" fn image_mounter_callback(a: *mut c_void, b: c_ulong, c: *mut c_void) -> c_long {
     trace!("image_mounter_callback called");
-    return unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) } as c_long;
+    unsafe { libc::fread(a, 1, b as usize, c as *mut libc::FILE) as c_long }
 }
 
 impl Drop for MobileImageMounter<'_> {

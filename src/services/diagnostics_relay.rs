@@ -40,7 +40,7 @@ impl DiagnosticsRelay<'_> {
         }
 
         Ok(DiagnosticsRelay {
-            pointer: pointer,
+            pointer,
             phantom: std::marker::PhantomData,
         })
     }
@@ -72,7 +72,7 @@ impl DiagnosticsRelay<'_> {
         }
 
         Ok(DiagnosticsRelay {
-            pointer: pointer,
+            pointer,
             phantom: std::marker::PhantomData,
         })
     }

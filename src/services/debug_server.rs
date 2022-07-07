@@ -365,7 +365,7 @@ impl DebugServerCommand {
         let mut c_array_ptr: *mut std::os::raw::c_char = arguments_c_array.as_mut_ptr();
         let mut c_array_ptr_ptr: *mut *mut std::os::raw::c_char = &mut c_array_ptr;
 
-        if arguments.len() == 0 {
+        if arguments.is_empty() {
             c_array_ptr_ptr = std::ptr::null_mut();
         }
 
@@ -388,17 +388,17 @@ impl DebugServerCommand {
     }
 }
 
-impl Into<DebugServerCommand> for String {
-    fn into(self) -> DebugServerCommand {
+impl From<String> for DebugServerCommand {
+    fn from(s: String) -> Self {
         // Split string into command and arguments
-        let mut split = self.split_whitespace();
+        let mut split = s.split_whitespace();
         let command = split.next().unwrap().to_string();
         let arguments: Vec<String> = split.map(|s| s.to_string()).collect();
         DebugServerCommand::new(command, arguments).unwrap()
     }
 }
-impl Into<DebugServerCommand> for &str {
-    fn into(self) -> DebugServerCommand {
-        self.to_string().into()
+impl From<&str> for DebugServerCommand {
+    fn from(s: &str) -> DebugServerCommand {
+        s.to_string().into()
     }
 }

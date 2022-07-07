@@ -1,6 +1,5 @@
 // jkcoxson
 
-use std::ffi::CStr;
 use std::os::raw::c_char;
 
 use crate::bindings as unsafe_bindings;
@@ -90,13 +89,13 @@ impl LockdowndClient<'_> {
         let domain = domain.into();
         let key = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == "".to_string() {
+        let domain_c_str = if domain == *"" {
             std::ptr::null()
         } else {
             domain_c_str.as_ptr()
         };
         let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_c_str = if key == "".to_string() {
+        let key_c_str = if key == *"" {
             std::ptr::null()
         } else {
             key_c_str.as_ptr()
@@ -135,13 +134,13 @@ impl LockdowndClient<'_> {
         let domain = domain.into();
         let key = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == "".to_string() {
+        let domain_c_str = if domain == *"" {
             std::ptr::null()
         } else {
             domain_c_str.as_ptr()
         };
         let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_c_str = if key == "".to_string() {
+        let key_c_str = if key == *"" {
             std::ptr::null()
         } else {
             key_c_str.as_ptr()
@@ -181,13 +180,13 @@ impl LockdowndClient<'_> {
         let domain = domain.into();
         let key = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == "".to_string() {
+        let domain_c_str = if domain == *"" {
             std::ptr::null()
         } else {
             domain_c_str.as_ptr()
         };
         let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_c_str = if key == "".to_string() {
+        let key_c_str = if key == *"" {
             std::ptr::null()
         } else {
             key_c_str.as_ptr()
@@ -222,7 +221,7 @@ impl LockdowndClient<'_> {
     ) -> Result<LockdowndService, LockdowndError> {
         let service = service.into();
         let label_c_str = std::ffi::CString::new(service.clone()).unwrap();
-        let label_c_str = if service == "".to_string() {
+        let label_c_str = if service == *"" {
             std::ptr::null()
         } else {
             label_c_str.as_ptr()
@@ -271,7 +270,7 @@ impl LockdowndClient<'_> {
         host_id: impl Into<String>,
     ) -> Result<(String, bool), LockdowndError> {
         let host_id = host_id.into();
-        let host_id_c_str = std::ffi::CString::new(host_id.clone()).unwrap();
+        let host_id_c_str = std::ffi::CString::new(host_id).unwrap();
         let mut session_id = unsafe { std::mem::zeroed() };
         let mut ssl_enabled = unsafe { std::mem::zeroed() };
 
@@ -309,7 +308,7 @@ impl LockdowndClient<'_> {
     pub fn stop_session(&self, session_id: impl Into<String>) -> Result<(), LockdowndError> {
         let session_id = session_id.into();
         let session_id_c_str = std::ffi::CString::new(session_id.clone()).unwrap();
-        let session_id_c_str = if session_id == "".to_string() {
+        let session_id_c_str = if session_id == *"" {
             std::ptr::null()
         } else {
             session_id_c_str.as_ptr()
@@ -378,26 +377,27 @@ impl LockdowndClient<'_> {
         pairing_record: Option<LockdowndPairRecord>,
         options: Option<Plist>,
     ) -> Result<(), LockdowndError> {
-        let pair_ptr: unsafe_bindings::lockdownd_pair_record_t = if pairing_record.is_some() {
-            &mut pairing_record.unwrap().into()
-        } else {
-            std::ptr::null_mut()
-        };
+        let pair_ptr: unsafe_bindings::lockdownd_pair_record_t =
+            if let Some(pairing_record) = pairing_record {
+                &mut pairing_record.into()
+            } else {
+                std::ptr::null_mut()
+            };
 
         let mut response = unsafe { std::mem::zeroed() };
 
-        let result = if options.is_none() {
-            unsafe { unsafe_bindings::lockdownd_pair(self.pointer, pair_ptr) }.into()
-        } else {
+        let result = if let Some(options) = options {
             unsafe {
                 unsafe_bindings::lockdownd_pair_with_options(
                     self.pointer,
                     pair_ptr,
-                    options.unwrap().get_pointer(),
+                    options.get_pointer(),
                     &mut response,
                 )
             }
             .into()
+        } else {
+            unsafe { unsafe_bindings::lockdownd_pair(self.pointer, pair_ptr) }.into()
         };
 
         if result != LockdowndError::Success {
@@ -527,7 +527,7 @@ impl LockdowndClient<'_> {
     pub fn client_set_label(&self, label: impl Into<String>) {
         let label = label.into();
         let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
-        let label_c_str = if label == "".to_string() {
+        let label_c_str = if label == *"" {
             std::ptr::null()
         } else {
             label_c_str.as_ptr()
@@ -647,44 +647,6 @@ impl LockdowndClient<'_> {
             .to_string();
 
         Ok(type_str)
-    }
-}
-
-impl From<*mut unsafe_bindings::lockdownd_pair_record> for LockdowndPairRecord {
-    fn from(l: *mut unsafe_bindings::lockdownd_pair_record) -> Self {
-        info!("Converting device certificate");
-        let device_certificate = unsafe { CStr::from_ptr((*l).device_certificate) }
-            .to_str()
-            .unwrap()
-            .to_string();
-        info!("Converting host certificate");
-        let host_certificate = unsafe { CStr::from_ptr((*l).host_certificate) }
-            .to_str()
-            .unwrap()
-            .to_string();
-        info!("Converting root certificate");
-        let root_certificate = unsafe { CStr::from_ptr((*l).root_certificate) }
-            .to_str()
-            .unwrap()
-            .to_string();
-        info!("Converting host id");
-        let host_id = unsafe { CStr::from_ptr((*l).host_id) }
-            .to_str()
-            .unwrap()
-            .to_string();
-        info!("Converting system buid");
-        let system_buid = unsafe { CStr::from_ptr((*l).system_buid) }
-            .to_str()
-            .unwrap()
-            .to_string();
-        info!("Returning pair record");
-        Self {
-            device_certificate,
-            host_certificate,
-            root_certificate,
-            host_id,
-            system_buid,
-        }
     }
 }
 
