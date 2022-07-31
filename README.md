@@ -10,10 +10,10 @@ Open a PR with your testing code to change a function's status.
 
 ## Building
 Build and install the following packages:
-- libusbmuxd
-- libimobiledevice
-- libimobiledevice-glue
-- openssl
+- [libusbmuxd](https://github.com/libimobiledevice/libusbmuxd)
+- [libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)
+- [libimobiledevice-glue](https://github.com/libimobiledevice/libimobiledevice-glue)
+- [openssl](https://github.com/openssl/openssl)
 
 **Note:** Package managers do not ship static libraries, so you will need to build them yourself
 if compiling statically.
