@@ -29,7 +29,7 @@ fn main() {
             }
             "-h" | "--help" => {
                 println!("Usage: ideviceimagemounter [options] <DMG Path>");
-                println!("");
+                println!();
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
                 println!("  -l, --list           : list all devices");
@@ -79,7 +79,7 @@ fn main() {
         }
     };
 
-    let mut lockdown_client = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
+    let lockdown_client = match device.new_lockdownd_client("ideviceimagemounter".to_string()) {
         Ok(lckd) => {
             println!("Successfully connected to lockdownd");
             lckd
@@ -110,23 +110,7 @@ fn main() {
         return;
     }
 
-    let service = match lockdown_client
-        .start_service("com.apple.mobile.mobile_image_mounter".to_string(), false)
-    {
-        Ok(service) => {
-            println!("Successfully started com.apple.mobile.mobile_image_mounter");
-            service
-        }
-        Err(e) => {
-            println!(
-                "Error starting com.apple.mobile.mobile_image_mounter: {:?}",
-                e
-            );
-            return;
-        }
-    };
-
-    let mim = match device.new_mobile_image_mounter(&service) {
+    let mim = match device.new_mobile_image_mounter("ideviceimagemounter") {
         Ok(mim) => {
             println!("Successfully started mobile_image_mounter");
             mim
