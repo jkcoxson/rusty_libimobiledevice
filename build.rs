@@ -223,9 +223,6 @@ fn main() {
             "cargo:rustc-link-search=native={}",
             dst.join("lib").display()
         );
-
-        println!("cargo:rustc-link-lib=static=crypto");
-        println!("cargo:rustc-link-lib=static=ssl");
     } else {
         // Check if folder ./override exists
         let override_path = PathBuf::from("./override").join(env::var("TARGET").unwrap());
@@ -260,6 +257,9 @@ fn main() {
         location_determinator
     );
     println!("cargo:rustc-link-lib={}=plist-2.0", location_determinator);
+
+    println!("cargo:rustc-link-lib={location_determinator}=crypto");
+    println!("cargo:rustc-link-lib={location_determinator}=ssl");
 }
 
 fn repo_setup(url: &str) {

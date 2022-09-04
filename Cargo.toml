@@ -15,8 +15,8 @@ documentation = "https://docs.rs/rusty_libimobiledevice"
 
 [dependencies]
 libc = "0.2.14"
-plist_plus = { version = "0.2.*", features = [ "static" ] }
-openssl = { version = "0.10.38", features = [ "vendored" ] }
+plist_plus = { version = "0.2.*" }
+openssl = { version = "0.10.38" }
 log = "0.4.15"
 
 [build-dependencies]
@@ -27,8 +27,10 @@ cmake = "0.1.48"
 
 [features]
 pls-generate = []
-dynamic = []
-static = []
+dynamic = ["plist_plus/dynamic"]
+static = ["plist_plus/static"]
 vendored = [
-    "static"
+    "static",
+    "plist_plus/vendored",
+    "openssl/vendored"
 ]
