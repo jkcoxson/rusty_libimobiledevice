@@ -16,7 +16,7 @@ documentation = "https://docs.rs/rusty_libimobiledevice"
 [dependencies]
 libc = "0.2.14"
 plist_plus = { version = "0.2.*" }
-openssl = { version = "0.10.38" }
+openssl = { version = "0.10.38", optional = true }
 log = "0.4.15"
 
 [build-dependencies]
@@ -26,6 +26,7 @@ autotools = "0.2.5"
 cmake = "0.1.48"
 
 [features]
+default = ["openssl"]
 pls-generate = []
 dynamic = ["plist_plus/dynamic"]
 static = ["plist_plus/static"]
