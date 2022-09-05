@@ -30,7 +30,6 @@ pls-generate = []
 dynamic = ["plist_plus/dynamic"]
 static = ["plist_plus/static"]
 vendored = [
-    "static",
     "plist_plus/vendored",
     "openssl/vendored"
 ]
