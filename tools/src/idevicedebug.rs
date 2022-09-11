@@ -33,7 +33,7 @@ fn main() {
             }
             "-h" | "--help" => {
                 println!("Usage: idevicedebug <usage> <app> [options]");
-                println!("");
+                println!();
                 println!("Usages:");
                 println!("  -u, --udid <udid>    : udid of the device to use");
                 println!("  -h, --help           : display this help message");
@@ -45,7 +45,7 @@ fn main() {
                 return;
             }
             _ => {
-                if args[i].starts_with("-") {
+                if args[i].starts_with('-') {
                     println!("Unknown flag: {}", args[i]);
                     return;
                 }
@@ -88,7 +88,7 @@ fn main() {
         Usage::Attach => {
             match device.new_debug_server("idevicedebug") {
                 Ok(_) => {
-                    if app == "" {
+                    if app.is_empty() {
                         println!("Error: No PID specified");
                         return;
                     }
@@ -113,7 +113,6 @@ fn main() {
                 }
                 Err(e) => {
                     println!("Error: Could not start debug server: {:?}", e);
-                    return;
                 }
             }
         }
@@ -197,7 +196,7 @@ fn main() {
                 }
             }
 
-            match debug_server.set_argv(vec![bundle_path.clone(), bundle_path.clone()]) {
+            match debug_server.set_argv(vec![bundle_path.clone(), bundle_path]) {
                 Ok(res) => println!("Successfully set argv: {:?}", res),
                 Err(e) => {
                     println!("Error setting argv: {:?}", e);
@@ -223,7 +222,6 @@ fn main() {
                     Ok(res) => println!("Detaching: {:?}", res),
                     Err(e) => {
                         println!("Error detaching: {:?}", e);
-                        return;
                     }
                 }
             }

@@ -25,7 +25,7 @@ fn main() {
             }
             "-h" | "--help" => {
                 println!("Usage: idevicelistapps [options]");
-                println!("");
+                println!();
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
                 println!("  -h, --help           : display this help message");
@@ -40,7 +40,7 @@ fn main() {
                 return;
             }
             _ => {
-                if args[i].starts_with("-") {
+                if args[i].starts_with('-') {
                     println!("Unknown flag: {}", args[i]);
                     return;
                 }
@@ -48,7 +48,7 @@ fn main() {
         }
         i += 1;
     }
-    let device = if udid == "" {
+    let device = if udid.is_empty() {
         match idevice::get_first_device() {
             Ok(device) => device,
             Err(e) => {
@@ -65,7 +65,6 @@ fn main() {
             }
         }
     };
-    
 
     let instproxy_client = match device.new_instproxy_client("idevicelistapps".to_string()) {
         Ok(instproxy) => {

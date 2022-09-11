@@ -32,7 +32,7 @@ fn main() {
                 return;
             }
             _ => {
-                if arguments[i].starts_with("-") {
+                if arguments[i].starts_with('-') {
                     println!("Unknown flag: {}", arguments[i]);
                     return;
                 }
@@ -41,8 +41,8 @@ fn main() {
         }
         i += 1;
     }
-    
-    let device = if udid == "" {
+
+    let device = if udid.is_empty() {
         match idevice::get_first_device() {
             Ok(device) => device,
             Err(e) => {
@@ -68,7 +68,7 @@ fn main() {
             return;
         }
     };
-    
+
     let image = match ss.take_screenshot() {
         Ok(image) => image,
         Err(e) => {
@@ -81,7 +81,7 @@ fn main() {
     for i in image {
         converted.push(i as u8);
     }
-    
+
     let mut file = match std::fs::File::create(file_name) {
         Ok(file) => file,
         Err(e) => {
@@ -90,5 +90,5 @@ fn main() {
         }
     };
 
-   file.write(&converted).unwrap();
+    file.write_all(&converted).unwrap();
 }

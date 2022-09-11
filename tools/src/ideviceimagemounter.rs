@@ -45,7 +45,7 @@ fn main() {
                 return;
             }
             _ => {
-                if args[i].starts_with("-") {
+                if args[i].starts_with('-') {
                     println!("Unknown flag: {}", args[i]);
                     return;
                 }
@@ -54,14 +54,14 @@ fn main() {
         }
         i += 1;
     }
-    if dmg_path == "" && !list_mode {
+    if dmg_path.is_empty() && !list_mode {
         println!("Error: No DMG specified. Use -h for help.");
         return;
     }
     println!("{}", dmg_path);
 
     // Get the device
-    let device = if udid == "" {
+    let device = if udid.is_empty() {
         match idevice::get_first_device() {
             Ok(device) => device,
             Err(e) => {
@@ -122,21 +122,20 @@ fn main() {
     };
 
     if list_mode {
-        match mim.lookup_image(image_type.to_string()) {
+        match mim.lookup_image(image_type) {
             Ok(plist) => {
                 println!("{:?}", plist);
                 println!("{:?}", plist.get_display_value().unwrap());
             }
             Err(e) => {
                 println!("Error listing images: {:?}", e);
-                return;
             }
         }
     } else {
         match mim.upload_image(
             dmg_path.clone(),
             image_type.clone(),
-            format!("{}.signature", dmg_path.clone()).to_string(),
+            format!("{}.signature", dmg_path),
         ) {
             Ok(_) => {
                 println!("Successfully uploaded image");
@@ -149,14 +148,13 @@ fn main() {
         match mim.mount_image(
             dmg_path.clone(),
             image_type,
-            format!("{}.signature", dmg_path.clone()).to_string(),
+            format!("{}.signature", dmg_path),
         ) {
             Ok(_) => {
                 println!("Successfully mounted image");
             }
             Err(e) => {
                 println!("Error mounting image: {:?}", e);
-                return;
             }
         }
     }
