@@ -1,6 +1,11 @@
 // jkcoxson
 
-use std::{collections::HashMap, convert::TryFrom, ffi::CStr, os::raw::c_char};
+use std::{
+    collections::HashMap,
+    convert::TryFrom,
+    ffi::{CStr, CString},
+    os::raw::c_char,
+};
 
 use log::warn;
 
@@ -358,8 +363,10 @@ impl AfcClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn remove_path(&self, path: impl Into<String>) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
-        let result = unsafe { unsafe_bindings::afc_remove_path(self.pointer, path_ptr) }.into();
+        let path: String = path.into();
+        let c_path = unsafe { CString::from_vec_unchecked(path.as_bytes().to_vec()) };
+        let result =
+            unsafe { unsafe_bindings::afc_remove_path(self.pointer, c_path.as_ptr()) }.into();
         if result != AfcError::Success {
             return Err(result);
         }
@@ -398,8 +405,10 @@ impl AfcClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn make_directory(&self, path: impl Into<String>) -> Result<(), AfcError> {
-        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
-        let result = unsafe { unsafe_bindings::afc_make_directory(self.pointer, path_ptr) }.into();
+        let path: String = path.into();
+        let c_path = unsafe { CString::from_vec_unchecked(path.as_bytes().to_vec()) };
+        let result =
+            unsafe { unsafe_bindings::afc_make_directory(self.pointer, c_path.as_ptr()) }.into();
         if result != AfcError::Success {
             return Err(result);
         }

@@ -97,27 +97,24 @@ fn main() {
         }
     };
 
-    let d_info = match afc.read_directory(".") {
-        Ok(d_info) => d_info,
-        Err(e) => {
-            println!("Error: Could not read dir: {:?}", e);
-            return;
-        }
-    };
-    println!("Dir: {:?}", d_info);
-    let d_info = &d_info[2..];
-
-    for i in d_info {
-        println!("{}", i);
-        let i = match afc.get_file_info("./".to_string() + i) {
-            Ok(i) => i,
+    // Check if PublicStaging exists
+    let p_staging_info = match afc.get_file_info("./PublicStaging") {
+        Ok(info) => info,
+        Err(_) => match afc.make_directory("./PublicStaging") {
+            Ok(_) => match afc.get_file_info("./PublicStaging") {
+                Ok(info) => info,
+                Err(e) => {
+                    println!("Unable to read PublicStaging info: {:?}", e);
+                    return;
+                }
+            },
             Err(e) => {
-                println!("Error: Could not get file info: {:?}", e);
-                continue;
+                println!("Unable to make PublicStaging directory");
+                return;
             }
-        };
-        println!("File: {:?}", i);
-    }
+        },
+    };
+    println!("Created PublicStaging directory");
 
     todo!();
 }
