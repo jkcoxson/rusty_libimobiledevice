@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::{convert::TryFrom, ffi::CStr, os::raw::c_char};
+use std::{collections::HashMap, convert::TryFrom, ffi::CStr, os::raw::c_char};
 
 use log::warn;
 
@@ -138,25 +138,45 @@ impl AfcClient<'_> {
     /// # Arguments
     /// * `path` - The path to the file
     /// # Returns
-    /// A string containing the file information
+    /// A map of properties
     ///
     /// ***Verified:*** False
-    pub fn get_file_info(&self, path: impl Into<String>) -> Result<String, AfcError> {
-        let path_ptr: *const c_char = path.into().as_ptr() as *const c_char;
-
-        let mut info = Vec::new();
-        let mut info_ptr: *mut *mut libc::c_char = &mut info.as_mut_ptr();
+    pub fn get_file_info(
+        &self,
+        path: impl Into<String>,
+    ) -> Result<HashMap<String, String>, AfcError> {
+        let path = path.into();
+        if path.is_empty() {
+            warn!("Cannot use empty string as directory");
+            return Err(AfcError::InvalidArg);
+        }
+        let path_ptr: *const c_char = path.as_ptr() as *const c_char;
+        let mut list: *mut *mut libc::c_char = std::ptr::null_mut::<*mut libc::c_char>();
 
         let result =
-            unsafe { unsafe_bindings::afc_get_file_info(self.pointer, path_ptr, &mut info_ptr) }
-                .into();
+            unsafe { unsafe_bindings::afc_get_file_info(self.pointer, path_ptr, &mut list) }.into();
         if result != AfcError::Success {
             return Err(result);
         }
-        println!("got here 2: {:?}", info);
-        println!("ptr: {:?}", info_ptr);
 
-        todo!();
+        let mut list_vec: Vec<String> = Vec::new();
+        let mut list_ptr: *mut *mut libc::c_char = list;
+        while !list_ptr.is_null() {
+            if unsafe { *list_ptr }.is_null() {
+                break;
+            }
+            let list_str = unsafe { CStr::from_ptr(*list_ptr).to_string_lossy().into_owned() };
+            list_vec.push(list_str);
+            list_ptr = unsafe { list_ptr.offset(1) };
+        }
+        unsafe { unsafe_bindings::afc_dictionary_free(list) };
+
+        let mut ret_properties = HashMap::new();
+
+        while list_vec.len() > 1 {
+            ret_properties.insert(list_vec.remove(0), list_vec.remove(0));
+        }
+        Ok(ret_properties)
     }
 
     /// Open a file on the device and return a handle to it

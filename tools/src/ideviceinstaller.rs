@@ -5,7 +5,7 @@ use std::time;
 use rusty_libimobiledevice::{error::AfcError, idevice, services::afc::AfcClient};
 
 const PKG_PATH: &'static str = "PublicStaging";
-const VERSION: &'static str = "0.1.0";
+const VERSION: &str = "0.1.0";
 
 fn main() {
     let mut mode = Usage::List;
@@ -38,7 +38,7 @@ fn main() {
             }
             "-h" | "--help" => {
                 println!("Usage: ideviceimagemounter <DMG Path> [options]");
-                println!("");
+                println!();
                 println!("Options:");
                 println!("  -u, --udid <udid>    : udid of the device to mount");
                 println!("  -p, --path <path>    : path to the image to install");
@@ -55,7 +55,7 @@ fn main() {
                 return;
             }
             _ => {
-                if args[i].starts_with("-") {
+                if args[i].starts_with('-') {
                     println!("Unknown flag: {}", args[i]);
                     return;
                 }
@@ -64,7 +64,7 @@ fn main() {
         i += 1;
     }
 
-    let device = if udid == "" {
+    let device = if udid.is_empty() {
         match idevice::get_first_device() {
             Ok(device) => device,
             Err(e) => {
@@ -109,7 +109,7 @@ fn main() {
 
     for i in d_info {
         println!("{}", i);
-        let i = match afc.get_file_info("./".to_string() + &i) {
+        let i = match afc.get_file_info("./".to_string() + i) {
             Ok(i) => i,
             Err(e) => {
                 println!("Error: Could not get file info: {:?}", e);
