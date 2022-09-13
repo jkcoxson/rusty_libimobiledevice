@@ -2,9 +2,9 @@
 
 use std::time;
 
-use rusty_libimobiledevice::{error::AfcError, idevice, services::afc::AfcClient};
+use rusty_libimobiledevice::idevice;
 
-const PKG_PATH: &'static str = "PublicStaging";
+const PKG_PATH: &str = "PublicStaging";
 const VERSION: &str = "0.1.0";
 
 fn main() {
@@ -82,6 +82,12 @@ fn main() {
         }
     };
 
+    // Check the IPA
+    if (mode == Usage::Install || mode == Usage::Upgrade) && path.is_empty() {
+        println!("Specify a path to the IPA");
+        return;
+    }
+
     // Get the current epoch time to append to the afc label
     // iOS is bad at releasing old afc clients
     let now = time::SystemTime::now();
@@ -98,18 +104,18 @@ fn main() {
     };
 
     // Check if PublicStaging exists
-    let p_staging_info = match afc.get_file_info("./PublicStaging") {
-        Ok(info) => info,
+    match afc.get_file_info(format!("./{}", PKG_PATH)) {
+        Ok(_) => {}
         Err(_) => match afc.make_directory("./PublicStaging") {
             Ok(_) => match afc.get_file_info("./PublicStaging") {
-                Ok(info) => info,
+                Ok(_) => {}
                 Err(e) => {
                     println!("Unable to read PublicStaging info: {:?}", e);
                     return;
                 }
             },
             Err(e) => {
-                println!("Unable to make PublicStaging directory");
+                println!("Unable to make PublicStaging directory: {:?}", e);
                 return;
             }
         },
@@ -119,6 +125,7 @@ fn main() {
     todo!();
 }
 
+#[derive(PartialEq, Eq)]
 enum Usage {
     Install,
     Uninstall,
