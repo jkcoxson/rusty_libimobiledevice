@@ -193,10 +193,11 @@ impl AfcClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn file_open(&self, path: impl Into<String>, mode: AfcFileMode) -> Result<u64, AfcError> {
-        let file_name_ptr: *const c_char = path.into().as_ptr() as *const c_char;
+        let path: String = path.into();
+        let c_path = unsafe { CString::from_vec_unchecked(path.as_bytes().to_vec()) };
         let mut handle = unsafe { std::mem::zeroed() };
         let result = unsafe {
-            unsafe_bindings::afc_file_open(self.pointer, file_name_ptr, mode.into(), &mut handle)
+            unsafe_bindings::afc_file_open(self.pointer, c_path.as_ptr(), mode.into(), &mut handle)
         }
         .into();
         if result != AfcError::Success {
@@ -282,8 +283,8 @@ impl AfcClient<'_> {
     /// *none*
     ///
     /// ***Verified:*** False
-    pub fn file_write(&self, handle: u64, data: impl Into<String>) -> Result<(), AfcError> {
-        let data = data.into();
+    pub fn file_write(&self, handle: u64, data: Vec<u8>) -> Result<(), AfcError> {
+        let data: Vec<c_char> = data.into_iter().map(|x| x as c_char).collect();
         let data_ptr: *const c_char = data.as_ptr() as *const c_char;
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {

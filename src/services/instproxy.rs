@@ -113,6 +113,17 @@ impl InstProxyClient<'_> {
         pointer
     }
 
+    /// Creates new client options for instproxy operations
+    /// # Arguments
+    /// *none*
+    /// # Returns
+    /// A plist containing empty client options
+    ///
+    /// ***Verified:*** False
+    pub fn client_options_new() -> Plist {
+        unsafe { unsafe_bindings::instproxy_client_options_new() }.into()
+    }
+
     /// Looks up information about apps on the device
     /// # Arguments
     /// * `app_ids` - The bundle ID's of apps to lookup information about
