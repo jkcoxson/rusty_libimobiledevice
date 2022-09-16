@@ -5,11 +5,12 @@ use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;
 use crate::error::{
     self, AfcError, DebugServerError, HeartbeatError, IdeviceError, InstProxyError, LockdowndError,
-    MobileImageMounterError, ScreenshotrError,
+    MisagentError, MobileImageMounterError, ScreenshotrError,
 };
 use crate::services::afc::AfcClient;
 use crate::services::heartbeat::HeartbeatClient;
 use crate::services::lockdownd::LockdowndClient;
+use crate::services::misagent::MisagentClient;
 use crate::services::mobile_image_mounter::MobileImageMounter;
 use core::fmt;
 use libc::c_void;
@@ -494,6 +495,20 @@ impl Device {
     /// ***Verified:*** False
     pub fn new_afc_client(&self, label: impl Into<String>) -> Result<AfcClient, AfcError> {
         AfcClient::start_service(self, label)
+    }
+
+    /// Creates a new misagent client for the device
+    /// # Arguments
+    /// * `label` - The label to give the underlying service as it starts
+    /// # Returns
+    /// An misagent client for the device
+    ///
+    /// ***Verified:*** False
+    pub fn new_misagent_client(
+        &self,
+        label: impl Into<String>,
+    ) -> Result<MisagentClient, MisagentError> {
+        MisagentClient::start_service(self, label)
     }
 }
 

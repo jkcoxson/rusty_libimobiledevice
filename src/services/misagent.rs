@@ -45,7 +45,7 @@ impl MisagentClient<'_> {
     /// * `device` - The device to create the service with
     /// * `service_name` - The name of the service to start
     /// # Returns
-    /// An afc service connection
+    /// An misagent service connection
     ///
     /// ***Verified:*** False
     pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, MisagentError> {
