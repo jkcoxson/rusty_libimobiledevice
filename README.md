@@ -23,6 +23,8 @@ To cross compile this crate, you can use the ``vendored`` feature and the build 
 ## Usage
 Add the crate and path to your cargo.toml, and add either ``static`` or ``dynamic`` to the features list. This will determine how the library is linked. By default this is dynamic. You can also use the ``vendored`` feature to build libimobiledevice at compile time.
 
+Check the [tools](tools) directory for full examples of how to use this library. It has many common use-cases.
+
 To list devices detected by a usbmuxd daemon, you can use the following example.
 ```rust
 // Include the idevice module. Will be needed in most scenarios.

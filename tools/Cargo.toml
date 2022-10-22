@@ -42,3 +42,7 @@ path = "src/ideviceinstaller.rs"
 [[bin]]
 name = "test"
 path = "src/test.rs"
+
+[[bin]]
+name = "idevicelocation"
+path = "src/idevicelocation.rs"
