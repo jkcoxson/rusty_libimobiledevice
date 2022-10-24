@@ -131,16 +131,16 @@ impl LockdowndClient<'_> {
         domain: impl Into<String>,
         value: Plist,
     ) -> Result<(), LockdowndError> {
-        let domain = domain.into();
-        let key = key.into();
+        let domain: String = domain.into();
+        let key: String = key.into();
         let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == *"" {
+        let domain_ptr = if domain.is_empty() {
             std::ptr::null()
         } else {
             domain_c_str.as_ptr()
         };
         let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_c_str = if key == *"" {
+        let key_ptr = if key.is_empty() {
             std::ptr::null()
         } else {
             key_c_str.as_ptr()
@@ -150,12 +150,14 @@ impl LockdowndClient<'_> {
         let result = unsafe {
             unsafe_bindings::lockdownd_set_value(
                 self.pointer,
-                domain_c_str,
-                key_c_str,
+                domain_ptr,
+                key_ptr,
                 value.get_pointer(),
             )
         }
         .into();
+
+        value.false_drop();
 
         if result != LockdowndError::Success {
             return Err(result);
