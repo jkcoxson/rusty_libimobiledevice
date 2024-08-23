@@ -137,6 +137,7 @@ fn main() {
         repo_setup("https://github.com/libimobiledevice/libplist.git");
         repo_setup("https://github.com/libimobiledevice/libimobiledevice-glue.git");
         repo_setup("https://github.com/libimobiledevice/libusbmuxd.git");
+        repo_setup("https://github.com/libimobiledevice/libtatsu.git");
         repo_setup("https://github.com/libimobiledevice/libimobiledevice.git");
 
         // Remove tools from libimobiledevice's makefile. There's no point to build them, and they cause errors on MacOS.
@@ -193,6 +194,22 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", dst.display());
 
         let mut dst = autotools::Config::new("libusbmuxd");
+        let dst = dst.without("cython", None);
+        let mut dst = dst.env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
+        for flag in &c_flags {
+            dst = dst.cflag(flag);
+        }
+        for flag in &cxx_flags {
+            dst = dst.cxxflag(flag);
+        }
+        let dst = dst.build();
+
+        println!(
+            "cargo:rustc-link-search=native={}",
+            dst.join("lib").display()
+        );
+
+        let mut dst = autotools::Config::new("libtatsu");
         let dst = dst.without("cython", None);
         let mut dst = dst.env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
         for flag in &c_flags {
