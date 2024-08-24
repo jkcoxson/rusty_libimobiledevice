@@ -253,9 +253,12 @@ impl LockdowndClient<'_> {
             return Err(result);
         }
 
+        let service_struct: &unsafe_bindings::lockdownd_service_descriptor =
+            unsafe { &*service };
+
         Ok(LockdowndService {
             pointer: service,
-            port: 0,
+            port: service_struct.port as u32,
             phantom: std::marker::PhantomData,
         })
     }
