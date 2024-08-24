@@ -51,6 +51,28 @@ impl AfcClient<'_> {
         ))
     }
 
+    /// Creates a new afc service connection to the device
+    /// # Arguments
+    /// * `device` - The device to connect to
+    /// * `descriptor` - The lockdown service to connect on
+    /// # Returns
+    /// A struct containing the handle to the connection
+    ///
+    /// ***Verified:*** False
+    pub fn with_service(device: &Device, descriptor: LockdowndService) -> Result<Self, String> {
+        let mut client_pointer = unsafe { std::mem::zeroed() };
+        let result = unsafe {
+            unsafe_bindings::afc_client_new(device.pointer, descriptor.pointer, &mut client_pointer)
+        };
+        if result != 0 {
+            return Err(format!("afc_client_new failed: {}", result));
+        }
+        Ok(AfcClient {
+            pointer: client_pointer,
+            phantom: std::marker::PhantomData,
+        })
+    }
+
     /// Starts an afc service connection to the device
     /// # Arguments
     /// * `device` - The device to create the service with
