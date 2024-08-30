@@ -117,7 +117,7 @@ impl CompanionProxy<'_> {
     /// Closes the connection after a reply, so this consumes the companion proxy.
     /// # Arguments
     /// *none*
-    /// * Returns
+    /// # Returns
     /// A plist containing the device registry
     ///
     /// ***Verified:*** False
