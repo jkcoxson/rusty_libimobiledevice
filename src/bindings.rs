@@ -7,6 +7,7 @@
 #![allow(unaligned_references)]
 #![allow(improper_ctypes)]
 #![allow(dead_code)]
+#![allow(unused_imports)]
 
 // This was mostly done for rust-analyzer, but it's useful to have it here
 
