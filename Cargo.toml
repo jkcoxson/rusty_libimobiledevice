@@ -1,13 +1,13 @@
 [package]
 name = "rusty_libimobiledevice"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
-authors = [ "Jackson Coxson" ]
+authors = ["Jackson Coxson"]
 description = "An ergonomic library to communicate with iOS devices"
 homepage = "https://github.com/jkcoxson/rusty_libimobiledevice"
 repository = "https://github.com/jkcoxson/rusty_libimobiledevice"
 license = "LGPL-2.1-or-later"
-keywords = [ "libimobiledevice", "ios", "lockdown", "developer-tools" ]
+keywords = ["libimobiledevice", "ios", "lockdown", "developer-tools"]
 readme = "README.md"
 documentation = "https://docs.rs/rusty_libimobiledevice"
 
@@ -21,7 +21,7 @@ log = "0.4.15"
 
 [build-dependencies]
 bindgen = "0.59.2"
-cc  = "1.0.73"
+cc = "1.0.73"
 autotools = "0.2.5"
 cmake = "0.1.48"
 
@@ -30,7 +30,4 @@ default = ["openssl"]
 pls-generate = []
 dynamic = ["plist_plus/dynamic"]
 static = ["plist_plus/static"]
-vendored = [
-    "plist_plus/vendored",
-    "openssl/vendored"
-]
+vendored = ["plist_plus/vendored", "openssl/vendored"]
