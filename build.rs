@@ -49,7 +49,7 @@ fn main() {
         // Change current directory to OUT_DIR
         let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
         env::set_current_dir(&out_path).unwrap();
-        env::set_var("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
+        env::set_var("PKG_CONFIG_PATH", out_path.join("lib/pkgconfig"));
 
         // Lib path setup
         let lib_path = out_path.join("lib");
@@ -182,7 +182,7 @@ fn main() {
 
         let mut dst = autotools::Config::new("libimobiledevice-glue");
         let dst = dst.without("cython", None);
-        let mut dst = dst.env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
+        let mut dst = dst.env("PKG_CONFIG_PATH", out_path.join("lib/pkgconfig"));
         for flag in &c_flags {
             dst = dst.cflag(flag);
         }
@@ -195,7 +195,7 @@ fn main() {
 
         let mut dst = autotools::Config::new("libusbmuxd");
         let dst = dst.without("cython", None);
-        let mut dst = dst.env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
+        let mut dst = dst.env("PKG_CONFIG_PATH", out_path.join("lib/pkgconfig"));
         for flag in &c_flags {
             dst = dst.cflag(flag);
         }
@@ -211,7 +211,7 @@ fn main() {
 
         let mut dst = autotools::Config::new("libtatsu");
         let dst = dst.without("cython", None);
-        let mut dst = dst.env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
+        let mut dst = dst.env("PKG_CONFIG_PATH", out_path.join("lib/pkgconfig"));
         for flag in &c_flags {
             dst = dst.cflag(flag);
         }
@@ -227,7 +227,7 @@ fn main() {
 
         let mut dst = autotools::Config::new("libimobiledevice");
         let dst = dst.without("cython", None);
-        let mut dst = dst.env("PKG_CONFIG_PATH", &out_path.join("lib/pkgconfig"));
+        let mut dst = dst.env("PKG_CONFIG_PATH", out_path.join("lib/pkgconfig"));
         for flag in &c_flags {
             dst = dst.cflag(flag);
         }
