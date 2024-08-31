@@ -270,13 +270,13 @@ impl AfcClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn file_read(&self, handle: u64, length: u32) -> Result<Vec<i8>, AfcError> {
-        let mut buffer = unsafe { std::mem::zeroed() };
+        let mut buffer = vec![0i8; length as usize].into_boxed_slice();
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_file_read(
                 self.pointer,
                 handle,
-                &mut buffer,
+                buffer.as_mut_ptr(),
                 length,
                 &mut bytes_written,
             )
@@ -285,14 +285,8 @@ impl AfcClient<'_> {
         if result != AfcError::Success {
             return Err(result);
         }
-
-        let vec = unsafe {
-            Vec::from_raw_parts(
-                buffer as *mut i8,
-                bytes_written as usize,
-                bytes_written as usize,
-            )
-        };
+        let mut vec = buffer.into_vec();
+        vec.truncate(bytes_written as usize);
 
         Ok(vec)
     }
