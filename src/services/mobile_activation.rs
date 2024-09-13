@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::os::raw::c_char;
+use std::ffi::CString;
 
 use crate::{
     bindings as unsafe_bindings, error::MobileActivationError, idevice::Device,
@@ -60,13 +60,14 @@ impl MobileActivationClient<'_> {
         device: &Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileActivationError> {
+        let label_c_string = CString::new(label.into()).unwrap();
         let mut client = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::mobileactivation_client_start_service(
                 device.pointer,
                 &mut client,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();

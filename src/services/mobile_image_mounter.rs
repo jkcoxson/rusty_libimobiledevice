@@ -1,6 +1,7 @@
 // jkcoxson
 
 use std::{
+    ffi::CString,
     io::Read,
     os::raw::{c_char, c_long, c_ulong},
     path::PathBuf,
@@ -69,12 +70,13 @@ impl MobileImageMounter<'_> {
         label: impl Into<String>,
     ) -> Result<Self, MobileImageMounterError> {
         let mut client = unsafe { std::mem::zeroed() };
+        let label_c_string = CString::new(label.into()).unwrap();
 
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_start_service(
                 device.pointer,
                 &mut client,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -125,28 +127,29 @@ impl MobileImageMounter<'_> {
             Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
         };
         // Read the image into a buffer
-        let image_path_c_str = &mut std::ffi::CString::new(image_path).unwrap();
-        let mode_c_str = &mut std::ffi::CString::new("rb").unwrap();
+        let image_path_c_string = CString::new(image_path).unwrap();
+        let mode_c_string = CString::new("rb").unwrap();
         info!("Opening image file");
-        let image_buffer = unsafe { libc::fopen(image_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
+        let image_buffer =
+            unsafe { libc::fopen(image_path_c_string.as_ptr(), mode_c_string.as_ptr()) };
         // Read the signature into a buffer
-        let signature_path_c_str = &mut std::ffi::CString::new(signature_path).unwrap();
+        let signature_path_c_string = CString::new(signature_path).unwrap();
         info!("Reading signature file");
         let signature_buffer =
-            unsafe { libc::fopen(signature_path_c_str.as_ptr(), mode_c_str.as_ptr()) };
+            unsafe { libc::fopen(signature_path_c_string.as_ptr(), mode_c_string.as_ptr()) };
 
-        let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
-        let image_type_c_str = if image_type == *"" {
+        let image_type_c_string = CString::new(image_type.clone()).unwrap();
+        let image_type_c_string_ptr = if image_type_c_string.is_empty() {
             std::ptr::null()
         } else {
-            image_type_c_str.as_ptr()
+            image_type_c_string.as_ptr()
         };
 
         info!("Uploading image");
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_upload_image(
                 self.pointer,
-                image_type_c_str,
+                image_type_c_string_ptr,
                 dmg_size as c_ulong,
                 signature_buffer as *const c_char,
                 signature_size as u16,
@@ -191,10 +194,11 @@ impl MobileImageMounter<'_> {
         if !image_path.exists() {
             return Err(MobileImageMounterError::DmgNotFound);
         }
-        let image_path = match image_path.canonicalize() {
+        let image_path = CString::new(match image_path.canonicalize() {
             Ok(path) => path.display().to_string(),
             Err(_) => return Err(MobileImageMounterError::DmgNotFound),
-        };
+        })
+        .unwrap();
 
         // Read the signature into a buffer
         let mut signature_buffer = Vec::new();
@@ -207,11 +211,12 @@ impl MobileImageMounter<'_> {
             Ok(_) => (),
             Err(_) => return Err(MobileImageMounterError::SignatureNotFound),
         };
-        let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
-        let image_type_c_str = if image_type == *"" {
+
+        let image_type_c_string = CString::new(image_type.clone()).unwrap();
+        let image_type_c_string_ptr = if image_type_c_string.is_empty() {
             std::ptr::null()
         } else {
-            image_type_c_str.as_ptr()
+            image_type_c_string.as_ptr()
         };
 
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
@@ -223,7 +228,7 @@ impl MobileImageMounter<'_> {
                 image_path.as_ptr() as *const c_char,
                 signature_buffer.as_ptr() as *const c_char,
                 signature_buffer.len() as u16,
-                image_type_c_str,
+                image_type_c_string_ptr,
                 &mut plist,
             )
         }
@@ -246,12 +251,11 @@ impl MobileImageMounter<'_> {
         &self,
         image_type: impl Into<String>,
     ) -> Result<Plist, MobileImageMounterError> {
-        let image_type = image_type.into();
-        let image_type_c_str = std::ffi::CString::new(image_type.clone()).unwrap();
-        let image_type_c_str = if image_type == *"" {
+        let image_type_c_string = CString::new(image_type.into()).unwrap();
+        let image_type_c_string_ptr = if image_type_c_string.is_empty() {
             std::ptr::null()
         } else {
-            image_type_c_str.as_ptr()
+            image_type_c_string.as_ptr()
         };
 
         let mut plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
@@ -260,7 +264,7 @@ impl MobileImageMounter<'_> {
         let result = unsafe {
             unsafe_bindings::mobile_image_mounter_lookup_image(
                 self.pointer,
-                image_type_c_str,
+                image_type_c_string_ptr,
                 &mut plist,
             )
         }

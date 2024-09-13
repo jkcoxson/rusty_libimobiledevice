@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::os::raw::c_char;
+use std::ffi::CString;
 
 use crate::{bindings as unsafe_bindings, error::RestoredError, idevice::Device};
 
@@ -23,11 +23,12 @@ impl RestoredClient<'_> {
     /// ***Verified:*** False
     pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, RestoredError> {
         let mut pointer = unsafe { std::mem::zeroed() };
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::restored_client_new(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -75,12 +76,9 @@ impl RestoredClient<'_> {
     /// ***Verified:*** False
     pub fn query_value(&self, key: impl Into<String>) -> Result<Plist, RestoredError> {
         let mut value = std::ptr::null_mut();
+        let key_c_string = CString::new(key.into()).unwrap();
         let result = unsafe {
-            unsafe_bindings::restored_query_value(
-                self.pointer,
-                key.into().as_ptr() as *const c_char,
-                &mut value,
-            )
+            unsafe_bindings::restored_query_value(self.pointer, key_c_string.as_ptr(), &mut value)
         }
         .into();
         if result != RestoredError::Success {
@@ -99,12 +97,9 @@ impl RestoredClient<'_> {
     /// ***Verified:*** False
     pub fn get_value(&self, key: impl Into<String>) -> Result<Plist, RestoredError> {
         let mut value = std::ptr::null_mut();
+        let key_c_string = CString::new(key.into()).unwrap();
         let result = unsafe {
-            unsafe_bindings::restored_get_value(
-                self.pointer,
-                key.into().as_ptr() as *const c_char,
-                &mut value,
-            )
+            unsafe_bindings::restored_get_value(self.pointer, key_c_string.as_ptr(), &mut value)
         }
         .into();
         if result != RestoredError::Success {
@@ -211,11 +206,9 @@ impl RestoredClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn set_label(&self, label: impl Into<String>) {
+        let label_c_string = CString::new(label.into()).unwrap();
         unsafe {
-            unsafe_bindings::restored_client_set_label(
-                self.pointer,
-                label.into().as_ptr() as *const c_char,
-            )
+            unsafe_bindings::restored_client_set_label(self.pointer, label_c_string.as_ptr())
         };
     }
 }

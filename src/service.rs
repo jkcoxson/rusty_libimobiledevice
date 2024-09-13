@@ -1,5 +1,6 @@
 // jkcoxson
 
+use std::ffi::CString;
 use std::os::raw::c_char;
 
 use crate::services::lockdownd::LockdowndService;
@@ -48,13 +49,15 @@ impl ServiceClient<'_> {
         label: impl Into<String>,
     ) -> Result<(Self, i32), ServiceError> {
         let mut pointer = std::ptr::null_mut();
+        let service_name_c_string = CString::new(service_name.into()).unwrap();
+        let label_c_string = CString::new(label.into()).unwrap();
         let mut error_code = 0;
         let result = unsafe {
             unsafe_bindings::service_client_factory_start_service(
                 device.pointer,
-                service_name.into().as_ptr() as *const c_char,
+                service_name_c_string.as_ptr(),
                 &mut pointer,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
                 None,
                 &mut error_code,
             )

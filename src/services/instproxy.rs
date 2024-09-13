@@ -27,15 +27,15 @@ impl InstProxyClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, InstProxyError> {
-        let label = label.into();
+        let label: String = label.into();
         let mut instproxy_client = unsafe { std::mem::zeroed() };
-        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
+        let label_c_string = CString::new(label.clone()).unwrap();
         info!("Creating instproxy client for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::instproxy_client_start_service(
                 device.pointer,
                 &mut instproxy_client,
-                label_c_str.as_ptr(),
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -193,18 +193,14 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy install");
-        let pkg_path_c_str = std::ffi::CString::new(pkg_path.into()).unwrap();
+        let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_install(
                 self.pointer,
-                pkg_path_c_str.as_ptr(),
+                pkg_path_c_string.as_ptr(),
                 ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
@@ -232,18 +228,14 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy upgrade");
-        let pkg_path_c_str = std::ffi::CString::new(pkg_path.into()).unwrap();
+        let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_upgrade(
                 self.pointer,
-                pkg_path_c_str.as_ptr(),
+                pkg_path_c_string.as_ptr(),
                 ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
@@ -271,18 +263,14 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy uninstall");
-        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
+        let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_uninstall(
                 self.pointer,
-                app_id_c_str.as_ptr(),
+                app_id_c_string.as_ptr(),
                 ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
@@ -307,11 +295,8 @@ impl InstProxyClient<'_> {
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         info!("Instproxy lookup archives");
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
+
         let result = unsafe {
             unsafe_bindings::instproxy_lookup_archives(self.pointer, ptr, &mut res_plist)
         }
@@ -337,18 +322,14 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy archive");
-        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
+        let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_archive(
                 self.pointer,
-                app_id_c_str.as_ptr(),
+                app_id_c_string.as_ptr(),
                 ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
@@ -375,18 +356,14 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy restore");
-        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
+        let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_restore(
                 self.pointer,
-                app_id_c_str.as_ptr(),
+                app_id_c_string.as_ptr(),
                 ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
@@ -413,18 +390,14 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<(), InstProxyError> {
         info!("Instproxy remove archive");
-        let app_id_c_str = std::ffi::CString::new(app_id.into()).unwrap();
+        let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_remove_archive(
                 self.pointer,
-                app_id_c_str.as_ptr(),
+                app_id_c_string.as_ptr(),
                 ptr,
                 None, // I feel like this will segfault. The bindings are probably wrong.
                 std::ptr::null_mut(),
@@ -495,7 +468,7 @@ impl InstProxyClient<'_> {
         &self,
         bundle_identifier: impl Into<String>,
     ) -> Result<String, InstProxyError> {
-        let bundle_id = std::ffi::CString::new(bundle_identifier.into()).unwrap();
+        let bundle_id_c_string = CString::new(bundle_identifier.into()).unwrap();
         // This is kinda horrifying, could use a refractor
         let to_fill = CString::new("").unwrap();
         let mut to_fill_bytes = to_fill.into_raw();
@@ -505,7 +478,7 @@ impl InstProxyClient<'_> {
         let result = unsafe {
             unsafe_bindings::instproxy_client_get_path_for_bundle_identifier(
                 self.pointer,
-                bundle_id.as_ptr(),
+                bundle_id_c_string.as_ptr(),
                 to_fill_ptr,
             )
         }

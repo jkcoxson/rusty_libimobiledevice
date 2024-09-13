@@ -1,6 +1,7 @@
 // jkcoxson
 
 use libc::c_uint;
+use std::ffi::CString;
 
 use crate::{
     bindings as unsafe_bindings, error::DiagnosticsRelayError, idevice::Device,
@@ -58,11 +59,12 @@ impl DiagnosticsRelay<'_> {
         label: impl Into<String>,
     ) -> Result<Self, DiagnosticsRelayError> {
         let mut pointer = std::ptr::null_mut();
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const std::os::raw::c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -160,10 +162,11 @@ impl DiagnosticsRelay<'_> {
         type_: impl Into<String>,
     ) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
+        let type_c_string = CString::new(type_.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_request_diagnostics(
                 self.pointer,
-                type_.into().as_ptr() as *const std::os::raw::c_char,
+                type_c_string.as_ptr(),
                 &mut plist,
             )
         }
@@ -215,11 +218,14 @@ impl DiagnosticsRelay<'_> {
         entry_class: impl Into<String>,
     ) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
+        let entry_name_c_string = CString::new(entry_name.into()).unwrap();
+        let entry_class_c_string = CString::new(entry_class.into()).unwrap();
+
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_ioregistry_entry(
                 self.pointer,
-                entry_name.into().as_ptr() as *const std::os::raw::c_char,
-                entry_class.into().as_ptr() as *const std::os::raw::c_char,
+                entry_name_c_string.as_ptr(),
+                entry_class_c_string.as_ptr(),
                 &mut plist,
             )
         }
@@ -244,10 +250,11 @@ impl DiagnosticsRelay<'_> {
         plane: impl Into<String>,
     ) -> Result<Plist, DiagnosticsRelayError> {
         let mut plist = std::ptr::null_mut();
+        let plane_c_string = CString::new(plane.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::diagnostics_relay_query_ioregistry_plane(
                 self.pointer,
-                plane.into().as_ptr() as *const std::os::raw::c_char,
+                plane_c_string.as_ptr(),
                 &mut plist,
             )
         }

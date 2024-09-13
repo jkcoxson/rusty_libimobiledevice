@@ -1,6 +1,9 @@
 // jkcoxson
 
-use std::os::raw::{c_char, c_uint};
+use std::{
+    ffi::CString,
+    os::raw::{c_char, c_uint},
+};
 
 use crate::{
     bindings as unsafe_bindings, error::SbservicesError, idevice::Device,
@@ -54,11 +57,12 @@ impl SpringboardServicesClient<'_> {
         label: impl Into<String>,
     ) -> Result<Self, SbservicesError> {
         let mut pointer = std::ptr::null_mut();
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::sbservices_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -82,14 +86,15 @@ impl SpringboardServicesClient<'_> {
     /// ***Verified:*** False
     pub fn get_icon_state(&self, format_version: Option<String>) -> Result<Plist, SbservicesError> {
         let mut plist = std::ptr::null_mut();
+        let format_version_c_string = format_version.map(|s| CString::new(s).unwrap());
+        let format_version_c_string_ptr =
+            format_version_c_string.map_or(std::ptr::null(), |s| s.as_ptr());
+
         let result = unsafe {
             unsafe_bindings::sbservices_get_icon_state(
                 self.pointer,
                 &mut plist,
-                format_version
-                    .as_ref()
-                    .map(|s| s.as_ptr())
-                    .unwrap_or(std::ptr::null()) as *mut c_char,
+                format_version_c_string_ptr,
             )
         }
         .into();
@@ -134,10 +139,11 @@ impl SpringboardServicesClient<'_> {
     ) -> Result<Vec<c_char>, SbservicesError> {
         let mut data = std::ptr::null_mut();
         let mut size = 0;
+        let bundle_id_c_string = CString::new(bundle_id.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::sbservices_get_icon_pngdata(
                 self.pointer,
-                bundle_id.into().as_ptr() as *const c_char,
+                bundle_id_c_string.as_ptr(),
                 &mut data,
                 &mut size,
             )

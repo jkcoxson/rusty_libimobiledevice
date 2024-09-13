@@ -1,5 +1,7 @@
 // jkcoxson
 
+use std::ffi::CString;
+
 use crate::bindings as unsafe_bindings;
 use crate::error::NpError;
 use crate::idevice::Device;
@@ -46,12 +48,14 @@ impl NotificationProxyClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_service(device: &Device, label: impl Into<String>) -> Result<Self, NpError> {
+        let label_c_string = CString::new(label.into()).unwrap();
+
         let mut pointer = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::np_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const std::os::raw::c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -74,11 +78,9 @@ impl NotificationProxyClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn post_notification(&self, notification: &str) -> Result<(), NpError> {
+        let notification_c_string = CString::new(notification).unwrap();
         let result = unsafe {
-            unsafe_bindings::np_post_notification(
-                self.pointer,
-                notification.as_ptr() as *const std::os::raw::c_char,
-            )
+            unsafe_bindings::np_post_notification(self.pointer, notification_c_string.as_ptr())
         }
         .into();
 
@@ -97,11 +99,9 @@ impl NotificationProxyClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn observe_notification(&self, notification: &str) -> Result<(), NpError> {
+        let notification_c_string = CString::new(notification).unwrap();
         let result = unsafe {
-            unsafe_bindings::np_observe_notification(
-                self.pointer,
-                notification.as_ptr() as *const std::os::raw::c_char,
-            )
+            unsafe_bindings::np_observe_notification(self.pointer, notification_c_string.as_ptr())
         }
         .into();
 

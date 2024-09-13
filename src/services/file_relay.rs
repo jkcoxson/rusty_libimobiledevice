@@ -52,11 +52,12 @@ impl FileRelay<'_> {
         label: impl Into<String>,
     ) -> Result<Self, FileRelayError> {
         let mut pointer = std::ptr::null_mut();
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::file_relay_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
