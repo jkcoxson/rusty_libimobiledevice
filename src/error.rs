@@ -48,6 +48,8 @@ pub enum LockdowndError {
     MissingObjectDepenency,
 }
 
+impl std::error::Error for LockdowndError {}
+
 impl From<i32> for LockdowndError {
     fn from(i: i32) -> LockdowndError {
         match i {
@@ -97,56 +99,60 @@ impl From<i32> for LockdowndError {
     }
 }
 
+impl std::fmt::Display for LockdowndError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            LockdowndError::Success => "Success",
+            LockdowndError::InvalidArg => "InvalidArg",
+            LockdowndError::InvalidConf => "InvalidConf",
+            LockdowndError::PlistError => "PlistError",
+            LockdowndError::PairingFailed => "PairingFailed",
+            LockdowndError::SslError => "SslError",
+            LockdowndError::DictError => "DictError",
+            LockdowndError::RecieveTimeout => "RecieveTimeout",
+            LockdowndError::MuxError => "MuxError",
+            LockdowndError::NoRunningSession => "NoRunningSession",
+            LockdowndError::InvalidResponse => "InvalidResponse",
+            LockdowndError::MissingKey => "MissingKey",
+            LockdowndError::MissingValue => "MissingValue",
+            LockdowndError::GetProhibited => "GetProhibited",
+            LockdowndError::SetProhibited => "SetProhibited",
+            LockdowndError::RemoveProhibited => "RemoveProhibited",
+            LockdowndError::ImmutableValue => "ImmutableValue",
+            LockdowndError::PasswordProtected => "PasswordProtected",
+            LockdowndError::UserDeniedPairing => "UserDeniedPairing",
+            LockdowndError::PairingDialogueRepsonsePending => "PairingDialogueRepsonsePending",
+            LockdowndError::MissingHostId => "MissingHostId",
+            LockdowndError::InvalidHostId => "InvalidHostId",
+            LockdowndError::SessionActive => "SessionActive",
+            LockdowndError::SessionInactive => "SessionInactive",
+            LockdowndError::MissingSessionId => "MissingSessionId",
+            LockdowndError::InvalidSessionId => "InvalidSessionId",
+            LockdowndError::MissingService => "MissingService",
+            LockdowndError::InvalidService => "InvalidService",
+            LockdowndError::ServiceLimit => "ServiceLimit",
+            LockdowndError::MissingPairRecord => "MissingPairRecord",
+            LockdowndError::SavePairRecordFailed => "SavePairRecordFailed",
+            LockdowndError::InvalidPairRecord => "InvalidPairRecord",
+            LockdowndError::InvalidActivationRecord => "InvalidActivationRecord",
+            LockdowndError::MissingActivationRecord => "MissingActivationRecord",
+            LockdowndError::ServiceProhibited => "ServiceProhibited",
+            LockdowndError::EscrowLocked => "EscrowLocked",
+            LockdowndError::PairingProhibitedOverThisConnection => {
+                "PairingProhibitedOverThisConnection"
+            }
+            LockdowndError::FmipProtected => "FmipProtected",
+            LockdowndError::McProtected => "McProtected",
+            LockdowndError::McChallengeRequired => "McChallengeRequired",
+            LockdowndError::UnknownError => "UnknownError",
+            LockdowndError::MissingObjectDepenency => "MissingObjectDepenency",
+        })
+    }
+}
+
 impl From<LockdowndError> for String {
     fn from(e: LockdowndError) -> String {
-        match e {
-            LockdowndError::Success => "Success".to_string(),
-            LockdowndError::InvalidArg => "InvalidArg".to_string(),
-            LockdowndError::InvalidConf => "InvalidConf".to_string(),
-            LockdowndError::PlistError => "PlistError".to_string(),
-            LockdowndError::PairingFailed => "PairingFailed".to_string(),
-            LockdowndError::SslError => "SslError".to_string(),
-            LockdowndError::DictError => "DictError".to_string(),
-            LockdowndError::RecieveTimeout => "RecieveTimeout".to_string(),
-            LockdowndError::MuxError => "MuxError".to_string(),
-            LockdowndError::NoRunningSession => "NoRunningSession".to_string(),
-            LockdowndError::InvalidResponse => "InvalidResponse".to_string(),
-            LockdowndError::MissingKey => "MissingKey".to_string(),
-            LockdowndError::MissingValue => "MissingValue".to_string(),
-            LockdowndError::GetProhibited => "GetProhibited".to_string(),
-            LockdowndError::SetProhibited => "SetProhibited".to_string(),
-            LockdowndError::RemoveProhibited => "RemoveProhibited".to_string(),
-            LockdowndError::ImmutableValue => "ImmutableValue".to_string(),
-            LockdowndError::PasswordProtected => "PasswordProtected".to_string(),
-            LockdowndError::UserDeniedPairing => "UserDeniedPairing".to_string(),
-            LockdowndError::PairingDialogueRepsonsePending => {
-                "PairingDialogueRepsonsePending".to_string()
-            }
-            LockdowndError::MissingHostId => "MissingHostId".to_string(),
-            LockdowndError::InvalidHostId => "InvalidHostId".to_string(),
-            LockdowndError::SessionActive => "SessionActive".to_string(),
-            LockdowndError::SessionInactive => "SessionInactive".to_string(),
-            LockdowndError::MissingSessionId => "MissingSessionId".to_string(),
-            LockdowndError::InvalidSessionId => "InvalidSessionId".to_string(),
-            LockdowndError::MissingService => "MissingService".to_string(),
-            LockdowndError::InvalidService => "InvalidService".to_string(),
-            LockdowndError::ServiceLimit => "ServiceLimit".to_string(),
-            LockdowndError::MissingPairRecord => "MissingPairRecord".to_string(),
-            LockdowndError::SavePairRecordFailed => "SavePairRecordFailed".to_string(),
-            LockdowndError::InvalidPairRecord => "InvalidPairRecord".to_string(),
-            LockdowndError::InvalidActivationRecord => "InvalidActivationRecord".to_string(),
-            LockdowndError::MissingActivationRecord => "MissingActivationRecord".to_string(),
-            LockdowndError::ServiceProhibited => "ServiceProhibited".to_string(),
-            LockdowndError::EscrowLocked => "EscrowLocked".to_string(),
-            LockdowndError::PairingProhibitedOverThisConnection => {
-                "PairingProhibitedOverThisConnection".to_string()
-            }
-            LockdowndError::FmipProtected => "FmipProtected".to_string(),
-            LockdowndError::McProtected => "McProtected".to_string(),
-            LockdowndError::McChallengeRequired => "McChallengeRequired".to_string(),
-            LockdowndError::UnknownError => "UnknownError".to_string(),
-            LockdowndError::MissingObjectDepenency => "MissingObjectDepenency".to_string(),
-        }
+        e.to_string()
     }
 }
 
@@ -161,6 +167,8 @@ pub enum IdeviceError {
     SslError,
     Timeout,
 }
+
+impl std::error::Error for IdeviceError {}
 
 impl From<i32> for IdeviceError {
     fn from(e: i32) -> IdeviceError {
@@ -177,18 +185,24 @@ impl From<i32> for IdeviceError {
     }
 }
 
+impl std::fmt::Display for IdeviceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            IdeviceError::Success => "Success",
+            IdeviceError::InvalidArg => "InvalidArg",
+            IdeviceError::UnknownError => "UnknownError",
+            IdeviceError::NoDevice => "NoDevice",
+            IdeviceError::NotEnoughData => "NotEnoughData",
+            IdeviceError::ConnRefused => "ConnRefused",
+            IdeviceError::SslError => "SslError",
+            IdeviceError::Timeout => "Timeout",
+        })
+    }
+}
+
 impl From<IdeviceError> for String {
     fn from(e: IdeviceError) -> String {
-        match e {
-            IdeviceError::Success => "Success".to_string(),
-            IdeviceError::InvalidArg => "InvalidArg".to_string(),
-            IdeviceError::UnknownError => "UnknownError".to_string(),
-            IdeviceError::NoDevice => "NoDevice".to_string(),
-            IdeviceError::NotEnoughData => "NotEnoughData".to_string(),
-            IdeviceError::ConnRefused => "ConnRefused".to_string(),
-            IdeviceError::SslError => "SslError".to_string(),
-            IdeviceError::Timeout => "Timeout".to_string(),
-        }
+        e.to_string()
     }
 }
 
@@ -203,6 +217,8 @@ pub enum UserPrefError {
     WriteError,
     UnknownError,
 }
+
+impl std::error::Error for UserPrefError {}
 
 impl From<i32> for UserPrefError {
     fn from(e: i32) -> UserPrefError {
@@ -219,18 +235,24 @@ impl From<i32> for UserPrefError {
     }
 }
 
+impl std::fmt::Display for UserPrefError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            UserPrefError::Success => "Success",
+            UserPrefError::InvalidArg => "InvalidArg",
+            UserPrefError::NoEnt => "NoEnt",
+            UserPrefError::InvalidConf => "InvalidConf",
+            UserPrefError::SslError => "SslError",
+            UserPrefError::ReadError => "ReadError",
+            UserPrefError::WriteError => "WriteError",
+            UserPrefError::UnknownError => "UnknownError",
+        })
+    }
+}
+
 impl From<UserPrefError> for String {
     fn from(e: UserPrefError) -> String {
-        match e {
-            UserPrefError::Success => "Success".to_string(),
-            UserPrefError::InvalidArg => "InvalidArg".to_string(),
-            UserPrefError::NoEnt => "NoEnt".to_string(),
-            UserPrefError::InvalidConf => "InvalidConf".to_string(),
-            UserPrefError::SslError => "SslError".to_string(),
-            UserPrefError::ReadError => "ReadError".to_string(),
-            UserPrefError::WriteError => "WriteError".to_string(),
-            UserPrefError::UnknownError => "UnknownError".to_string(),
-        }
+        e.to_string()
     }
 }
 
@@ -245,6 +267,8 @@ pub enum PropertyListServiceError {
     NotEnoughData,
     UnknownError,
 }
+
+impl std::error::Error for PropertyListServiceError {}
 
 impl From<i32> for PropertyListServiceError {
     fn from(e: i32) -> PropertyListServiceError {
@@ -261,18 +285,24 @@ impl From<i32> for PropertyListServiceError {
     }
 }
 
+impl std::fmt::Display for PropertyListServiceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            PropertyListServiceError::Success => "Success",
+            PropertyListServiceError::InvalidArg => "InvalidArg",
+            PropertyListServiceError::PlistError => "PlistError",
+            PropertyListServiceError::MuxError => "MuxError",
+            PropertyListServiceError::SslError => "SslError",
+            PropertyListServiceError::RecieveTimeout => "RecieveTimeout",
+            PropertyListServiceError::NotEnoughData => "NotEnoughData",
+            PropertyListServiceError::UnknownError => "UnknownError",
+        })
+    }
+}
+
 impl From<PropertyListServiceError> for String {
     fn from(e: PropertyListServiceError) -> String {
-        match e {
-            PropertyListServiceError::Success => "Success".to_string(),
-            PropertyListServiceError::InvalidArg => "InvalidArg".to_string(),
-            PropertyListServiceError::PlistError => "PlistError".to_string(),
-            PropertyListServiceError::MuxError => "MuxError".to_string(),
-            PropertyListServiceError::SslError => "SslError".to_string(),
-            PropertyListServiceError::RecieveTimeout => "RecieveTimeout".to_string(),
-            PropertyListServiceError::NotEnoughData => "NotEnoughData".to_string(),
-            PropertyListServiceError::UnknownError => "UnknownError".to_string(),
-        }
+        e.to_string()
     }
 }
 
@@ -287,6 +317,8 @@ pub enum ServiceError {
     Timeout,
     UnknownError,
 }
+
+impl std::error::Error for ServiceError {}
 
 impl From<i32> for ServiceError {
     fn from(e: i32) -> ServiceError {
@@ -303,18 +335,24 @@ impl From<i32> for ServiceError {
     }
 }
 
+impl std::fmt::Display for ServiceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            ServiceError::Success => "Success",
+            ServiceError::InvalidArg => "InvalidArg",
+            ServiceError::MuxError => "MuxError",
+            ServiceError::SslError => "SslError",
+            ServiceError::StartServiceError => "StartServiceError",
+            ServiceError::NotEnoughData => "NotEnoughData",
+            ServiceError::Timeout => "Timeout",
+            ServiceError::UnknownError => "UnknownError",
+        })
+    }
+}
+
 impl From<ServiceError> for String {
     fn from(e: ServiceError) -> String {
-        match e {
-            ServiceError::Success => "Success".to_string(),
-            ServiceError::InvalidArg => "InvalidArg".to_string(),
-            ServiceError::MuxError => "MuxError".to_string(),
-            ServiceError::SslError => "SslError".to_string(),
-            ServiceError::StartServiceError => "StartServiceError".to_string(),
-            ServiceError::NotEnoughData => "NotEnoughData".to_string(),
-            ServiceError::Timeout => "Timeout".to_string(),
-            ServiceError::UnknownError => "UnknownError".to_string(),
-        }
+        e.to_string()
     }
 }
 
@@ -386,9 +424,11 @@ pub enum InstProxyError {
     UninstallProhibited,
     MissingBundleVersion,
     UnknownError,
-    // Internal 
-    MissingObjectDepenency
+    // Internal
+    MissingObjectDepenency,
 }
+
+impl std::error::Error for InstProxyError {}
 
 impl From<i32> for InstProxyError {
     fn from(e: i32) -> InstProxyError {
@@ -462,80 +502,89 @@ impl From<i32> for InstProxyError {
             _ => InstProxyError::UnknownError,
         }
     }
-            
+}
+
+impl std::fmt::Display for InstProxyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            InstProxyError::Success => "Success",
+            InstProxyError::InvalidArg => "InvalidArg",
+            InstProxyError::PlistError => "PlistError",
+            InstProxyError::ConnFailed => "ConnFailed",
+            InstProxyError::OpInProgress => "OpInProgress",
+            InstProxyError::OpFailed => "OpFailed",
+            InstProxyError::RecieveTimeout => "RecieveTimeout",
+            InstProxyError::AlreadyArchived => "AlreadyArchived",
+            InstProxyError::ApiInternalerror => "ApiInternalerror",
+            InstProxyError::ApplicationAlreadyInstalled => "ApplicationAlreadyInstalled",
+            InstProxyError::ApplicationMoveFailed => "ApplicationMoveFailed",
+            InstProxyError::ApplicationSinfCaptureFailed => "ApplicationSinfCaptureFailed",
+            InstProxyError::ApplicationSandboxFailed => "ApplicationSandboxFailed",
+            InstProxyError::ApplicationVerificationFailed => "ApplicationVerificationFailed",
+            InstProxyError::ArchiveDestructionFailed => "ArchiveDestructionFailed",
+            InstProxyError::BundleVerificationFailed => "BundleVerficationFailed",
+            InstProxyError::CarrierBundleCopyFailed => "CarrierBundleCopyFailed",
+            InstProxyError::CarrierBundleDirectoryCreationFailed => {
+                "CarrierBundleDirectoryCreationFailed"
+            }
+            InstProxyError::CarrierBundleMissingSupportedSims => {
+                "CarrierBundleMissingSupportedSims"
+            }
+            InstProxyError::CommCenterNotificationFailed => "CommCenterNotificationFailed",
+            InstProxyError::ContainerCreationFailed => "ContainerCreationFailed",
+            InstProxyError::ContainerP0wnFailed => "ContainerP0wnFailed",
+            InstProxyError::ContainerRemovalFailed => "ContainerRemovalFailed",
+            InstProxyError::EmbeddedProfileInstallFailed => "EmbeddedProfileInstallFailed",
+            InstProxyError::ExecutableTwiddleFailed => "ExecutableTwiddleFailed",
+            InstProxyError::ExistenceCheckFailed => "ExistenceCheckFailed",
+            InstProxyError::InstallMapUpdateFailed => "InstallMapUpdateFailed",
+            InstProxyError::ManifestCaptureFailed => "ManifestCaptureFailed",
+            InstProxyError::MapGenerationFailed => "MapGenerationFailed",
+            InstProxyError::MissingBundleExecutable => "MissingBundleExecutable",
+            InstProxyError::MissingBundleIdentifier => "MissingBundleIdentifier",
+            InstProxyError::MissingBundlePath => "MissingBundlePath",
+            InstProxyError::MissingContainer => "MissingContainer",
+            InstProxyError::NotificationFailed => "NotificationFailed",
+            InstProxyError::PackageExtractionFailed => "PackageExtractionFailed",
+            InstProxyError::PackageInspectionFailed => "PackageInspectionFailed",
+            InstProxyError::PackageMoveFailed => "PackageMoveFailed",
+            InstProxyError::PathConversionFailed => "PathConversionFailed",
+            InstProxyError::RestoreConversionFailed => "RestoreConversionFailed",
+            InstProxyError::SeatbeltProfileRemovalFailed => "SeatbeltProfileRemovalFailed",
+            InstProxyError::StageCreationFailed => "StageCreationFailed",
+            InstProxyError::SymlinkFailed => "SymlinkFailed",
+            InstProxyError::UnknownCommand => "UnknownCommand",
+            InstProxyError::ItunesArtworkCaptureFailed => "ItunesArtworkCaptureFailed",
+            InstProxyError::ItunesMetadataCaptureFailed => "ItunesMetadataCaptureFailed",
+            InstProxyError::DeviceOsVersionTooLow => "DeviceOsVersionTooLow",
+            InstProxyError::DeviceFamilyNotSupported => "DeviceFamilyNotSupported",
+            InstProxyError::PackagePatchFailed => "PackagePatchFailed",
+            InstProxyError::IncorrectArchitecture => "IncorrectArchitecture",
+            InstProxyError::PluginCopyFailed => "PluginCopyFailed",
+            InstProxyError::BreadcrumbFailed => "BreadcrumbFailed",
+            InstProxyError::BreadcrumbUnlockFailed => "BreadcrumbUnlockFailed",
+            InstProxyError::GeoJsonCaptureFailed => "GeoJsonCaptureFailed",
+            InstProxyError::NewsstandArtworkCaptureFailed => "NewsstandArtworkCaptureFailed",
+            InstProxyError::MissingCommand => "MissingCommand",
+            InstProxyError::NotEntitled => "NotEntitled",
+            InstProxyError::MissingPackagePath => "MissingPackagePath",
+            InstProxyError::MissingContainerPath => "MissingContainerPath",
+            InstProxyError::MissingApplicationIdentifier => "MissingApplicationIdentifier",
+            InstProxyError::MissingBundleVersion => "MissingBundleVersion",
+            InstProxyError::UninstallProhibited => "UninstallProhibited",
+            InstProxyError::UnknownError => "UnknownError",
+            InstProxyError::MissingAttributeValue => "MissingAttributeValue",
+            InstProxyError::LookupFailed => "LookupFailed",
+            InstProxyError::DictCreationFailed => "DictCreationFailed",
+            InstProxyError::InstallProhibited => "InstallProhibited",
+            InstProxyError::MissingObjectDepenency => "MissingObjectDependency",
+        })
+    }
 }
 
 impl From<InstProxyError> for String {
     fn from(e: InstProxyError) -> String {
-        match e {
-            InstProxyError::Success => "Success".to_string(),
-            InstProxyError::InvalidArg => "InvalidArg".to_string(),
-            InstProxyError::PlistError => "PlistError".to_string(),
-            InstProxyError::ConnFailed => "ConnFailed".to_string(),
-            InstProxyError::OpInProgress => "OpInProgress".to_string(),
-            InstProxyError::OpFailed => "OpFailed".to_string(),
-            InstProxyError::RecieveTimeout => "RecieveTimeout".to_string(),
-            InstProxyError::AlreadyArchived => "AlreadyArchived".to_string(),
-            InstProxyError::ApiInternalerror => "ApiInternalerror".to_string(),
-            InstProxyError::ApplicationAlreadyInstalled => "ApplicationAlreadyInstalled".to_string(),
-            InstProxyError::ApplicationMoveFailed => "ApplicationMoveFailed".to_string(),
-            InstProxyError::ApplicationSinfCaptureFailed => "ApplicationSinfCaptureFailed".to_string(),
-            InstProxyError::ApplicationSandboxFailed => "ApplicationSandboxFailed".to_string(),
-            InstProxyError::ApplicationVerificationFailed => "ApplicationVerificationFailed".to_string(),
-            InstProxyError::ArchiveDestructionFailed => "ArchiveDestructionFailed".to_string(),
-            InstProxyError::BundleVerificationFailed => "BundleVerficationFailed".to_string(),
-            InstProxyError::CarrierBundleCopyFailed => "CarrierBundleCopyFailed".to_string(),
-            InstProxyError::CarrierBundleDirectoryCreationFailed => "CarrierBundleDirectoryCreationFailed".to_string(),
-            InstProxyError::CarrierBundleMissingSupportedSims => "CarrierBundleMissingSupportedSims".to_string(),
-            InstProxyError::CommCenterNotificationFailed => "CommCenterNotificationFailed".to_string(),
-            InstProxyError::ContainerCreationFailed => "ContainerCreationFailed".to_string(),
-            InstProxyError::ContainerP0wnFailed => "ContainerP0wnFailed".to_string(),
-            InstProxyError::ContainerRemovalFailed => "ContainerRemovalFailed".to_string(),
-            InstProxyError::EmbeddedProfileInstallFailed => "EmbeddedProfileInstallFailed".to_string(),
-            InstProxyError::ExecutableTwiddleFailed => "ExecutableTwiddleFailed".to_string(),
-            InstProxyError::ExistenceCheckFailed => "ExistenceCheckFailed".to_string(),
-            InstProxyError::InstallMapUpdateFailed => "InstallMapUpdateFailed".to_string(),
-            InstProxyError::ManifestCaptureFailed => "ManifestCaptureFailed".to_string(),
-            InstProxyError::MapGenerationFailed => "MapGenerationFailed".to_string(),
-            InstProxyError::MissingBundleExecutable => "MissingBundleExecutable".to_string(),
-            InstProxyError::MissingBundleIdentifier => "MissingBundleIdentifier".to_string(),
-            InstProxyError::MissingBundlePath => "MissingBundlePath".to_string(),
-            InstProxyError::MissingContainer => "MissingContainer".to_string(),
-            InstProxyError::NotificationFailed => "NotificationFailed".to_string(),
-            InstProxyError::PackageExtractionFailed => "PackageExtractionFailed".to_string(),
-            InstProxyError::PackageInspectionFailed => "PackageInspectionFailed".to_string(),
-            InstProxyError::PackageMoveFailed => "PackageMoveFailed".to_string(),
-            InstProxyError::PathConversionFailed => "PathConversionFailed".to_string(),
-            InstProxyError::RestoreConversionFailed => "RestoreConversionFailed".to_string(),
-            InstProxyError::SeatbeltProfileRemovalFailed => "SeatbeltProfileRemovalFailed".to_string(),
-            InstProxyError::StageCreationFailed => "StageCreationFailed".to_string(),
-            InstProxyError::SymlinkFailed => "SymlinkFailed".to_string(),
-            InstProxyError::UnknownCommand => "UnknownCommand".to_string(),
-            InstProxyError::ItunesArtworkCaptureFailed => "ItunesArtworkCaptureFailed".to_string(),
-            InstProxyError::ItunesMetadataCaptureFailed => "ItunesMetadataCaptureFailed".to_string(),
-            InstProxyError::DeviceOsVersionTooLow => "DeviceOsVersionTooLow".to_string(),
-            InstProxyError::DeviceFamilyNotSupported => "DeviceFamilyNotSupported".to_string(),
-            InstProxyError::PackagePatchFailed => "PackagePatchFailed".to_string(),
-            InstProxyError::IncorrectArchitecture => "IncorrectArchitecture".to_string(),
-            InstProxyError::PluginCopyFailed => "PluginCopyFailed".to_string(),
-            InstProxyError::BreadcrumbFailed => "BreadcrumbFailed".to_string(),
-            InstProxyError::BreadcrumbUnlockFailed => "BreadcrumbUnlockFailed".to_string(),
-            InstProxyError::GeoJsonCaptureFailed => "GeoJsonCaptureFailed".to_string(),
-            InstProxyError::NewsstandArtworkCaptureFailed => "NewsstandArtworkCaptureFailed".to_string(),
-            InstProxyError::MissingCommand => "MissingCommand".to_string(),
-            InstProxyError::NotEntitled => "NotEntitled".to_string(),
-            InstProxyError::MissingPackagePath => "MissingPackagePath".to_string(),
-            InstProxyError::MissingContainerPath => "MissingContainerPath".to_string(),
-            InstProxyError::MissingApplicationIdentifier => "MissingApplicationIdentifier".to_string(),
-            InstProxyError::MissingBundleVersion => "MissingBundleVersion".to_string(),
-            InstProxyError::UninstallProhibited => "UninstallProhibited".to_string(),
-            InstProxyError::UnknownError => "UnknownError".to_string(),
-            InstProxyError::MissingAttributeValue => "MissingAttributeValue".to_string(),
-            InstProxyError::LookupFailed => "LookupFailed".to_string(),
-            InstProxyError::DictCreationFailed => "DictCreationFailed".to_string(),
-            InstProxyError::InstallProhibited => "InstallProhibited".to_string(),
-            InstProxyError::MissingObjectDepenency => "MissingObjectDependency".to_string(),
-        }
+        e.to_string()
     }
 }
 
@@ -547,8 +596,10 @@ pub enum DebugServerError {
     SslError,
     ResponseError,
     Timeout,
-    UnknownError
+    UnknownError,
 }
+
+impl std::error::Error for DebugServerError {}
 
 impl From<i32> for DebugServerError {
     fn from(value: i32) -> DebugServerError {
@@ -559,22 +610,28 @@ impl From<i32> for DebugServerError {
             3 => DebugServerError::SslError,
             4 => DebugServerError::ResponseError,
             5 => DebugServerError::Timeout,
-            _ => DebugServerError::UnknownError
+            _ => DebugServerError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for DebugServerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            DebugServerError::Success => "Success",
+            DebugServerError::InvalidArg => "InvalidArg",
+            DebugServerError::MuxError => "MuxError",
+            DebugServerError::SslError => "SslError",
+            DebugServerError::ResponseError => "ResponseError",
+            DebugServerError::Timeout => "Timeout",
+            DebugServerError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<DebugServerError> for String {
     fn from(value: DebugServerError) -> String {
-        match value {
-            DebugServerError::Success => "Success".to_string(),
-            DebugServerError::InvalidArg => "InvalidArg".to_string(),
-            DebugServerError::MuxError => "MuxError".to_string(),
-            DebugServerError::SslError => "SslError".to_string(),
-            DebugServerError::ResponseError => "ResponseError".to_string(),
-            DebugServerError::Timeout => "Timeout".to_string(),
-            DebugServerError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -587,8 +644,10 @@ pub enum WebInspectorError {
     SslError,
     ReceiveTimeout,
     NotEnoughData,
-    UnknownError
+    UnknownError,
 }
+
+impl std::error::Error for WebInspectorError {}
 
 impl From<i32> for WebInspectorError {
     fn from(value: i32) -> WebInspectorError {
@@ -600,23 +659,29 @@ impl From<i32> for WebInspectorError {
             -4 => WebInspectorError::SslError,
             -5 => WebInspectorError::ReceiveTimeout,
             -6 => WebInspectorError::NotEnoughData,
-            _ => WebInspectorError::UnknownError
+            _ => WebInspectorError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for WebInspectorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            WebInspectorError::Success => "Success",
+            WebInspectorError::InvalidArg => "InvalidArg",
+            WebInspectorError::PlistError => "PlistError",
+            WebInspectorError::MuxError => "MuxError",
+            WebInspectorError::SslError => "SslError",
+            WebInspectorError::ReceiveTimeout => "ReceiveTimeout",
+            WebInspectorError::NotEnoughData => "NotEnoughData",
+            WebInspectorError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<WebInspectorError> for String {
     fn from(value: WebInspectorError) -> String {
-        match value {
-            WebInspectorError::Success => "Success".to_string(),
-            WebInspectorError::InvalidArg => "InvalidArg".to_string(),
-            WebInspectorError::PlistError => "PlistError".to_string(),
-            WebInspectorError::MuxError => "MuxError".to_string(),
-            WebInspectorError::SslError => "SslError".to_string(),
-            WebInspectorError::ReceiveTimeout => "ReceiveTimeout".to_string(),
-            WebInspectorError::NotEnoughData => "NotEnoughData".to_string(),
-            WebInspectorError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -628,8 +693,10 @@ pub enum SyslogRelayError {
     SslError,
     NotEnoughData,
     Timeout,
-    UnknownError
+    UnknownError,
 }
+
+impl std::error::Error for SyslogRelayError {}
 
 impl From<i32> for SyslogRelayError {
     fn from(value: i32) -> SyslogRelayError {
@@ -640,22 +707,28 @@ impl From<i32> for SyslogRelayError {
             -3 => SyslogRelayError::SslError,
             -4 => SyslogRelayError::NotEnoughData,
             -5 => SyslogRelayError::Timeout,
-            _ => SyslogRelayError::UnknownError
+            _ => SyslogRelayError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for SyslogRelayError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            SyslogRelayError::Success => "Success",
+            SyslogRelayError::InvalidArg => "InvalidArg",
+            SyslogRelayError::MuxError => "MuxError",
+            SyslogRelayError::SslError => "SslError",
+            SyslogRelayError::NotEnoughData => "NotEnoughData",
+            SyslogRelayError::Timeout => "Timeout",
+            SyslogRelayError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<SyslogRelayError> for String {
     fn from(value: SyslogRelayError) -> String {
-        match value {
-            SyslogRelayError::Success => "Success".to_string(),
-            SyslogRelayError::InvalidArg => "InvalidArg".to_string(),
-            SyslogRelayError::MuxError => "MuxError".to_string(),
-            SyslogRelayError::SslError => "SslError".to_string(),
-            SyslogRelayError::NotEnoughData => "NotEnoughData".to_string(),
-            SyslogRelayError::Timeout => "Timeout".to_string(),
-            SyslogRelayError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -668,8 +741,10 @@ pub enum ScreenshotrError {
     SslError,
     ReceiveTimeout,
     BadVersion,
-    UnknownError
+    UnknownError,
 }
+
+impl std::error::Error for ScreenshotrError {}
 
 impl From<i32> for ScreenshotrError {
     fn from(value: i32) -> ScreenshotrError {
@@ -681,23 +756,29 @@ impl From<i32> for ScreenshotrError {
             -4 => ScreenshotrError::SslError,
             -5 => ScreenshotrError::ReceiveTimeout,
             -6 => ScreenshotrError::BadVersion,
-            _ => ScreenshotrError::UnknownError
+            _ => ScreenshotrError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for ScreenshotrError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            ScreenshotrError::Success => "Success",
+            ScreenshotrError::InvalidArg => "InvalidArg",
+            ScreenshotrError::PlistError => "PlistError",
+            ScreenshotrError::MuxError => "MuxError",
+            ScreenshotrError::SslError => "SslError",
+            ScreenshotrError::ReceiveTimeout => "ReceiveTimeout",
+            ScreenshotrError::BadVersion => "BadVersion",
+            ScreenshotrError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<ScreenshotrError> for String {
     fn from(value: ScreenshotrError) -> String {
-        match value {
-            ScreenshotrError::Success => "Success".to_string(),
-            ScreenshotrError::InvalidArg => "InvalidArg".to_string(),
-            ScreenshotrError::PlistError => "PlistError".to_string(),
-            ScreenshotrError::MuxError => "MuxError".to_string(),
-            ScreenshotrError::SslError => "SslError".to_string(),
-            ScreenshotrError::ReceiveTimeout => "ReceiveTimeout".to_string(),
-            ScreenshotrError::BadVersion => "BadVersion".to_string(),
-            ScreenshotrError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -710,6 +791,8 @@ pub enum SbservicesError {
     UnknownError,
 }
 
+impl std::error::Error for SbservicesError {}
+
 impl From<i32> for SbservicesError {
     fn from(value: i32) -> SbservicesError {
         match value {
@@ -717,20 +800,26 @@ impl From<i32> for SbservicesError {
             -1 => SbservicesError::InvalidArg,
             -2 => SbservicesError::PlistError,
             -3 => SbservicesError::ConnFailed,
-            _ => SbservicesError::UnknownError
+            _ => SbservicesError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for SbservicesError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            SbservicesError::Success => "Success",
+            SbservicesError::InvalidArg => "InvalidArg",
+            SbservicesError::PlistError => "PlistError",
+            SbservicesError::ConnFailed => "ConnFailed",
+            SbservicesError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<SbservicesError> for String {
     fn from(value: SbservicesError) -> String {
-        match value {
-            SbservicesError::Success => "Success".to_string(),
-            SbservicesError::InvalidArg => "InvalidArg".to_string(),
-            SbservicesError::PlistError => "PlistError".to_string(),
-            SbservicesError::ConnFailed => "ConnFailed".to_string(),
-            SbservicesError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -743,8 +832,10 @@ pub enum ReverseProxyError {
     SslError,
     NotEnoughData,
     Timeout,
-    UnknownError
+    UnknownError,
 }
+
+impl std::error::Error for ReverseProxyError {}
 
 impl From<i32> for ReverseProxyError {
     fn from(value: i32) -> ReverseProxyError {
@@ -756,23 +847,29 @@ impl From<i32> for ReverseProxyError {
             -4 => ReverseProxyError::SslError,
             -5 => ReverseProxyError::NotEnoughData,
             -6 => ReverseProxyError::Timeout,
-            _ => ReverseProxyError::UnknownError
+            _ => ReverseProxyError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for ReverseProxyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            ReverseProxyError::Success => "Success",
+            ReverseProxyError::InvalidArg => "InvalidArg",
+            ReverseProxyError::PlistError => "PlistError",
+            ReverseProxyError::MuxError => "MuxError",
+            ReverseProxyError::SslError => "SslError",
+            ReverseProxyError::NotEnoughData => "NotEnoughData",
+            ReverseProxyError::Timeout => "Timeout",
+            ReverseProxyError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<ReverseProxyError> for String {
     fn from(value: ReverseProxyError) -> String {
-        match value {
-            ReverseProxyError::Success => "Success".to_string(),
-            ReverseProxyError::InvalidArg => "InvalidArg".to_string(),
-            ReverseProxyError::PlistError => "PlistError".to_string(),
-            ReverseProxyError::MuxError => "MuxError".to_string(),
-            ReverseProxyError::SslError => "SslError".to_string(),
-            ReverseProxyError::NotEnoughData => "NotEnoughData".to_string(),
-            ReverseProxyError::Timeout => "Timeout".to_string(),
-            ReverseProxyError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -784,8 +881,10 @@ pub enum RestoredError {
     MuxError,
     NotEnoughData,
     RecieveTimeout,
-    UnknownError
+    UnknownError,
 }
+
+impl std::error::Error for RestoredError {}
 
 impl From<i32> for RestoredError {
     fn from(value: i32) -> RestoredError {
@@ -796,22 +895,28 @@ impl From<i32> for RestoredError {
             -3 => RestoredError::MuxError,
             -4 => RestoredError::NotEnoughData,
             -5 => RestoredError::RecieveTimeout,
-            _ => RestoredError::UnknownError
+            _ => RestoredError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for RestoredError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            RestoredError::Success => "Success",
+            RestoredError::InvalidArg => "InvalidArg",
+            RestoredError::PlistError => "PlistError",
+            RestoredError::MuxError => "MuxError",
+            RestoredError::NotEnoughData => "NotEnoughData",
+            RestoredError::RecieveTimeout => "RecieveTimeout",
+            RestoredError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<RestoredError> for String {
     fn from(value: RestoredError) -> String {
-        match value {
-            RestoredError::Success => "Success".to_string(),
-            RestoredError::InvalidArg => "InvalidArg".to_string(),
-            RestoredError::PlistError => "PlistError".to_string(),
-            RestoredError::MuxError => "MuxError".to_string(),
-            RestoredError::NotEnoughData => "NotEnoughData".to_string(),
-            RestoredError::RecieveTimeout => "RecieveTimeout".to_string(),
-            RestoredError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -828,6 +933,8 @@ pub enum PreboardError {
     UnknownError,
 }
 
+impl std::error::Error for PreboardError {}
+
 impl From<i32> for PreboardError {
     fn from(value: i32) -> PreboardError {
         match value {
@@ -839,24 +946,30 @@ impl From<i32> for PreboardError {
             -5 => PreboardError::NotEnoughData,
             -6 => PreboardError::Timeout,
             -10 => PreboardError::OpInProgress,
-            _ => PreboardError::UnknownError
+            _ => PreboardError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for PreboardError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            PreboardError::Success => "Success",
+            PreboardError::InvalidArg => "InvalidArg",
+            PreboardError::PlistError => "PlistError",
+            PreboardError::MuxError => "MuxError",
+            PreboardError::SslError => "SslError",
+            PreboardError::NotEnoughData => "NotEnoughData",
+            PreboardError::Timeout => "Timeout",
+            PreboardError::OpInProgress => "OpInProgress",
+            PreboardError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<PreboardError> for String {
     fn from(value: PreboardError) -> String {
-        match value {
-            PreboardError::Success => "Success".to_string(),
-            PreboardError::InvalidArg => "InvalidArg".to_string(),
-            PreboardError::PlistError => "PlistError".to_string(),
-            PreboardError::MuxError => "MuxError".to_string(),
-            PreboardError::SslError => "SslError".to_string(),
-            PreboardError::NotEnoughData => "NotEnoughData".to_string(),
-            PreboardError::Timeout => "Timeout".to_string(),
-            PreboardError::OpInProgress => "OpInProgress".to_string(),
-            PreboardError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -869,6 +982,8 @@ pub enum NpError {
     UnknownError,
 }
 
+impl std::error::Error for NpError {}
+
 impl From<i32> for NpError {
     fn from(value: i32) -> NpError {
         match value {
@@ -876,20 +991,26 @@ impl From<i32> for NpError {
             -1 => NpError::InvalidArg,
             -2 => NpError::PlistError,
             -3 => NpError::ConnFailed,
-            _ => NpError::UnknownError
+            _ => NpError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for NpError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            NpError::Success => "Success",
+            NpError::InvalidArg => "InvalidArg",
+            NpError::PlistError => "PlistError",
+            NpError::ConnFailed => "ConnFailed",
+            NpError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<NpError> for String {
     fn from(value: NpError) -> String {
-        match value {
-            NpError::Success => "Success".to_string(),
-            NpError::InvalidArg => "InvalidArg".to_string(),
-            NpError::PlistError => "PlistError".to_string(),
-            NpError::ConnFailed => "ConnFailed".to_string(),
-            NpError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -909,6 +1030,8 @@ pub enum MobileSyncError {
     UnknownError,
 }
 
+impl std::error::Error for MobileSyncError {}
+
 impl From<i32> for MobileSyncError {
     fn from(value: i32) -> MobileSyncError {
         match value {
@@ -923,27 +1046,33 @@ impl From<i32> for MobileSyncError {
             -8 => MobileSyncError::Cancelled,
             -9 => MobileSyncError::WrongDirection,
             -10 => MobileSyncError::NotReady,
-            _ => MobileSyncError::UnknownError
+            _ => MobileSyncError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for MobileSyncError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MobileSyncError::Success => "Success",
+            MobileSyncError::InvalidArg => "InvalidArg",
+            MobileSyncError::PlistError => "PlistError",
+            MobileSyncError::MuxError => "MuxError",
+            MobileSyncError::SslError => "SslError",
+            MobileSyncError::ReceiveTimeout => "ReceiveTimeout",
+            MobileSyncError::BadVersion => "BadVersion",
+            MobileSyncError::SyncRefused => "SyncRefused",
+            MobileSyncError::Cancelled => "Cancelled",
+            MobileSyncError::WrongDirection => "WrongDirection",
+            MobileSyncError::NotReady => "NotReady",
+            MobileSyncError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<MobileSyncError> for String {
     fn from(value: MobileSyncError) -> String {
-        match value {
-            MobileSyncError::Success => "Success".to_string(),
-            MobileSyncError::InvalidArg => "InvalidArg".to_string(),
-            MobileSyncError::PlistError => "PlistError".to_string(),
-            MobileSyncError::MuxError => "MuxError".to_string(),
-            MobileSyncError::SslError => "SslError".to_string(),
-            MobileSyncError::ReceiveTimeout => "ReceiveTimeout".to_string(),
-            MobileSyncError::BadVersion => "BadVersion".to_string(),
-            MobileSyncError::SyncRefused => "SyncRefused".to_string(),
-            MobileSyncError::Cancelled => "Cancelled".to_string(),
-            MobileSyncError::WrongDirection => "WrongDirection".to_string(),
-            MobileSyncError::NotReady => "NotReady".to_string(),
-            MobileSyncError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -961,6 +1090,8 @@ pub enum MobileBackup2Error {
     UnknownError,
 }
 
+impl std::error::Error for MobileBackup2Error {}
+
 impl From<i32> for MobileBackup2Error {
     fn from(value: i32) -> MobileBackup2Error {
         match value {
@@ -973,25 +1104,31 @@ impl From<i32> for MobileBackup2Error {
             -6 => MobileBackup2Error::BadVersion,
             -7 => MobileBackup2Error::ReplyNotOk,
             -8 => MobileBackup2Error::NoCommonVersion,
-            _ => MobileBackup2Error::UnknownError
+            _ => MobileBackup2Error::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for MobileBackup2Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MobileBackup2Error::Success => "Success",
+            MobileBackup2Error::InvalidArg => "InvalidArg",
+            MobileBackup2Error::PlistError => "PlistError",
+            MobileBackup2Error::MuxError => "MuxError",
+            MobileBackup2Error::SslError => "SslError",
+            MobileBackup2Error::RecieveTimeout => "RecieveTimeout",
+            MobileBackup2Error::BadVersion => "BadVersion",
+            MobileBackup2Error::ReplyNotOk => "ReplyNotOk",
+            MobileBackup2Error::NoCommonVersion => "NoCommonVersion",
+            MobileBackup2Error::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<MobileBackup2Error> for String {
     fn from(value: MobileBackup2Error) -> String {
-        match value {
-            MobileBackup2Error::Success => "Success".to_string(),
-            MobileBackup2Error::InvalidArg => "InvalidArg".to_string(),
-            MobileBackup2Error::PlistError => "PlistError".to_string(),
-            MobileBackup2Error::MuxError => "MuxError".to_string(),
-            MobileBackup2Error::SslError => "SslError".to_string(),
-            MobileBackup2Error::RecieveTimeout => "RecieveTimeout".to_string(),
-            MobileBackup2Error::BadVersion => "BadVersion".to_string(),
-            MobileBackup2Error::ReplyNotOk => "ReplyNotOk".to_string(),
-            MobileBackup2Error::NoCommonVersion => "NoCommonVersion".to_string(),
-            MobileBackup2Error::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1008,6 +1145,8 @@ pub enum MobileBackupError {
     UnknownError,
 }
 
+impl std::error::Error for MobileBackupError {}
+
 impl From<i32> for MobileBackupError {
     fn from(value: i32) -> MobileBackupError {
         match value {
@@ -1019,24 +1158,30 @@ impl From<i32> for MobileBackupError {
             -5 => MobileBackupError::ReceiveTimeout,
             -6 => MobileBackupError::BadVersion,
             -7 => MobileBackupError::ReplyNotOk,
-            _ => MobileBackupError::UnknownError
+            _ => MobileBackupError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for MobileBackupError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MobileBackupError::Success => "Success",
+            MobileBackupError::InvalidArg => "InvalidArg",
+            MobileBackupError::PlistError => "PlistError",
+            MobileBackupError::MuxError => "MuxError",
+            MobileBackupError::SslError => "SslError",
+            MobileBackupError::ReceiveTimeout => "ReceiveTimeout",
+            MobileBackupError::BadVersion => "BadVersion",
+            MobileBackupError::ReplyNotOk => "ReplyNotOk",
+            MobileBackupError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<MobileBackupError> for String {
     fn from(value: MobileBackupError) -> String {
-        match value {
-            MobileBackupError::Success => "Success".to_string(),
-            MobileBackupError::InvalidArg => "InvalidArg".to_string(),
-            MobileBackupError::PlistError => "PlistError".to_string(),
-            MobileBackupError::MuxError => "MuxError".to_string(),
-            MobileBackupError::SslError => "SslError".to_string(),
-            MobileBackupError::ReceiveTimeout => "ReceiveTimeout".to_string(),
-            MobileBackupError::BadVersion => "BadVersion".to_string(),
-            MobileBackupError::ReplyNotOk => "ReplyNotOk".to_string(),
-            MobileBackupError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1051,6 +1196,8 @@ pub enum MobileActivationError {
     UnknownError,
 }
 
+impl std::error::Error for MobileActivationError {}
+
 impl From<i32> for MobileActivationError {
     fn from(value: i32) -> MobileActivationError {
         match value {
@@ -1060,22 +1207,28 @@ impl From<i32> for MobileActivationError {
             -3 => MobileActivationError::MuxError,
             -4 => MobileActivationError::UnknownRequest,
             -5 => MobileActivationError::RequestFailed,
-            _ => MobileActivationError::UnknownError
+            _ => MobileActivationError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for MobileActivationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MobileActivationError::Success => "Success",
+            MobileActivationError::InvalidArg => "InvalidArg",
+            MobileActivationError::PlistError => "PlistError",
+            MobileActivationError::MuxError => "MuxError",
+            MobileActivationError::UnknownRequest => "UnknownRequest",
+            MobileActivationError::RequestFailed => "RequestFailed",
+            MobileActivationError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<MobileActivationError> for String {
     fn from(value: MobileActivationError) -> String {
-        match value {
-            MobileActivationError::Success => "Success".to_string(),
-            MobileActivationError::InvalidArg => "InvalidArg".to_string(),
-            MobileActivationError::PlistError => "PlistError".to_string(),
-            MobileActivationError::MuxError => "MuxError".to_string(),
-            MobileActivationError::UnknownRequest => "UnknownRequest".to_string(),
-            MobileActivationError::RequestFailed => "RequestFailed".to_string(),
-            MobileActivationError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1094,6 +1247,8 @@ pub enum MobileImageMounterError {
     MissingObjectDepenency,
 }
 
+impl std::error::Error for MobileImageMounterError {}
+
 impl From<i32> for MobileImageMounterError {
     fn from(value: i32) -> MobileImageMounterError {
         match value {
@@ -1106,25 +1261,31 @@ impl From<i32> for MobileImageMounterError {
             -100 => MobileImageMounterError::DmgNotFound,
             -101 => MobileImageMounterError::SignatureNotFound,
             -102 => MobileImageMounterError::MissingObjectDepenency,
-            _ => MobileImageMounterError::UnknownError
+            _ => MobileImageMounterError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for MobileImageMounterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MobileImageMounterError::Success => "Success",
+            MobileImageMounterError::InvalidArg => "InvalidArg",
+            MobileImageMounterError::PlistError => "PlistError",
+            MobileImageMounterError::ConnFailed => "ConnFailed",
+            MobileImageMounterError::CommandFailed => "CommandFailed",
+            MobileImageMounterError::DeviceLocked => "DeviceLocked",
+            MobileImageMounterError::DmgNotFound => "DmgNotFound",
+            MobileImageMounterError::SignatureNotFound => "SignatureNotFound",
+            MobileImageMounterError::MissingObjectDepenency => "MissingObjectDepenency",
+            MobileImageMounterError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<MobileImageMounterError> for String {
     fn from(value: MobileImageMounterError) -> String {
-        match value {
-            MobileImageMounterError::Success => "Success".to_string(),
-            MobileImageMounterError::InvalidArg => "InvalidArg".to_string(),
-            MobileImageMounterError::PlistError => "PlistError".to_string(),
-            MobileImageMounterError::ConnFailed => "ConnFailed".to_string(),
-            MobileImageMounterError::CommandFailed => "CommandFailed".to_string(),
-            MobileImageMounterError::DeviceLocked => "DeviceLocked".to_string(),
-            MobileImageMounterError::DmgNotFound => "DmgNotFound".to_string(),
-            MobileImageMounterError::SignatureNotFound => "SignatureNotFound".to_string(),
-            MobileImageMounterError::MissingObjectDepenency => "MissingObjectDepenency".to_string(),
-            MobileImageMounterError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1138,6 +1299,8 @@ pub enum MisagentError {
     UnknownError,
 }
 
+impl std::error::Error for MisagentError {}
+
 impl From<i32> for MisagentError {
     fn from(value: i32) -> MisagentError {
         match value {
@@ -1146,21 +1309,27 @@ impl From<i32> for MisagentError {
             -2 => MisagentError::PlistError,
             -3 => MisagentError::ConnFailed,
             -4 => MisagentError::RequestFailed,
-            _ => MisagentError::UnknownError
+            _ => MisagentError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for MisagentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            MisagentError::Success => "Success",
+            MisagentError::InvalidArg => "InvalidArg",
+            MisagentError::PlistError => "PlistError",
+            MisagentError::ConnFailed => "ConnFailed",
+            MisagentError::RequestFailed => "RequestFailed",
+            MisagentError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<MisagentError> for String {
     fn from(value: MisagentError) -> String {
-        match value {
-            MisagentError::Success => "Success".to_string(),
-            MisagentError::InvalidArg => "InvalidArg".to_string(),
-            MisagentError::PlistError => "PlistError".to_string(),
-            MisagentError::ConnFailed => "ConnFailed".to_string(),
-            MisagentError::RequestFailed => "RequestFailed".to_string(),
-            MisagentError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1174,6 +1343,8 @@ pub enum HouseArrestError {
     UnknownError,
 }
 
+impl std::error::Error for HouseArrestError {}
+
 impl From<i32> for HouseArrestError {
     fn from(value: i32) -> HouseArrestError {
         match value {
@@ -1182,21 +1353,27 @@ impl From<i32> for HouseArrestError {
             -2 => HouseArrestError::PlistError,
             -3 => HouseArrestError::ConnFailed,
             -4 => HouseArrestError::InvalidMode,
-            _ => HouseArrestError::UnknownError
+            _ => HouseArrestError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for HouseArrestError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            HouseArrestError::Success => "Success",
+            HouseArrestError::InvalidArg => "InvalidArg",
+            HouseArrestError::PlistError => "PlistError",
+            HouseArrestError::ConnFailed => "ConnFailed",
+            HouseArrestError::InvalidMode => "InvalidMode",
+            HouseArrestError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<HouseArrestError> for String {
     fn from(value: HouseArrestError) -> String {
-        match value {
-            HouseArrestError::Success => "Success".to_string(),
-            HouseArrestError::InvalidArg => "InvalidArg".to_string(),
-            HouseArrestError::PlistError => "PlistError".to_string(),
-            HouseArrestError::ConnFailed => "ConnFailed".to_string(),
-            HouseArrestError::InvalidMode => "InvalidMode".to_string(),
-            HouseArrestError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1212,6 +1389,8 @@ pub enum HeartbeatError {
     UnknownError,
 }
 
+impl std::error::Error for HeartbeatError {}
+
 impl From<i32> for HeartbeatError {
     fn from(value: i32) -> HeartbeatError {
         match value {
@@ -1222,23 +1401,29 @@ impl From<i32> for HeartbeatError {
             -4 => HeartbeatError::SslError,
             -5 => HeartbeatError::NotEnoughData,
             -6 => HeartbeatError::Timeout,
-            _ => HeartbeatError::UnknownError
+            _ => HeartbeatError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for HeartbeatError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            HeartbeatError::Success => "Success",
+            HeartbeatError::InvalidArg => "InvalidArg",
+            HeartbeatError::PlistError => "PlistError",
+            HeartbeatError::MuxError => "MuxError",
+            HeartbeatError::SslError => "SslError",
+            HeartbeatError::NotEnoughData => "NotEnoughData",
+            HeartbeatError::Timeout => "Timeout",
+            HeartbeatError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<HeartbeatError> for String {
     fn from(value: HeartbeatError) -> String {
-        match value {
-            HeartbeatError::Success => "Success".to_string(),
-            HeartbeatError::InvalidArg => "InvalidArg".to_string(),
-            HeartbeatError::PlistError => "PlistError".to_string(),
-            HeartbeatError::MuxError => "MuxError".to_string(),
-            HeartbeatError::SslError => "SslError".to_string(),
-            HeartbeatError::NotEnoughData => "NotEnoughData".to_string(),
-            HeartbeatError::Timeout => "Timeout".to_string(),
-            HeartbeatError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1254,6 +1439,8 @@ pub enum FileRelayError {
     UnknownError,
 }
 
+impl std::error::Error for FileRelayError {}
+
 impl From<i32> for FileRelayError {
     fn from(value: i32) -> FileRelayError {
         match value {
@@ -1264,23 +1451,29 @@ impl From<i32> for FileRelayError {
             -4 => FileRelayError::InvalidSource,
             -5 => FileRelayError::StagingEmpty,
             -6 => FileRelayError::PermissionDenied,
-            _ => FileRelayError::UnknownError
+            _ => FileRelayError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for FileRelayError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            FileRelayError::Success => "Success",
+            FileRelayError::InvalidArg => "InvalidArg",
+            FileRelayError::PlistError => "PlistError",
+            FileRelayError::MuxError => "MuxError",
+            FileRelayError::InvalidSource => "InvalidSource",
+            FileRelayError::StagingEmpty => "StagingEmpty",
+            FileRelayError::PermissionDenied => "PermissionDenied",
+            FileRelayError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<FileRelayError> for String {
     fn from(value: FileRelayError) -> String {
-        match value {
-            FileRelayError::Success => "Success".to_string(),
-            FileRelayError::InvalidArg => "InvalidArg".to_string(),
-            FileRelayError::PlistError => "PlistError".to_string(),
-            FileRelayError::MuxError => "MuxError".to_string(),
-            FileRelayError::InvalidSource => "InvalidSource".to_string(),
-            FileRelayError::StagingEmpty => "StagingEmpty".to_string(),
-            FileRelayError::PermissionDenied => "PermissionDenied".to_string(),
-            FileRelayError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1294,6 +1487,8 @@ pub enum DiagnosticsRelayError {
     UnknownError,
 }
 
+impl std::error::Error for DiagnosticsRelayError {}
+
 impl From<i32> for DiagnosticsRelayError {
     fn from(value: i32) -> DiagnosticsRelayError {
         match value {
@@ -1302,21 +1497,27 @@ impl From<i32> for DiagnosticsRelayError {
             -2 => DiagnosticsRelayError::PlistError,
             -3 => DiagnosticsRelayError::MuxError,
             -4 => DiagnosticsRelayError::UnknownRequest,
-            _ => DiagnosticsRelayError::UnknownError
+            _ => DiagnosticsRelayError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for DiagnosticsRelayError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            DiagnosticsRelayError::Success => "Success",
+            DiagnosticsRelayError::InvalidArg => "InvalidArg",
+            DiagnosticsRelayError::PlistError => "PlistError",
+            DiagnosticsRelayError::MuxError => "MuxError",
+            DiagnosticsRelayError::UnknownRequest => "UnknownRequest",
+            DiagnosticsRelayError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<DiagnosticsRelayError> for String {
     fn from(value: DiagnosticsRelayError) -> String {
-        match value {
-            DiagnosticsRelayError::Success => "Success".to_string(),
-            DiagnosticsRelayError::InvalidArg => "InvalidArg".to_string(),
-            DiagnosticsRelayError::PlistError => "PlistError".to_string(),
-            DiagnosticsRelayError::MuxError => "MuxError".to_string(),
-            DiagnosticsRelayError::UnknownRequest => "UnknownRequest".to_string(),
-            DiagnosticsRelayError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1336,6 +1537,8 @@ pub enum CompanionProxyError {
     UnknownError,
 }
 
+impl std::error::Error for CompanionProxyError {}
+
 impl From<i32> for CompanionProxyError {
     fn from(value: i32) -> CompanionProxyError {
         match value {
@@ -1350,27 +1553,33 @@ impl From<i32> for CompanionProxyError {
             -100 => CompanionProxyError::NoDevices,
             -101 => CompanionProxyError::UnsupportedKey,
             -102 => CompanionProxyError::TimeoutReply,
-            _ => CompanionProxyError::UnknownError
+            _ => CompanionProxyError::UnknownError,
         }
+    }
+}
+
+impl std::fmt::Display for CompanionProxyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            CompanionProxyError::Success => "Success",
+            CompanionProxyError::InvalidArg => "InvalidArg",
+            CompanionProxyError::PlistError => "PlistError",
+            CompanionProxyError::MuxError => "MuxError",
+            CompanionProxyError::SslError => "SslError",
+            CompanionProxyError::NotEnoughData => "NotEnoughData",
+            CompanionProxyError::Timeout => "Timeout",
+            CompanionProxyError::OpInProgress => "OpInProgress",
+            CompanionProxyError::NoDevices => "NoDevices",
+            CompanionProxyError::UnsupportedKey => "UnsupportedKey",
+            CompanionProxyError::TimeoutReply => "TimeoutReply",
+            CompanionProxyError::UnknownError => "UnknownError",
+        })
     }
 }
 
 impl From<CompanionProxyError> for String {
     fn from(value: CompanionProxyError) -> String {
-        match value {
-            CompanionProxyError::Success => "Success".to_string(),
-            CompanionProxyError::InvalidArg => "InvalidArg".to_string(),
-            CompanionProxyError::PlistError => "PlistError".to_string(),
-            CompanionProxyError::MuxError => "MuxError".to_string(),
-            CompanionProxyError::SslError => "SslError".to_string(),
-            CompanionProxyError::NotEnoughData => "NotEnoughData".to_string(),
-            CompanionProxyError::Timeout => "Timeout".to_string(),
-            CompanionProxyError::OpInProgress => "OpInProgress".to_string(),
-            CompanionProxyError::NoDevices => "NoDevices".to_string(),
-            CompanionProxyError::UnsupportedKey => "UnsupportedKey".to_string(),
-            CompanionProxyError::TimeoutReply => "TimeoutReply".to_string(),
-            CompanionProxyError::UnknownError => "UnknownError".to_string(),
-        }
+        value.to_string()
     }
 }
 
@@ -1406,6 +1615,8 @@ pub enum AfcError {
     DirNotEmpty,
     ForceSignedType,
 }
+
+impl std::error::Error for AfcError {}
 
 impl From<i32> for AfcError {
     fn from(value: i32) -> AfcError {
@@ -1443,38 +1654,44 @@ impl From<i32> for AfcError {
     }
 }
 
+impl std::fmt::Display for AfcError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            AfcError::Success => "Success",
+            AfcError::UnknownError => "UnknownError",
+            AfcError::OpHeaderInvalid => "OpHeaderInvalid",
+            AfcError::NoResources => "NoResources",
+            AfcError::ReadError => "ReadError",
+            AfcError::WriteError => "WriteError",
+            AfcError::UnknownPacketType => "UnknownPacketType",
+            AfcError::InvalidArg => "InvalidArg",
+            AfcError::ObjectNotFound => "ObjectNotFound",
+            AfcError::ObjectIsDir => "ObjectIsDir",
+            AfcError::PermDenied => "PermDenied",
+            AfcError::ServiceNotConnected => "ServiceNotConnected",
+            AfcError::OpTimeout => "OpTimeout",
+            AfcError::TooMuchData => "TooMuchData",
+            AfcError::EndOfData => "EndOfData",
+            AfcError::OpNotSupported => "OpNotSupported",
+            AfcError::ObjectExists => "ObjectExists",
+            AfcError::ObjectBusy => "ObjectBusy",
+            AfcError::NoSpaceLeft => "NoSpaceLeft",
+            AfcError::OpWouldBlock => "OpWouldBlock",
+            AfcError::IoError => "IoError",
+            AfcError::OpInterrupted => "OpInterrupted",
+            AfcError::OpInProgress => "OpInProgress",
+            AfcError::InternalError => "InternalError",
+            AfcError::MuxError => "MuxError",
+            AfcError::NoMem => "NoMem",
+            AfcError::NotEnoughData => "NotEnoughData",
+            AfcError::DirNotEmpty => "DirNotEmpty",
+            AfcError::ForceSignedType => "ForceSignedType",
+        })
+    }
+}
+
 impl From<AfcError> for String {
     fn from(value: AfcError) -> String {
-        match value {
-            AfcError::Success => "Success".to_string(),
-            AfcError::UnknownError => "UnknownError".to_string(),
-            AfcError::OpHeaderInvalid => "OpHeaderInvalid".to_string(),
-            AfcError::NoResources => "NoResources".to_string(),
-            AfcError::ReadError => "ReadError".to_string(),
-            AfcError::WriteError => "WriteError".to_string(),
-            AfcError::UnknownPacketType => "UnknownPacketType".to_string(),
-            AfcError::InvalidArg => "InvalidArg".to_string(),
-            AfcError::ObjectNotFound => "ObjectNotFound".to_string(),
-            AfcError::ObjectIsDir => "ObjectIsDir".to_string(),
-            AfcError::PermDenied => "PermDenied".to_string(),
-            AfcError::ServiceNotConnected => "ServiceNotConnected".to_string(),
-            AfcError::OpTimeout => "OpTimeout".to_string(),
-            AfcError::TooMuchData => "TooMuchData".to_string(),
-            AfcError::EndOfData => "EndOfData".to_string(),
-            AfcError::OpNotSupported => "OpNotSupported".to_string(),
-            AfcError::ObjectExists => "ObjectExists".to_string(),
-            AfcError::ObjectBusy => "ObjectBusy".to_string(),
-            AfcError::NoSpaceLeft => "NoSpaceLeft".to_string(),
-            AfcError::OpWouldBlock => "OpWouldBlock".to_string(),
-            AfcError::IoError => "IoError".to_string(),
-            AfcError::OpInterrupted => "OpInterrupted".to_string(),
-            AfcError::OpInProgress => "OpInProgress".to_string(),
-            AfcError::InternalError => "InternalError".to_string(),
-            AfcError::MuxError => "MuxError".to_string(),
-            AfcError::NoMem => "NoMem".to_string(),
-            AfcError::NotEnoughData => "NotEnoughData".to_string(),
-            AfcError::DirNotEmpty => "DirNotEmpty".to_string(),
-            AfcError::ForceSignedType => "ForceSignedType".to_string(),
-        }
+        value.to_string()
     }
 }
