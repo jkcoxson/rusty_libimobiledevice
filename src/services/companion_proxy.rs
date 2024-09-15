@@ -1,11 +1,10 @@
 // jkcoxson
 
-use std::os::raw::c_char;
-
 use crate::{
     bindings as unsafe_bindings, error::CompanionProxyError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
+use std::ffi::CString;
 
 use plist_plus::Plist;
 
@@ -57,12 +56,14 @@ impl CompanionProxy<'_> {
         device: &Device,
         label: impl Into<String>,
     ) -> Result<Self, CompanionProxyError> {
+        let label_c_string = CString::new(label.into()).unwrap();
+
         let mut pointer = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -144,12 +145,15 @@ impl CompanionProxy<'_> {
         udid: impl Into<String>,
         key: impl Into<String>,
     ) -> Result<Plist, CompanionProxyError> {
+        let udid_c_string = CString::new(udid.into()).unwrap();
+        let key_c_string = CString::new(key.into()).unwrap();
+
         let mut plist = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::companion_proxy_get_value_from_registry(
                 self.pointer,
-                udid.into().as_ptr() as *const c_char,
-                key.into().as_ptr() as *const c_char,
+                udid_c_string.as_ptr(),
+                key_c_string.as_ptr(),
                 &mut plist,
             )
         }
@@ -177,11 +181,13 @@ impl CompanionProxy<'_> {
         options: Plist,
     ) -> Result<u16, CompanionProxyError> {
         let mut result_port = 0;
+        let service_name_c_string = CString::new(service_name.into()).unwrap();
+
         let result = unsafe {
             unsafe_bindings::companion_proxy_start_forwarding_service_port(
                 self.pointer,
                 port,
-                service_name.into().as_ptr() as *const c_char,
+                service_name_c_string.as_ptr(),
                 &mut result_port,
                 options.get_pointer(),
             )

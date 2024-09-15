@@ -1,11 +1,10 @@
 // jkcoxson
 
-use std::os::raw::c_char;
-
 use crate::{
     bindings as unsafe_bindings, error::MisagentError, idevice::Device,
     services::lockdownd::LockdowndService,
 };
+use std::{ffi::CString, os::raw::c_char};
 
 use plist_plus::Plist;
 
@@ -115,10 +114,9 @@ impl MisagentClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn remove(&self, id: impl Into<String>) -> Result<(), MisagentError> {
-        let result = unsafe {
-            unsafe_bindings::misagent_remove(self.pointer, id.into().as_ptr() as *const c_char)
-        }
-        .into();
+        let id_c_string = CString::new(id.into()).unwrap();
+        let result =
+            unsafe { unsafe_bindings::misagent_remove(self.pointer, id_c_string.as_ptr()) }.into();
         if result != MisagentError::Success {
             return Err(result);
         }

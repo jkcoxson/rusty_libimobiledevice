@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::{convert::TryInto, os::raw::c_char};
+use std::{convert::TryInto, ffi::CString, os::raw::c_char};
 
 use libc::c_int;
 use log::info;
@@ -36,13 +36,13 @@ impl DebugServer<'_> {
         let mut client: unsafe_bindings::debugserver_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::debugserver_client_t = &mut client;
 
-        let label_c_str = std::ffi::CString::new(label).unwrap();
+        let label_c_string = CString::new(label).unwrap();
         info!("Creating debug server for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::debugserver_client_start_service(
                 device.pointer,
                 client_ptr,
-                label_c_str.as_ptr(),
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -64,13 +64,13 @@ impl DebugServer<'_> {
     ///
     /// ***Verified:*** False
     pub fn send(&self, data: impl Into<String>) -> Result<(), DebugServerError> {
-        let data_c_str = std::ffi::CString::new(data.into()).unwrap();
+        let data_c_string = CString::new(data.into()).unwrap();
         let mut sent = 0;
         let result = unsafe {
             unsafe_bindings::debugserver_client_send(
                 self.pointer,
-                data_c_str.as_ptr(),
-                data_c_str.as_bytes().len().try_into().unwrap(),
+                data_c_string.as_ptr(),
+                data_c_string.as_bytes().len().try_into().unwrap(),
                 &mut sent,
             )
         }
@@ -182,12 +182,12 @@ impl DebugServer<'_> {
         &self,
         env: impl Into<String>,
     ) -> Result<String, DebugServerError> {
-        let env_c_str = std::ffi::CString::new(env.into()).unwrap();
+        let env_c_string = CString::new(env.into()).unwrap();
         let mut response = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::debugserver_client_set_environment_hex_encoded(
                 self.pointer,
-                env_c_str.as_ptr(),
+                env_c_string.as_ptr(),
                 &mut response,
             )
         }
@@ -298,11 +298,10 @@ impl DebugServer<'_> {
     pub fn encode_string(buffer: impl Into<String>) -> Vec<c_char> {
         let mut encoded_buffer = unsafe { std::mem::zeroed() };
         let mut encoded_buffer_size = 0;
-        let buffer_c_str = std::ffi::CString::new(buffer.into()).unwrap();
-        let buffer_ptr = buffer_c_str.as_ptr() as *mut c_char;
+        let buffer_c_string = CString::new(buffer.into()).unwrap();
         unsafe {
             unsafe_bindings::debugserver_encode_string(
-                buffer_ptr,
+                buffer_c_string.as_ptr(),
                 &mut encoded_buffer,
                 &mut encoded_buffer_size,
             );
@@ -323,10 +322,13 @@ impl DebugServer<'_> {
         let buffer = buffer.into();
         let mut decoded_buffer = unsafe { std::mem::zeroed() };
         let buffer_len = buffer.len() as unsafe_bindings::size_t;
-        let buffer_c_str = std::ffi::CString::new(buffer).unwrap();
-        let buffer_ptr = buffer_c_str.as_ptr() as *mut c_char;
+        let buffer_c_string = CString::new(buffer).unwrap();
         unsafe {
-            unsafe_bindings::debugserver_decode_string(buffer_ptr, buffer_len, &mut decoded_buffer);
+            unsafe_bindings::debugserver_decode_string(
+                buffer_c_string.as_ptr(),
+                buffer_len,
+                &mut decoded_buffer,
+            );
         }
         let decoded_buffer_str = unsafe {
             std::ffi::CStr::from_ptr(decoded_buffer)

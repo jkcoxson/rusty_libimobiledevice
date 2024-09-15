@@ -1,6 +1,9 @@
 // jkcoxson
 
-use std::os::raw::{c_char, c_int, c_uint};
+use std::{
+    ffi::CString,
+    os::raw::{c_char, c_int, c_uint},
+};
 
 use crate::{
     bindings as unsafe_bindings,
@@ -64,12 +67,12 @@ impl MobileBackupClient<'_> {
         label: impl Into<String>,
     ) -> Result<Self, MobileBackupError> {
         let mut client = unsafe { std::mem::zeroed() };
-
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::mobilebackup_client_start_service(
                 device.pointer,
                 &mut client,
-                label.into().as_ptr() as *const std::os::raw::c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -135,18 +138,17 @@ impl MobileBackupClient<'_> {
         base_path: impl Into<String>,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
-        let ptr = if let Some(manifest) = manifest {
-            manifest.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = manifest.map_or(std::ptr::null_mut(), |v| v.get_pointer());
+
+        let base_path_c_string = CString::new(base_path.into()).unwrap();
+        let backup_version_c_string = CString::new(backup_version.into()).unwrap();
 
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_backup(
                 self.pointer,
                 ptr,
-                base_path.into().as_ptr() as *const std::os::raw::c_char,
-                backup_version.into().as_ptr() as *const std::os::raw::c_char,
+                base_path_c_string.as_ptr(),
+                backup_version_c_string.as_ptr(),
             )
         }
         .into();
@@ -187,12 +189,14 @@ impl MobileBackupClient<'_> {
         flags: MobileBackupRestoreFlags,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
+        let backup_version_c_string = CString::new(backup_version.into()).unwrap();
+
         let result = unsafe {
             unsafe_bindings::mobilebackup_request_restore(
                 self.pointer,
                 manifest.get_pointer(),
                 flags.into(),
-                backup_version.into().as_ptr() as *const std::os::raw::c_char,
+                backup_version_c_string.as_ptr(),
             )
         }
         .into();
@@ -280,11 +284,10 @@ impl MobileBackupClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn send_error(&self, error: impl Into<String>) -> Result<(), MobileBackupError> {
+        let error_c_string = CString::new(error.into()).unwrap();
+
         let result = unsafe {
-            unsafe_bindings::mobilebackup_send_error(
-                self.pointer,
-                error.into().as_ptr() as *const std::os::raw::c_char,
-            )
+            unsafe_bindings::mobilebackup_send_error(self.pointer, error_c_string.as_ptr())
         }
         .into();
 
@@ -336,12 +339,13 @@ impl MobileBackup2Client<'_> {
         label: impl Into<String>,
     ) -> Result<Self, MobileBackup2Error> {
         let mut client = unsafe { std::mem::zeroed() };
+        let label_c_string = CString::new(label.into()).unwrap();
 
         let result = unsafe {
             unsafe_bindings::mobilebackup2_client_start_service(
                 device.pointer,
                 &mut client,
-                label.into().as_ptr() as *const std::os::raw::c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -369,13 +373,15 @@ impl MobileBackup2Client<'_> {
         message: Option<String>,
         options: Plist,
     ) -> Result<(), MobileBackup2Error> {
-        let ptr = if let Some(message) = message {
-            message.as_ptr() as *const c_char
-        } else {
-            std::ptr::null()
-        };
+        let message_c_string = message.map(|s| CString::new(s).unwrap());
+        let message_c_string_ptr = message_c_string.map_or(std::ptr::null(), |s| s.as_ptr());
+
         let result = unsafe {
-            unsafe_bindings::mobilebackup2_send_message(self.pointer, ptr, options.get_pointer())
+            unsafe_bindings::mobilebackup2_send_message(
+                self.pointer,
+                message_c_string_ptr,
+                options.get_pointer(),
+            )
         }
         .into();
 
@@ -508,11 +514,14 @@ impl MobileBackup2Client<'_> {
         options: Plist,
     ) -> Result<(), MobileBackup2Error> {
         let result = unsafe {
+            let target_c_string = CString::new(target.into()).unwrap();
+            let source_c_string = CString::new(source.into()).unwrap();
+            let request: CString = request.into();
             unsafe_bindings::mobilebackup2_send_request(
                 self.pointer,
-                request.into(),
-                target.into().as_ptr() as *const std::os::raw::c_char,
-                source.into().as_ptr() as *const std::os::raw::c_char,
+                request.as_ptr(),
+                target_c_string.as_ptr(),
+                source_c_string.as_ptr(),
                 options.get_pointer(),
             )
         }
@@ -536,16 +545,16 @@ impl MobileBackup2Client<'_> {
         status_string: Option<String>,
         status_plist: Option<Plist>,
     ) -> Result<(), MobileBackup2Error> {
+        let status_plist = status_plist.map_or(std::ptr::null_mut(), |s| s.get_pointer());
+        let status_c_string = status_string.map(|s| CString::new(s).unwrap());
+        let status_c_string_ptr = status_c_string.map_or(std::ptr::null(), |s| s.as_ptr());
+
         let result = unsafe {
             unsafe_bindings::mobilebackup2_send_status_response(
                 self.pointer,
                 code,
-                status_string
-                    .map(|s| s.as_ptr() as *const std::os::raw::c_char)
-                    .unwrap_or(std::ptr::null()),
-                status_plist
-                    .map(|p| p.get_pointer())
-                    .unwrap_or(std::ptr::null_mut::<std::os::raw::c_void>()), // idk
+                status_c_string_ptr,
+                status_plist,
             )
         }
         .into();
@@ -585,14 +594,15 @@ impl From<MobileBackupRestoreFlags> for c_uint {
     }
 }
 
-impl From<MobileBackupRequest> for *const c_char {
+impl From<MobileBackupRequest> for CString {
     fn from(request: MobileBackupRequest) -> Self {
-        match request {
-            MobileBackupRequest::Backup => "Backup".as_ptr() as *const c_char,
-            MobileBackupRequest::Restore => "Restore".as_ptr() as *const c_char,
-            MobileBackupRequest::Info => "Info".as_ptr() as *const c_char,
-            MobileBackupRequest::List => "List".as_ptr() as *const c_char,
-        }
+        CString::new(match request {
+            MobileBackupRequest::Backup => "Backup",
+            MobileBackupRequest::Restore => "Restore",
+            MobileBackupRequest::Info => "Info",
+            MobileBackupRequest::List => "List",
+        })
+        .unwrap()
     }
 }
 

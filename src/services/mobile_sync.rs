@@ -1,9 +1,6 @@
 // jkcoxson
 
-use std::{
-    ffi::CString,
-    os::raw::{c_char, c_uint},
-};
+use std::ffi::{c_uint, CString};
 
 use crate::{
     bindings as unsafe_bindings, error::MobileSyncError, idevice::Device,
@@ -60,12 +57,13 @@ impl MobileSyncClient<'_> {
         device: Device,
         label: impl Into<String>,
     ) -> Result<Self, MobileSyncError> {
+        let label_c_string = CString::new(label.into()).unwrap();
         let mut pointer: unsafe_bindings::mobilesync_client_t = std::ptr::null_mut();
         let result = unsafe {
             unsafe_bindings::mobilesync_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *mut c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -135,9 +133,7 @@ impl MobileSyncClient<'_> {
         computer_data_class_version: u64,
         sync_type: MobileSyncType,
     ) -> Result<(), (String, MobileSyncError)> {
-        let data_class = data_class.into();
-        let data_class = CString::new(data_class).unwrap();
-        let data_class_ptr = data_class.as_ptr();
+        let data_class_c_string = CString::new(data_class.into()).unwrap();
 
         let mut anchor_ptrs = Vec::new();
         for i in anchors {
@@ -152,7 +148,7 @@ impl MobileSyncClient<'_> {
         let result = unsafe {
             unsafe_bindings::mobilesync_start(
                 self.pointer,
-                data_class_ptr,
+                data_class_c_string.as_ptr(),
                 anchor_ptrs[0],
                 computer_data_class_version,
                 &mut sync_type.into(),
@@ -182,10 +178,11 @@ impl MobileSyncClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn cancel(&self, reason: impl Into<String>) -> Result<(), MobileSyncError> {
-        let reason = CString::new(reason.into()).unwrap();
-        let reason_ptr = reason.as_ptr();
+        let reason_c_string = CString::new(reason.into()).unwrap();
 
-        let result = unsafe { unsafe_bindings::mobilesync_cancel(self.pointer, reason_ptr) }.into();
+        let result =
+            unsafe { unsafe_bindings::mobilesync_cancel(self.pointer, reason_c_string.as_ptr()) }
+                .into();
 
         if result != MobileSyncError::Success {
             return Err(result);
@@ -402,9 +399,12 @@ impl MobileSyncAnchor {
 
 impl From<MobileSyncAnchor> for unsafe_bindings::mobilesync_anchors_t {
     fn from(anchor: MobileSyncAnchor) -> Self {
+        let device_anchor = CString::new(anchor.device_anchor).unwrap().into_raw();
+        let computer_anchor = CString::new(anchor.computer_anchor).unwrap().into_raw();
+
         let x = unsafe_bindings::mobilesync_anchors {
-            device_anchor: anchor.device_anchor.as_ptr() as *mut c_char,
-            computer_anchor: anchor.computer_anchor.as_ptr() as *mut c_char,
+            device_anchor,
+            computer_anchor,
         };
         Box::into_raw(Box::new(x))
     }

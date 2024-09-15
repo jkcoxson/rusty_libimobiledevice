@@ -39,10 +39,13 @@ impl HeartbeatClient {
     /// ***Verified:*** False
     pub fn new(device: &Device, label: impl Into<String>) -> Result<Self, HeartbeatError> {
         let mut pointer = unsafe { std::mem::zeroed() };
-        let label_c_str = CString::new(label.into()).unwrap();
-        let label_ptr = label_c_str.as_ptr();
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
-            unsafe_bindings::heartbeat_client_start_service(device.pointer, &mut pointer, label_ptr)
+            unsafe_bindings::heartbeat_client_start_service(
+                device.pointer,
+                &mut pointer,
+                label_c_string.as_ptr(),
+            )
         }
         .into();
         if result != HeartbeatError::Success {

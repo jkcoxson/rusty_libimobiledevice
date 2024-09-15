@@ -1,5 +1,6 @@
 // jkcoxson
 
+use std::ffi::CString;
 use std::os::raw::c_char;
 
 use crate::bindings as unsafe_bindings;
@@ -51,14 +52,14 @@ impl LockdowndClient<'_> {
         let mut client: unsafe_bindings::lockdownd_client_t = unsafe { std::mem::zeroed() };
         let client_ptr: *mut unsafe_bindings::lockdownd_client_t = &mut client;
 
-        let label_c_str = std::ffi::CString::new(label.into()).unwrap();
+        let label_c_string = CString::new(label.into()).unwrap();
 
         info!("Creating lockdownd client for {}", device.get_udid());
         let result = unsafe {
             unsafe_bindings::lockdownd_client_new_with_handshake(
                 device.pointer,
                 client_ptr,
-                label_c_str.as_ptr(),
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -86,26 +87,30 @@ impl LockdowndClient<'_> {
         key: impl Into<String>,
         domain: impl Into<String>,
     ) -> Result<Plist, LockdowndError> {
-        let domain = domain.into();
-        let key = key.into();
-        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == *"" {
+        let domain_c_string = CString::new(domain.into()).unwrap();
+        let domain_c_string_ptr = if domain_c_string.is_empty() {
             std::ptr::null()
         } else {
-            domain_c_str.as_ptr()
+            domain_c_string.as_ptr()
         };
-        let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_c_str = if key == *"" {
+        let key_string: String = key.into();
+        info!("Getting value for {}", key_string);
+        let key_c_string = CString::new(key_string).unwrap();
+        let key_c_str_ptr = if key_c_string.is_empty() {
             std::ptr::null()
         } else {
-            key_c_str.as_ptr()
+            key_c_string.as_ptr()
         };
 
         let mut value: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
 
-        info!("Getting value for {}", key);
         let result = unsafe {
-            unsafe_bindings::lockdownd_get_value(self.pointer, domain_c_str, key_c_str, &mut value)
+            unsafe_bindings::lockdownd_get_value(
+                self.pointer,
+                domain_c_string_ptr,
+                key_c_str_ptr,
+                &mut value,
+            )
         }
         .into();
 
@@ -131,27 +136,26 @@ impl LockdowndClient<'_> {
         domain: impl Into<String>,
         value: Plist,
     ) -> Result<(), LockdowndError> {
-        let domain: String = domain.into();
-        let key: String = key.into();
-        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_ptr = if domain.is_empty() {
+        let domain_c_string = CString::new(domain.into()).unwrap();
+        let domain_c_string_ptr = if domain_c_string.is_empty() {
             std::ptr::null()
         } else {
-            domain_c_str.as_ptr()
+            domain_c_string.as_ptr()
         };
-        let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_ptr = if key.is_empty() {
+        let key_string: String = key.into();
+        info!("Setting value for {}", key_string);
+        let key_c_string = CString::new(key_string).unwrap();
+        let key_c_string_ptr = if key_c_string.is_empty() {
             std::ptr::null()
         } else {
-            key_c_str.as_ptr()
+            key_c_string.as_ptr()
         };
 
-        info!("Setting value for {}", key);
         let result = unsafe {
             unsafe_bindings::lockdownd_set_value(
                 self.pointer,
-                domain_ptr,
-                key_ptr,
+                domain_c_string_ptr,
+                key_c_string_ptr,
                 value.get_pointer(),
             )
         }
@@ -179,24 +183,27 @@ impl LockdowndClient<'_> {
         key: impl Into<String>,
         domain: impl Into<String>,
     ) -> Result<(), LockdowndError> {
-        let domain = domain.into();
-        let key = key.into();
-        let domain_c_str = std::ffi::CString::new(domain.clone()).unwrap();
-        let domain_c_str = if domain == *"" {
+        let domain_c_string = CString::new(domain.into()).unwrap();
+        let domain_c_string_ptr = if domain_c_string.is_empty() {
             std::ptr::null()
         } else {
-            domain_c_str.as_ptr()
+            domain_c_string.as_ptr()
         };
-        let key_c_str = std::ffi::CString::new(key.clone()).unwrap();
-        let key_c_str = if key == *"" {
+        let key_string: String = key.into();
+        info!("Removing value for {}", key_string);
+        let key_c_string = CString::new(key_string).unwrap();
+        let key_c_string_ptr = if key_c_string.is_empty() {
             std::ptr::null()
         } else {
-            key_c_str.as_ptr()
+            key_c_string.as_ptr()
         };
 
-        info!("Removing value for {}", key);
         let result = unsafe {
-            unsafe_bindings::lockdownd_remove_value(self.pointer, domain_c_str, key_c_str)
+            unsafe_bindings::lockdownd_remove_value(
+                self.pointer,
+                domain_c_string_ptr,
+                key_c_string_ptr,
+            )
         }
         .into();
 
@@ -222,11 +229,11 @@ impl LockdowndClient<'_> {
         escrow_bag: bool,
     ) -> Result<LockdowndService, LockdowndError> {
         let service = service.into();
-        let label_c_str = std::ffi::CString::new(service.clone()).unwrap();
-        let label_c_str = if service == *"" {
+        let label_c_string = CString::new(service.clone()).unwrap();
+        let label_c_string_ptr = if label_c_string.is_empty() {
             std::ptr::null()
         } else {
-            label_c_str.as_ptr()
+            label_c_string.as_ptr()
         };
 
         let mut service: unsafe_bindings::lockdownd_service_descriptor_t =
@@ -235,14 +242,18 @@ impl LockdowndClient<'_> {
         info!("Starting lockdown service");
         let result = if escrow_bag {
             unsafe {
-                unsafe_bindings::lockdownd_start_service(self.pointer, label_c_str, &mut service)
+                unsafe_bindings::lockdownd_start_service(
+                    self.pointer,
+                    label_c_string_ptr,
+                    &mut service,
+                )
             }
             .into()
         } else {
             unsafe {
                 unsafe_bindings::lockdownd_start_service_with_escrow_bag(
                     self.pointer,
-                    label_c_str,
+                    label_c_string_ptr,
                     &mut service,
                 )
             }
@@ -274,15 +285,14 @@ impl LockdowndClient<'_> {
         &self,
         host_id: impl Into<String>,
     ) -> Result<(String, bool), LockdowndError> {
-        let host_id = host_id.into();
-        let host_id_c_str = std::ffi::CString::new(host_id).unwrap();
+        let host_id_c_string = CString::new(host_id.into()).unwrap();
         let mut session_id = unsafe { std::mem::zeroed() };
         let mut ssl_enabled = unsafe { std::mem::zeroed() };
 
         let result = unsafe {
             unsafe_bindings::lockdownd_start_session(
                 self.pointer,
-                host_id_c_str.as_ptr(),
+                host_id_c_string.as_ptr(),
                 &mut session_id,
                 &mut ssl_enabled,
             )
@@ -311,16 +321,15 @@ impl LockdowndClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn stop_session(&self, session_id: impl Into<String>) -> Result<(), LockdowndError> {
-        let session_id = session_id.into();
-        let session_id_c_str = std::ffi::CString::new(session_id.clone()).unwrap();
-        let session_id_c_str = if session_id == *"" {
+        let session_id_c_str = CString::new(session_id.into()).unwrap();
+        let session_id_c_str_ptr = if session_id_c_str.is_empty() {
             std::ptr::null()
         } else {
             session_id_c_str.as_ptr()
         };
 
         let result =
-            unsafe { unsafe_bindings::lockdownd_stop_session(self.pointer, session_id_c_str) }
+            unsafe { unsafe_bindings::lockdownd_stop_session(self.pointer, session_id_c_str_ptr) }
                 .into();
 
         if result != LockdowndError::Success {
@@ -382,12 +391,7 @@ impl LockdowndClient<'_> {
         pairing_record: Option<LockdowndPairRecord>,
         options: Option<Plist>,
     ) -> Result<(), LockdowndError> {
-        let pair_ptr: unsafe_bindings::lockdownd_pair_record_t =
-            if let Some(pairing_record) = pairing_record {
-                &mut pairing_record.into()
-            } else {
-                std::ptr::null_mut()
-            };
+        let pair_ptr = pairing_record.map_or(std::ptr::null_mut(), |v| &mut v.into());
 
         let mut response = unsafe { std::mem::zeroed() };
 
@@ -530,15 +534,14 @@ impl LockdowndClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn client_set_label(&self, label: impl Into<String>) {
-        let label = label.into();
-        let label_c_str = std::ffi::CString::new(label.clone()).unwrap();
-        let label_c_str = if label == *"" {
+        let label_c_string = CString::new(label.into()).unwrap();
+        let label_c_string_ptr = if label_c_string.is_empty() {
             std::ptr::null()
         } else {
-            label_c_str.as_ptr()
+            label_c_string.as_ptr()
         };
 
-        unsafe { unsafe_bindings::lockdownd_client_set_label(self.pointer, label_c_str) };
+        unsafe { unsafe_bindings::lockdownd_client_set_label(self.pointer, label_c_string_ptr) };
     }
 
     /// Get the UDID of the device
@@ -658,23 +661,25 @@ impl LockdowndClient<'_> {
 impl From<LockdowndPairRecord> for unsafe_bindings::lockdownd_pair_record {
     fn from(l: LockdowndPairRecord) -> Self {
         info!("Converting device certificate");
-        let device_certificate = std::ffi::CString::new(l.device_certificate).unwrap();
+        let device_certificate = CString::new(l.device_certificate).unwrap();
         info!("Converting host certificate");
-        let host_certificate = std::ffi::CString::new(l.host_certificate).unwrap();
+        let host_certificate = CString::new(l.host_certificate).unwrap();
         info!("Converting root certificate");
-        let root_certificate = std::ffi::CString::new(l.root_certificate).unwrap();
+        let root_certificate = CString::new(l.root_certificate).unwrap();
         info!("Converting host id");
-        let host_id = std::ffi::CString::new(l.host_id).unwrap();
+        let host_id = CString::new(l.host_id).unwrap();
         info!("Converting system buid");
-        let system_buid = std::ffi::CString::new(l.system_buid).unwrap();
+        let system_buid = CString::new(l.system_buid).unwrap();
 
         info!("Setting device certificate");
+        // TODO: check if it causes a memory leak, also it should not be freed
+        // on the C side (see CString::into_raw)
         Self {
-            device_certificate: device_certificate.as_ptr() as *mut c_char,
-            host_certificate: host_certificate.as_ptr() as *mut c_char,
-            root_certificate: root_certificate.as_ptr() as *mut c_char,
-            host_id: host_id.as_ptr() as *mut c_char,
-            system_buid: system_buid.as_ptr() as *mut c_char,
+            device_certificate: device_certificate.into_raw(),
+            host_certificate: host_certificate.into_raw(),
+            root_certificate: root_certificate.into_raw(),
+            host_id: host_id.into_raw(),
+            system_buid: system_buid.into_raw(),
         }
     }
 }

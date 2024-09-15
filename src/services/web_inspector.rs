@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::os::raw::c_char;
+use std::ffi::CString;
 
 use crate::{
     bindings as unsafe_bindings, error::WebInspectorError, idevice::Device,
@@ -59,12 +59,13 @@ impl WebInspectorClient<'_> {
         label: impl Into<String>,
     ) -> Result<Self, WebInspectorError> {
         let mut pointer = std::ptr::null_mut();
+        let label_c_string = CString::new(label.into()).unwrap();
 
         let result = unsafe {
             unsafe_bindings::webinspector_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();

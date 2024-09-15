@@ -1,5 +1,7 @@
 // jkcoxson
 
+use std::ffi::CString;
+
 use crate::{
     bindings as unsafe_bindings, error::HouseArrestError, idevice::Device,
     services::lockdownd::LockdowndService,
@@ -53,11 +55,12 @@ impl HouseArrest<'_> {
         label: impl Into<String>,
     ) -> Result<Self, HouseArrestError> {
         let mut pointer = std::ptr::null_mut();
+        let label_c_string = CString::new(label.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::house_arrest_client_start_service(
                 device.pointer,
                 &mut pointer,
-                label.into().as_ptr() as *const std::os::raw::c_char,
+                label_c_string.as_ptr(),
             )
         }
         .into();
@@ -114,11 +117,14 @@ impl HouseArrest<'_> {
         command: impl Into<String>,
         app_id: impl Into<String>,
     ) -> Result<Plist, HouseArrestError> {
+        let command_c_string = CString::new(command.into()).unwrap();
+        let app_id_c_string = CString::new(app_id.into()).unwrap();
+
         let result = unsafe {
             unsafe_bindings::house_arrest_send_command(
                 self.pointer,
-                command.into().as_ptr() as *const std::os::raw::c_char,
-                app_id.into().as_ptr() as *const std::os::raw::c_char,
+                command_c_string.as_ptr(),
+                app_id_c_string.as_ptr(),
             )
         }
         .into();
