@@ -86,19 +86,19 @@ impl FileRelay<'_> {
         mut connection: DeviceConnection,
         timeout: u32,
     ) -> Result<(), FileRelayError> {
-        let sources: Vec<FileRelaySources> = sources;
-        let mut source_ptrs = vec![];
+        let mut source_c_strings: Vec<CString> = Vec::with_capacity(sources.len());
+        let mut source_c_strings_ptrs: Vec<*const c_char> = Vec::with_capacity(sources.len() + 1);
         for source in sources {
-            let source: CString = source.into();
-            source_ptrs.push(source.into_raw() as *const c_char);
+            source_c_strings.push(source.into());
+            source_c_strings_ptrs.push(source_c_strings.last().unwrap().as_ptr());
         }
-        let ptrs_ptr = source_ptrs.as_mut_ptr();
+        source_c_strings_ptrs.push(std::ptr::null());
 
         if timeout == 0 {
             let result = unsafe {
                 unsafe_bindings::file_relay_request_sources(
                     self.pointer,
-                    ptrs_ptr,
+                    source_c_strings_ptrs.as_mut_ptr(),
                     &mut connection.pointer,
                 )
             }
@@ -111,7 +111,7 @@ impl FileRelay<'_> {
             let result = unsafe {
                 unsafe_bindings::file_relay_request_sources_timeout(
                     self.pointer,
-                    ptrs_ptr,
+                    source_c_strings_ptrs.as_mut_ptr(),
                     &mut connection.pointer,
                     timeout,
                 )
