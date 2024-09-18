@@ -110,17 +110,17 @@ impl MobileImageMounter<'_> {
         let image_type = image_type.into();
         let signature_path = signature_path.into();
         // Determine if files exist
-        let dmg_size = match std::fs::File::open(image_path.clone()) {
+        let dmg_size = match std::fs::File::open(&image_path) {
             Ok(mut file) => {
-                let mut temp_buf = vec![];
+                let mut temp_buf = Vec::with_capacity(file.metadata().unwrap().len() as usize);
                 file.read_to_end(&mut temp_buf).unwrap();
                 temp_buf.len()
             }
             Err(_) => return Err(MobileImageMounterError::DmgNotFound),
         };
-        let signature_size = match std::fs::File::open(signature_path.clone()) {
+        let signature_size = match std::fs::File::open(&signature_path) {
             Ok(mut file) => {
-                let mut temp_buf = vec![];
+                let mut temp_buf = Vec::with_capacity(file.metadata().unwrap().len() as usize);
                 file.read_to_end(&mut temp_buf).unwrap();
                 temp_buf.len()
             }
