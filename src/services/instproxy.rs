@@ -426,28 +426,20 @@ impl InstProxyClient<'_> {
         client_options: Option<Plist>,
     ) -> Result<Plist, InstProxyError> {
         let mut res_plist = unsafe { std::mem::zeroed() };
-        let mut capabilities_c_str = vec![];
+        let mut capabilities_c_str = Vec::with_capacity(capabilities.len());
+        let mut capabilities_c_str_ptrs = Vec::with_capacity(capabilities.len()+1);
         for capability in capabilities {
-            capabilities_c_str.push(std::ffi::CString::new(capability).unwrap());
-        }
-
-        let mut capabilities_c_str_ptrs = vec![];
-        for capability in capabilities_c_str {
-            capabilities_c_str_ptrs.push(capability.as_ptr())
+            capabilities_c_str.push(CString::new(capability).unwrap());
+            capabilities_c_str_ptrs.push(capabilities_c_str.last().unwrap().as_ptr())
         }
         capabilities_c_str_ptrs.push(std::ptr::null());
 
-        let ptr = if let Some(client_options) = client_options {
-            client_options.get_pointer()
-        } else {
-            std::ptr::null_mut()
-        };
+        let ptr = client_options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
-        let cap_ptr = capabilities_c_str_ptrs.as_mut_ptr();
         let result = unsafe {
             unsafe_bindings::instproxy_check_capabilities_match(
                 self.pointer,
-                cap_ptr,
+                capabilities_c_str_ptrs.as_mut_ptr(),
                 ptr,
                 &mut res_plist,
             )
