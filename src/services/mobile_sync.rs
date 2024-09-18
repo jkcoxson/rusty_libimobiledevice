@@ -135,7 +135,7 @@ impl MobileSyncClient<'_> {
     ) -> Result<(), (String, MobileSyncError)> {
         let data_class_c_string = CString::new(data_class.into()).unwrap();
 
-        let mut anchor_ptrs = Vec::new();
+        let mut anchor_ptrs = Vec::with_capacity(anchors.len()+1);
         for i in anchors {
             anchor_ptrs.push(unsafe_bindings::mobilesync_anchors_t::from(i));
         }

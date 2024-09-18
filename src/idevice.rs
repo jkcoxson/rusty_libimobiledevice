@@ -44,7 +44,7 @@ pub fn get_udid_list() -> Result<Vec<String>, IdeviceError> {
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
 
-    let mut to_return = vec![];
+    let mut to_return = Vec::with_capacity(device_list_slice.len());
     for device in device_list_slice {
         to_return.push(unsafe {
             std::ffi::CStr::from_ptr((*(*device)).udid)
@@ -82,7 +82,7 @@ pub fn get_devices() -> Result<Vec<Device>, IdeviceError> {
     let device_list_slice =
         unsafe { std::slice::from_raw_parts_mut(device_list, device_count as usize) };
 
-    let mut to_return = vec![];
+    let mut to_return = Vec::with_capacity(device_list_slice.len());
     for i in device_list_slice.iter_mut() {
         let network = unsafe { (*(*i)).conn_type != 1 };
 

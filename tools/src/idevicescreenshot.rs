@@ -77,7 +77,7 @@ fn main() {
         }
     };
     println!("Got {} bytes of image data", image.len());
-    let mut converted = vec![];
+    let mut converted = Vec::with_capacity(image.len());
     for i in image {
         converted.push(i as u8);
     }
