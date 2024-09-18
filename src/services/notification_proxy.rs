@@ -120,10 +120,15 @@ impl NotificationProxyClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn observe_notifications(&self, notifications: Vec<&str>) -> Result<(), NpError> {
-        let mut not_ptrs = Vec::new();
+        let mut not_c_strings = Vec::with_capacity(notifications.len());
+        let mut not_ptrs = Vec::with_capacity(not_c_strings.len() + 1);
+
         for notification in notifications {
-            not_ptrs.push(notification.as_ptr() as *const std::os::raw::c_char);
+            not_c_strings.push(CString::new(notification).unwrap());
+            not_ptrs.push(not_c_strings.last().unwrap().as_ptr());
+
         }
+        not_ptrs.push(std::ptr::null());
 
         let result = unsafe {
             unsafe_bindings::np_observe_notifications(self.pointer, not_ptrs.as_mut_ptr())
