@@ -125,9 +125,7 @@ impl PreboardClient<'_> {
         let result = unsafe {
             unsafe_bindings::preboard_create_stashbag(
                 self.pointer,
-                manifest
-                    .map(|p| p.get_pointer())
-                    .unwrap_or(std::ptr::null_mut()),
+                manifest.map_or(std::ptr::null_mut(), |p| p.get_pointer()),
                 None,
                 std::ptr::null_mut(),
             )
@@ -152,9 +150,7 @@ impl PreboardClient<'_> {
         let result = unsafe {
             unsafe_bindings::preboard_commit_stashbag(
                 self.pointer,
-                manifest
-                    .map(|p| p.get_pointer())
-                    .unwrap_or(std::ptr::null_mut()),
+                manifest.map_or(std::ptr::null_mut(), |p| p.get_pointer()),
                 None,
                 std::ptr::null_mut(),
             )
