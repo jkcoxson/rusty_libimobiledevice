@@ -251,12 +251,11 @@ impl DebugServer<'_> {
     ///
     /// ***Verified:*** False
     pub fn set_argv(&self, args: Vec<String>) -> Result<String, DebugServerError> {
-        let mut argv: Vec<*mut std::os::raw::c_char> = Vec::new();
-        let mut c_strings = vec![];
+        let mut argv = Vec::with_capacity(args.len()+1);
+        let mut c_strings = Vec::with_capacity(args.len());
         for arg in args {
-            let arg_c_str = std::ffi::CString::new(arg).unwrap().into_raw();
-            argv.push(arg_c_str);
-            c_strings.push(arg_c_str);
+            c_strings.push(CString::new(arg).unwrap());
+            argv.push(c_strings.last().unwrap().as_ptr() as *mut c_char)
         }
         argv.push(std::ptr::null_mut());
 
