@@ -139,15 +139,17 @@ impl InstProxyClient<'_> {
     ) -> Result<Plist, InstProxyError> {
         // Convert vector of strings to a slice
         let cstrings = app_ids
-            .iter()
-            .map(|s| std::ffi::CString::new(s.clone()).unwrap())
+            .into_iter()
+            .map(|s| CString::new(s).unwrap())
             .collect::<Vec<_>>();
         let mut cstring_pointers = cstrings.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
         cstring_pointers.push(std::ptr::null());
-        let mut cstring_pointers_ptr = cstring_pointers.as_mut_ptr();
-        if app_ids.is_empty() {
-            cstring_pointers_ptr = std::ptr::null_mut();
-        }
+
+        let cstring_pointers_ptr = if cstrings.is_empty() {
+            std::ptr::null_mut()
+        } else {
+            cstring_pointers.as_mut_ptr()
+        };
 
         let opt_ptr = if let Some(client_options) = client_options {
             let client_options = client_options;
