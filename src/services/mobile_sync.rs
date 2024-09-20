@@ -135,7 +135,7 @@ impl MobileSyncClient<'_> {
     ) -> Result<(), (String, MobileSyncError)> {
         let data_class_c_string = CString::new(data_class.into()).unwrap();
 
-        let mut anchor_ptrs = Vec::new();
+        let mut anchor_ptrs = Vec::with_capacity(anchors.len()+1);
         for i in anchors {
             anchor_ptrs.push(unsafe_bindings::mobilesync_anchors_t::from(i));
         }
@@ -342,9 +342,7 @@ impl MobileSyncClient<'_> {
         is_last: bool,
         actions: Option<Plist>,
     ) -> Result<(), MobileSyncError> {
-        let actions = actions
-            .map(|x| x.get_pointer())
-            .unwrap_or(std::ptr::null_mut());
+        let actions = actions.map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::mobilesync_send_changes(

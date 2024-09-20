@@ -113,21 +113,18 @@ impl ServiceClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn receive(&self, size: u32) -> Result<Vec<c_char>, ServiceError> {
-        let mut data = Vec::new();
+        let mut data = vec![0 as c_char; size as usize];
         let mut received = 0;
         let result = unsafe {
-            unsafe_bindings::service_receive(
-                self.pointer,
-                data.as_mut_ptr() as *mut c_char,
-                size,
-                &mut received,
-            )
+            unsafe_bindings::service_receive(self.pointer, data.as_mut_ptr(), size, &mut received)
         }
         .into();
 
         if result != ServiceError::Success {
             return Err(result);
         }
+
+        data.truncate(received as usize);
 
         Ok(data)
     }
