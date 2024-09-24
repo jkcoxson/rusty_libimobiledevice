@@ -80,7 +80,7 @@ impl DeviceConnection<'_> {
     /// The received data
     ///
     /// ***Verified:*** False
-    pub fn recieve(&self, len: u32, timeout: u32) -> Result<c_char, IdeviceError> {
+    pub fn receive(&self, len: u32, timeout: u32) -> Result<c_char, IdeviceError> {
         let mut buffer = unsafe { std::mem::zeroed() };
         let mut recieved = unsafe { std::mem::zeroed() };
 
