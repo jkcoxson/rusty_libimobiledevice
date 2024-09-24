@@ -82,7 +82,7 @@ impl DeviceConnection<'_> {
     /// ***Verified:*** False
     pub fn receive(&self, len: u32, timeout: Option<u32>) -> Result<Vec<u8>, IdeviceError> {
         let mut buffer = vec![0 as u8; len as usize];
-        let mut received = unsafe { std::mem::zeroed() };
+        let mut received = 0;
 
         let result = match timeout {
             Some(timeout) => unsafe {
@@ -109,7 +109,9 @@ impl DeviceConnection<'_> {
             return Err(result);
         }
 
-        Ok(buffer) // idk if this is correct
+        buffer.truncate(received as usize);
+
+        Ok(buffer)
     }
 
     /// Toggles SSL on the connection
