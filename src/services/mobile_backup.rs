@@ -427,7 +427,7 @@ impl MobileBackup2Client<'_> {
     /// The bytes sent
     ///
     /// ***Verified:*** False
-    pub fn send_raw(&self, data: Vec<u8>) -> Result<u32, MobileBackup2Error> {
+    pub fn send_raw(&self, data: &[u8]) -> Result<u32, MobileBackup2Error> {
         let mut sent = 0;
         let result = unsafe {
             unsafe_bindings::mobilebackup2_send_raw(
@@ -478,7 +478,7 @@ impl MobileBackup2Client<'_> {
     /// * The version of the iOS device
     ///
     /// ***Verified:*** False
-    pub fn version_exchange(&self, mut versions: Vec<f64>) -> Result<f64, MobileBackup2Error> {
+    pub fn version_exchange(&self, versions: &mut [f64]) -> Result<f64, MobileBackup2Error> {
         let mut version = 0.0;
         let result = unsafe {
             unsafe_bindings::mobilebackup2_version_exchange(
