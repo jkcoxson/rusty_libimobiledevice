@@ -159,6 +159,8 @@ impl ServiceClient<'_> {
             return Err(result);
         }
 
+        data.truncate(received as usize);
+
         Ok(data)
     }
 
