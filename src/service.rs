@@ -86,7 +86,7 @@ impl ServiceClient<'_> {
     /// The number of bytes sent
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: Vec<c_char>) -> Result<u32, ServiceError> {
+    pub fn send(&self, data: Vec<u8>) -> Result<u32, ServiceError> {
         let mut sent = 0;
         let result = unsafe {
             unsafe_bindings::service_send(
@@ -112,11 +112,11 @@ impl ServiceClient<'_> {
     /// The received data as a vector of bytes
     ///
     /// ***Verified:*** False
-    pub fn receive(&self, size: u32) -> Result<Vec<c_char>, ServiceError> {
-        let mut data = vec![0 as c_char; size as usize];
+    pub fn receive(&self, size: u32) -> Result<Vec<u8>, ServiceError> {
+        let mut data = vec![0 as u8; size as usize];
         let mut received = 0;
         let result = unsafe {
-            unsafe_bindings::service_receive(self.pointer, data.as_mut_ptr(), size, &mut received)
+            unsafe_bindings::service_receive(self.pointer, data.as_mut_ptr() as *mut c_char, size, &mut received)
         }
         .into();
 
@@ -141,8 +141,8 @@ impl ServiceClient<'_> {
         &self,
         size: u32,
         timeout: u32,
-    ) -> Result<Vec<c_char>, ServiceError> {
-        let mut data = Vec::new();
+    ) -> Result<Vec<u8>, ServiceError> {
+        let mut data = Vec::with_capacity(size as usize);
         let mut received = 0;
         let result = unsafe {
             unsafe_bindings::service_receive_with_timeout(
@@ -158,6 +158,8 @@ impl ServiceClient<'_> {
         if result != ServiceError::Success {
             return Err(result);
         }
+
+        data.truncate(received as usize);
 
         Ok(data)
     }

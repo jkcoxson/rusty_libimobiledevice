@@ -294,14 +294,14 @@ impl DebugServer<'_> {
     /// The encoded bytes
     ///
     /// ***Verified:*** False
-    pub fn encode_string(buffer: impl Into<String>) -> Vec<c_char> {
-        let mut encoded_buffer = unsafe { std::mem::zeroed() };
+    pub fn encode_string(buffer: impl Into<String>) -> Vec<u8> {
+        let encoded_buffer: *mut u8 = unsafe { std::mem::zeroed() };
         let mut encoded_buffer_size = 0;
         let buffer_c_string = CString::new(buffer.into()).unwrap();
         unsafe {
             unsafe_bindings::debugserver_encode_string(
                 buffer_c_string.as_ptr(),
-                &mut encoded_buffer,
+                &mut (encoded_buffer as *mut c_char),
                 &mut encoded_buffer_size,
             );
         }

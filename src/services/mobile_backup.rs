@@ -453,12 +453,12 @@ impl MobileBackup2Client<'_> {
     /// A vector of bytes containing the received data
     ///
     /// ***Verified:*** False
-    pub fn receive_raw(&self, len: u32) -> Result<Vec<c_char>, MobileBackup2Error> {
-        let mut data = unsafe { std::mem::zeroed() };
+    pub fn receive_raw(&self, len: u32) -> Result<Vec<u8>, MobileBackup2Error> {
+        let data: u8 = unsafe { std::mem::zeroed() };
         let mut received = 0;
 
         let result = unsafe {
-            unsafe_bindings::mobilebackup2_receive_raw(self.pointer, &mut data, len, &mut received)
+            unsafe_bindings::mobilebackup2_receive_raw(self.pointer, &mut (data as c_char), len, &mut received)
         }
         .into();
 
@@ -467,7 +467,7 @@ impl MobileBackup2Client<'_> {
         }
 
         Ok(unsafe {
-            std::slice::from_raw_parts(&data as *const c_char, received as usize).to_vec()
+            std::slice::from_raw_parts(&data, received as usize).to_vec()
         })
     }
 

@@ -136,15 +136,15 @@ impl SpringboardServicesClient<'_> {
     pub fn get_icon_png_data(
         &self,
         bundle_id: impl Into<String>,
-    ) -> Result<Vec<c_char>, SbservicesError> {
-        let mut data = std::ptr::null_mut();
+    ) -> Result<Vec<u8>, SbservicesError> {
+        let data: *mut u8 = std::ptr::null_mut();
         let mut size = 0;
         let bundle_id_c_string = CString::new(bundle_id.into()).unwrap();
         let result = unsafe {
             unsafe_bindings::sbservices_get_icon_pngdata(
                 self.pointer,
                 bundle_id_c_string.as_ptr(),
-                &mut data,
+                &mut (data as *mut c_char),
                 &mut size,
             )
         }
@@ -190,13 +190,13 @@ impl SpringboardServicesClient<'_> {
     /// A vector of bytes containing the .png
     ///
     /// ***Verified:*** False
-    pub fn get_home_screen_wallpaper_pngdata(&self) -> Result<Vec<c_char>, SbservicesError> {
-        let mut data = std::ptr::null_mut();
+    pub fn get_home_screen_wallpaper_pngdata(&self) -> Result<Vec<u8>, SbservicesError> {
+        let data: *mut u8 = std::ptr::null_mut();
         let mut size = 0;
         let result = unsafe {
             unsafe_bindings::sbservices_get_home_screen_wallpaper_pngdata(
                 self.pointer,
-                &mut data,
+                &mut (data as *mut c_char),
                 &mut size,
             )
         }

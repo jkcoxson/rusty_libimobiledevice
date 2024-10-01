@@ -309,14 +309,12 @@ impl AfcClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn file_write(&self, handle: u64, data: Vec<u8>) -> Result<(), AfcError> {
-        let data: Vec<c_char> = data.into_iter().map(|x| x as c_char).collect();
-        let data_ptr: *const c_char = data.as_ptr() as *const c_char;
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_file_write(
                 self.pointer,
                 handle,
-                data_ptr,
+                data.as_ptr() as *const c_char,
                 data.len() as u32,
                 &mut bytes_written,
             )
