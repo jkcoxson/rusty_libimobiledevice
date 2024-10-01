@@ -90,7 +90,7 @@ impl DebugServer<'_> {
     /// The bytes received
     ///
     /// ***Verified:*** False
-    pub fn recieve(&self, size: u32, timeout: u32) -> Result<Vec<u8>, DebugServerError> {
+    pub fn receive(&self, size: u32, timeout: u32) -> Result<Vec<u8>, DebugServerError> {
         let mut data = vec![0u8; size as usize];
         let mut received = 0;
 

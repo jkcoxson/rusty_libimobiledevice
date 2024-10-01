@@ -86,7 +86,7 @@ impl MobileSyncClient<'_> {
     /// A plist containing the message
     ///
     /// ***Verified:*** False
-    pub fn recieve(&self) -> Result<Plist, MobileSyncError> {
+    pub fn receive(&self) -> Result<Plist, MobileSyncError> {
         let mut plist: unsafe_bindings::plist_t = std::ptr::null_mut();
         let result =
             unsafe { unsafe_bindings::mobilesync_receive(self.pointer, &mut plist) }.into();
