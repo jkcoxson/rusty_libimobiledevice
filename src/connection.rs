@@ -80,26 +80,26 @@ impl DeviceConnection<'_> {
     /// The received data
     ///
     /// ***Verified:*** False
-    pub fn recieve(&self, len: u32, timeout: u32) -> Result<c_char, IdeviceError> {
-        let mut buffer = unsafe { std::mem::zeroed() };
-        let mut recieved = unsafe { std::mem::zeroed() };
+    pub fn receive(&self, len: u32, timeout: Option<u32>) -> Result<Vec<u8>, IdeviceError> {
+        let mut buffer = vec![0 as u8; len as usize];
+        let mut received = 0;
 
-        let result = match timeout > 0 {
-            true => unsafe {
+        let result = match timeout {
+            Some(timeout) => unsafe {
                 unsafe_bindings::idevice_connection_receive_timeout(
                     self.pointer,
-                    &mut buffer,
+                    buffer.as_mut_ptr() as *mut c_char,
                     len,
-                    &mut recieved,
+                    &mut received,
                     timeout,
                 )
             },
-            false => unsafe {
+            None => unsafe {
                 unsafe_bindings::idevice_connection_receive(
                     self.pointer,
-                    &mut buffer,
+                    buffer.as_mut_ptr() as *mut c_char,
                     len,
-                    &mut recieved,
+                    &mut received,
                 )
             },
         }
@@ -109,7 +109,9 @@ impl DeviceConnection<'_> {
             return Err(result);
         }
 
-        Ok(buffer) // idk if this is correct
+        buffer.truncate(received as usize);
+
+        Ok(buffer)
     }
 
     /// Toggles SSL on the connection
