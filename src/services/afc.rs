@@ -278,14 +278,14 @@ impl AfcClient<'_> {
     /// A vector of bytes containing the data read
     ///
     /// ***Verified:*** False
-    pub fn file_read(&self, handle: u64, length: u32) -> Result<Vec<i8>, AfcError> {
-        let mut buffer = vec![0i8; length as usize].into_boxed_slice();
+    pub fn file_read(&self, handle: u64, length: u32) -> Result<Vec<u8>, AfcError> {
+        let mut buffer = vec![0u8; length as usize];
         let mut bytes_written = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::afc_file_read(
                 self.pointer,
                 handle,
-                buffer.as_mut_ptr(),
+                buffer.as_mut_ptr() as *mut c_char,
                 length,
                 &mut bytes_written,
             )
@@ -294,10 +294,9 @@ impl AfcClient<'_> {
         if result != AfcError::Success {
             return Err(result);
         }
-        let mut vec = buffer.into_vec();
-        vec.truncate(bytes_written as usize);
+        buffer.truncate(bytes_written as usize);
 
-        Ok(vec)
+        Ok(buffer)
     }
 
     /// Writes data to a file on the device
