@@ -1,6 +1,5 @@
 // jkcoxson
 
-use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::os::raw::c_char;
 
@@ -53,13 +52,13 @@ impl DeviceConnection<'_> {
     /// The number of bytes sent
     ///
     /// ***Verified:*** False
-    pub fn send(&self, data: Vec<u8>) -> Result<u32, IdeviceError> {
+    pub fn send(&self, data: &[u8]) -> Result<u32, IdeviceError> {
         let mut to_fill = unsafe { std::mem::zeroed() };
         let result = unsafe {
             unsafe_bindings::idevice_connection_send(
                 self.pointer,
                 data.as_ptr() as *const c_char,
-                data.len().try_into().unwrap(),
+                data.len() as u32,
                 &mut to_fill,
             )
         }
