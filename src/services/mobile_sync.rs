@@ -342,7 +342,7 @@ impl MobileSyncClient<'_> {
         is_last: bool,
         actions: Option<Plist>,
     ) -> Result<(), MobileSyncError> {
-        let actions = actions.map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let actions = actions.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::mobilesync_send_changes(

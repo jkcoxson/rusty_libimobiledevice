@@ -168,7 +168,7 @@ impl RestoredClient<'_> {
     ///
     /// ***Verified:*** False
     pub fn start_restore(&self, options: Option<Plist>, version: u64) -> Result<(), RestoredError> {
-        let ptr = options.map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result =
             unsafe { unsafe_bindings::restored_start_restore(self.pointer, ptr, version) }.into();

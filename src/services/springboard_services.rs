@@ -88,7 +88,7 @@ impl SpringboardServicesClient<'_> {
         let mut plist = std::ptr::null_mut();
         let format_version_c_string = format_version.map(|s| CString::new(s).unwrap());
         let format_version_c_string_ptr =
-            format_version_c_string.map_or(std::ptr::null(), |s| s.as_ptr());
+            format_version_c_string.as_ref().map_or(std::ptr::null(), |s| s.as_ptr());
 
         let result = unsafe {
             unsafe_bindings::sbservices_get_icon_state(

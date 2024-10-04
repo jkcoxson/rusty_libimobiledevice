@@ -138,7 +138,7 @@ impl MobileBackupClient<'_> {
         base_path: impl Into<String>,
         backup_version: impl Into<String>,
     ) -> Result<(), MobileBackupError> {
-        let ptr = manifest.map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = manifest.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let base_path_c_string = CString::new(base_path.into()).unwrap();
         let backup_version_c_string = CString::new(backup_version.into()).unwrap();
@@ -374,7 +374,7 @@ impl MobileBackup2Client<'_> {
         options: Plist,
     ) -> Result<(), MobileBackup2Error> {
         let message_c_string = message.map(|s| CString::new(s).unwrap());
-        let message_c_string_ptr = message_c_string.map_or(std::ptr::null(), |s| s.as_ptr());
+        let message_c_string_ptr = message_c_string.as_ref().map_or(std::ptr::null(), |s| s.as_ptr());
 
         let result = unsafe {
             unsafe_bindings::mobilebackup2_send_message(
@@ -545,9 +545,9 @@ impl MobileBackup2Client<'_> {
         status_string: Option<String>,
         status_plist: Option<Plist>,
     ) -> Result<(), MobileBackup2Error> {
-        let status_plist = status_plist.map_or(std::ptr::null_mut(), |s| s.get_pointer());
+        let status_plist = status_plist.as_ref().map_or(std::ptr::null_mut(), |s| s.get_pointer());
         let status_c_string = status_string.map(|s| CString::new(s).unwrap());
-        let status_c_string_ptr = status_c_string.map_or(std::ptr::null(), |s| s.as_ptr());
+        let status_c_string_ptr = status_c_string.as_ref().map_or(std::ptr::null(), |s| s.as_ptr());
 
         let result = unsafe {
             unsafe_bindings::mobilebackup2_send_status_response(
