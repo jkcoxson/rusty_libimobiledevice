@@ -154,12 +154,13 @@ impl SpringboardServicesClient<'_> {
             return Err(result);
         }
 
-        let mut vec = Vec::with_capacity(size as usize);
-        unsafe {
-            std::ptr::copy_nonoverlapping(data, vec.as_mut_ptr(), size as usize);
+        if data == 0 as *mut u8 {
+            Ok(Vec::new())
+        } else {
+            Ok(unsafe {
+                std::slice::from_raw_parts(data, size as usize).to_vec()
+            })
         }
-
-        Ok(vec)
     }
 
     /// Gets the orientation of the device
