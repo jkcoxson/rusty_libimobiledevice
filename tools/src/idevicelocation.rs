@@ -141,11 +141,7 @@ fn main() {
 
             // Send latitude
             let lat_len = (latitude.len() as u32).to_be_bytes();
-            let lat_len = lat_len
-                .iter()
-                .map(|x| *x as i8)
-                .collect::<Vec<i8>>()
-                .to_vec();
+            let lat_len = lat_len.to_vec();
             match service.send(lat_len) {
                 Ok(_) => {}
                 Err(e) => {
@@ -153,13 +149,8 @@ fn main() {
                     return;
                 }
             }
-            let latitude = latitude
-                .as_bytes()
-                .iter()
-                .map(|x| *x as i8)
-                .collect::<Vec<i8>>()
-                .to_vec();
-            match service.send(latitude) {
+            let latitude = latitude.as_bytes();
+            match service.send(latitude.to_vec()) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Unable to send latitude: {:?}", e);
@@ -169,11 +160,7 @@ fn main() {
 
             // Send longitude
             let lon_len = (longitude.len() as u32).to_be_bytes();
-            let lon_len = lon_len
-                .iter()
-                .map(|x| *x as i8)
-                .collect::<Vec<i8>>()
-                .to_vec();
+            let lon_len = lon_len.to_vec();
             match service.send(lon_len) {
                 Ok(_) => {}
                 Err(e) => {
@@ -181,12 +168,7 @@ fn main() {
                     return;
                 }
             }
-            let longitude = longitude
-                .as_bytes()
-                .iter()
-                .map(|x| *x as i8)
-                .collect::<Vec<i8>>()
-                .to_vec();
+            let longitude = longitude.as_bytes().to_vec();
             match service.send(longitude) {
                 Ok(_) => {}
                 Err(e) => {

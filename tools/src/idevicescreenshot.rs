@@ -77,10 +77,6 @@ fn main() {
         }
     };
     println!("Got {} bytes of image data", image.len());
-    let mut converted = Vec::with_capacity(image.len());
-    for i in image {
-        converted.push(i as u8);
-    }
 
     let mut file = match std::fs::File::create(file_name) {
         Ok(file) => file,
@@ -90,5 +86,5 @@ fn main() {
         }
     };
 
-    file.write_all(&converted).unwrap();
+    file.write_all(&image).unwrap();
 }
