@@ -454,11 +454,11 @@ impl MobileBackup2Client<'_> {
     ///
     /// ***Verified:*** False
     pub fn receive_raw(&self, len: u32) -> Result<Vec<u8>, MobileBackup2Error> {
-        let data: u8 = unsafe { std::mem::zeroed() };
+        let mut data: Vec<u8> = vec![0; len as usize];
         let mut received = 0;
 
         let result = unsafe {
-            unsafe_bindings::mobilebackup2_receive_raw(self.pointer, &mut (data as c_char), len, &mut received)
+            unsafe_bindings::mobilebackup2_receive_raw(self.pointer, data.as_mut_ptr() as *mut c_char, len, &mut received)
         }
         .into();
 
@@ -466,9 +466,8 @@ impl MobileBackup2Client<'_> {
             return Err(result);
         }
 
-        Ok(unsafe {
-            std::slice::from_raw_parts(&data, received as usize).to_vec()
-        })
+        data.truncate(received as usize);
+        Ok(data)
     }
 
     /// Exchanges version with the service
