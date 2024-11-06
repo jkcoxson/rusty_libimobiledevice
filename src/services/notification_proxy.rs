@@ -126,7 +126,6 @@ impl NotificationProxyClient<'_> {
         for notification in notifications {
             not_c_strings.push(CString::new(notification).unwrap());
             not_ptrs.push(not_c_strings.last().unwrap().as_ptr());
-
         }
         not_ptrs.push(std::ptr::null());
 

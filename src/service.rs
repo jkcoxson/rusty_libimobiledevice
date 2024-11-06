@@ -116,7 +116,12 @@ impl ServiceClient<'_> {
         let mut data = vec![0 as u8; size as usize];
         let mut received = 0;
         let result = unsafe {
-            unsafe_bindings::service_receive(self.pointer, data.as_mut_ptr() as *mut c_char, size, &mut received)
+            unsafe_bindings::service_receive(
+                self.pointer,
+                data.as_mut_ptr() as *mut c_char,
+                size,
+                &mut received,
+            )
         }
         .into();
 
@@ -137,11 +142,7 @@ impl ServiceClient<'_> {
     /// The received data as a vector of bytes
     ///
     /// ***Verified:*** False
-    pub fn receive_with_timeout(
-        &self,
-        size: u32,
-        timeout: u32,
-    ) -> Result<Vec<u8>, ServiceError> {
+    pub fn receive_with_timeout(&self, size: u32, timeout: u32) -> Result<Vec<u8>, ServiceError> {
         let mut data = Vec::with_capacity(size as usize);
         let mut received = 0;
         let result = unsafe {
