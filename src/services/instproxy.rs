@@ -197,7 +197,9 @@ impl InstProxyClient<'_> {
         info!("Instproxy install");
         let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_install(
@@ -232,7 +234,9 @@ impl InstProxyClient<'_> {
         info!("Instproxy upgrade");
         let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_upgrade(
@@ -267,7 +271,9 @@ impl InstProxyClient<'_> {
         info!("Instproxy uninstall");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_uninstall(
@@ -297,7 +303,9 @@ impl InstProxyClient<'_> {
         let mut res_plist: unsafe_bindings::plist_t = unsafe { std::mem::zeroed() };
         info!("Instproxy lookup archives");
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_lookup_archives(self.pointer, ptr, &mut res_plist)
@@ -326,7 +334,9 @@ impl InstProxyClient<'_> {
         info!("Instproxy archive");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_archive(
@@ -360,7 +370,9 @@ impl InstProxyClient<'_> {
         info!("Instproxy restore");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_restore(
@@ -394,7 +406,9 @@ impl InstProxyClient<'_> {
         info!("Instproxy remove archive");
         let app_id_c_string = CString::new(app_id.into()).unwrap();
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_remove_archive(
@@ -427,14 +441,16 @@ impl InstProxyClient<'_> {
     ) -> Result<Plist, InstProxyError> {
         let mut res_plist = unsafe { std::mem::zeroed() };
         let mut capabilities_c_str = Vec::with_capacity(capabilities.len());
-        let mut capabilities_c_str_ptrs = Vec::with_capacity(capabilities.len()+1);
+        let mut capabilities_c_str_ptrs = Vec::with_capacity(capabilities.len() + 1);
         for capability in capabilities {
             capabilities_c_str.push(CString::new(capability).unwrap());
             capabilities_c_str_ptrs.push(capabilities_c_str.last().unwrap().as_ptr())
         }
         capabilities_c_str_ptrs.push(std::ptr::null());
 
-        let ptr = client_options.as_ref().map_or(std::ptr::null_mut(), |v| v.get_pointer());
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
 
         let result = unsafe {
             unsafe_bindings::instproxy_check_capabilities_match(

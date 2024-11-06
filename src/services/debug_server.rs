@@ -251,7 +251,7 @@ impl DebugServer<'_> {
     ///
     /// ***Verified:*** False
     pub fn set_argv(&self, args: Vec<String>) -> Result<String, DebugServerError> {
-        let mut argv = Vec::with_capacity(args.len()+1);
+        let mut argv = Vec::with_capacity(args.len() + 1);
         let mut c_strings = Vec::with_capacity(args.len());
         for arg in args {
             c_strings.push(CString::new(arg).unwrap());

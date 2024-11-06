@@ -87,8 +87,9 @@ impl SpringboardServicesClient<'_> {
     pub fn get_icon_state(&self, format_version: Option<String>) -> Result<Plist, SbservicesError> {
         let mut plist = std::ptr::null_mut();
         let format_version_c_string = format_version.map(|s| CString::new(s).unwrap());
-        let format_version_c_string_ptr =
-            format_version_c_string.as_ref().map_or(std::ptr::null(), |s| s.as_ptr());
+        let format_version_c_string_ptr = format_version_c_string
+            .as_ref()
+            .map_or(std::ptr::null(), |s| s.as_ptr());
 
         let result = unsafe {
             unsafe_bindings::sbservices_get_icon_state(
@@ -157,9 +158,7 @@ impl SpringboardServicesClient<'_> {
         if data == 0 as *mut u8 {
             Ok(Vec::new())
         } else {
-            Ok(unsafe {
-                std::slice::from_raw_parts(data, size as usize).to_vec()
-            })
+            Ok(unsafe { std::slice::from_raw_parts(data, size as usize).to_vec() })
         }
     }
 
