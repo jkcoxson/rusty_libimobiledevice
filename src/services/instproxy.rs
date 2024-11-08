@@ -84,6 +84,32 @@ impl InstProxyClient<'_> {
         Ok(plist.into())
     }
 
+    /// Lists installed applications on the device using an option plist
+    /// # Arguments
+    /// * `client_options` - A plist containing options for the lookup.
+    /// # Returns
+    /// A plist with a list of applications
+    ///
+    /// ***Verified:*** False
+    pub fn browse_with_options(&self, client_options: Plist) -> Result<Plist, InstProxyError> {
+        let mut plist = std::ptr::null_mut();
+
+        let result = unsafe {
+            unsafe_bindings::instproxy_browse(
+                self.pointer,
+                client_options.get_pointer(),
+                &mut plist,
+            )
+        }
+        .into();
+
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+
+        Ok(plist.into())
+    }
+
     /// Creates a Plist containing return attributes for lookup
     /// # Arguments
     /// * `options` - The options for lookup
