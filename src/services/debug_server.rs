@@ -122,7 +122,9 @@ impl DebugServer<'_> {
             }
         }
 
-        Ok(data[..received as usize].to_vec())
+        data.truncate(received as usize);
+
+        Ok(data)
     }
 
     /// Receives a response from the debug server
