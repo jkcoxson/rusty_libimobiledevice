@@ -1,6 +1,6 @@
 // jkcoxson
 
-use libc::c_uint;
+use std::os::raw::c_uint;
 use std::ffi::CString;
 
 use crate::{

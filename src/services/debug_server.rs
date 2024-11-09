@@ -1,8 +1,7 @@
 // jkcoxson
 
-use std::{convert::TryInto, ffi::CString, os::raw::c_char};
+use std::{convert::TryInto, ffi::CString, os::raw::{c_char, c_int}};
 
-use libc::c_int;
 use log::info;
 
 use crate::{bindings as unsafe_bindings, error::DebugServerError, idevice::Device};
