@@ -1,6 +1,6 @@
 // jkcoxson
 
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device};
 
@@ -505,17 +505,14 @@ impl InstProxyClient<'_> {
         bundle_identifier: impl Into<String>,
     ) -> Result<String, InstProxyError> {
         let bundle_id_c_string = CString::new(bundle_identifier.into()).unwrap();
-        // This is kinda horrifying, could use a refractor
-        let to_fill = CString::new("").unwrap();
-        let mut to_fill_bytes = to_fill.into_raw();
-        let to_fill_ptr = &mut to_fill_bytes;
+        let mut path_ptr = unsafe { std::mem::zeroed() };
 
         info!("Instproxy get_path_for_bundle_identifier");
         let result = unsafe {
             unsafe_bindings::instproxy_client_get_path_for_bundle_identifier(
                 self.pointer,
                 bundle_id_c_string.as_ptr(),
-                to_fill_ptr,
+                &mut path_ptr,
             )
         }
         .into();
@@ -525,7 +522,7 @@ impl InstProxyClient<'_> {
         }
 
         info!("Instproxy get_path_for_bundle_identifier done");
-        Ok(unsafe { CString::from_raw(to_fill_bytes).into_string().unwrap() })
+        Ok(unsafe { CStr::from_ptr(path_ptr).to_string_lossy().into_owned() })
     }
 }
 
