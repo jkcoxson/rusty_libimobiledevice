@@ -84,24 +84,21 @@ impl HeartbeatClient {
     pub fn receive(&self, timeout: u32) -> Result<Plist, HeartbeatError> {
         let mut plist_ptr = unsafe { std::mem::zeroed() };
 
-        if timeout == 0 {
-            let result =
-                unsafe { unsafe_bindings::heartbeat_receive(self.pointer, &mut plist_ptr) }.into();
-            if result != HeartbeatError::Success {
-                return Err(result);
+        let result =  unsafe {
+            if timeout == 0 {
+               unsafe_bindings::heartbeat_receive(self.pointer, &mut plist_ptr)
+            } else {
+                {
+                    unsafe_bindings::heartbeat_receive_with_timeout(
+                        self.pointer,
+                        &mut plist_ptr,
+                        timeout,
+                    )
+                }
             }
-        } else {
-            let result = unsafe {
-                unsafe_bindings::heartbeat_receive_with_timeout(
-                    self.pointer,
-                    &mut plist_ptr,
-                    timeout,
-                )
-            }
-            .into();
-            if result != HeartbeatError::Success {
-                return Err(result);
-            }
+        }.into();
+        if result != HeartbeatError::Success {
+            return Err(result);
         }
 
         Ok(plist_ptr.into())

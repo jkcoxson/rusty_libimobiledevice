@@ -542,21 +542,16 @@ pub enum BrowseOption {
 impl From<BrowseOption> for Plist {
     fn from(option: BrowseOption) -> Self {
         let mut dict = Plist::new_dict();
-        match option {
-            BrowseOption::System => dict
-                .dict_set_item("ApplicationType", "System".into())
-                .unwrap(),
-            BrowseOption::User => dict
-                .dict_set_item("ApplicationType", "User".into())
-                .unwrap(),
-            BrowseOption::Internal => dict
-                .dict_set_item("ApplicationType", "Internal".into())
-                .unwrap(),
-            BrowseOption::All => dict.dict_set_item("ApplicationType", "All".into()).unwrap(),
-            BrowseOption::None => dict
-                .dict_set_item("ApplicationType", "None".into())
-                .unwrap(),
-        }
+        let value = match option {
+            BrowseOption::System => "System",
+            BrowseOption::User => "User",
+            BrowseOption::Internal =>"Internal",
+            BrowseOption::All => "All",
+            BrowseOption::None => "None",
+        }.into();
+        dict
+            .dict_set_item("ApplicationType", value)
+            .unwrap();
         dict
     }
 }

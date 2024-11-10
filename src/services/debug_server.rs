@@ -136,16 +136,15 @@ impl DebugServer<'_> {
     ///
     /// ***Verified:*** False
     pub fn receive_response(&self) -> Result<String, DebugServerError> {
-        let mut data = unsafe { std::mem::zeroed() };
+        let data: *mut u8 = unsafe { std::mem::zeroed() };
         let mut size = 0;
         let result = unsafe {
-            unsafe_bindings::debugserver_client_receive_response(self.pointer, &mut data, &mut size)
+            unsafe_bindings::debugserver_client_receive_response(self.pointer, data as *mut *mut c_char, &mut size)
         }
         .into();
         if result != DebugServerError::Success {
             return Err(result);
         }
-        let data = data as *mut u8;
 
         Ok(
             String::from_utf8(unsafe { std::slice::from_raw_parts(data, size as usize).to_vec() })
@@ -212,9 +211,9 @@ impl DebugServer<'_> {
     ///
     /// ***Verified:*** False
     pub fn send_command(&self, command: DebugServerCommand) -> Result<String, DebugServerError> {
-        let mut response: std::os::raw::c_char = unsafe { std::mem::zeroed() };
-        let mut response_ptr: *mut std::os::raw::c_char = &mut response;
-        let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
+        let mut response: c_char = unsafe { std::mem::zeroed() };
+        let mut response_ptr: *mut c_char = &mut response;
+        let response_ptr_ptr: *mut *mut c_char = &mut response_ptr;
 
         let response_size = std::ptr::null_mut();
         info!("Sending command to debug server");
@@ -260,9 +259,9 @@ impl DebugServer<'_> {
         }
         argv.push(std::ptr::null_mut());
 
-        let mut response: std::os::raw::c_char = unsafe { std::mem::zeroed() };
-        let mut response_ptr: *mut std::os::raw::c_char = &mut response;
-        let response_ptr_ptr: *mut *mut std::os::raw::c_char = &mut response_ptr;
+        let mut response: c_char = unsafe { std::mem::zeroed() };
+        let mut response_ptr: *mut c_char = &mut response;
+        let response_ptr_ptr: *mut *mut c_char = &mut response_ptr;
 
         info!("Setting argv for debug server");
         let result = unsafe {
@@ -364,8 +363,8 @@ impl DebugServerCommand {
             arguments_c_array.push(c_str.as_bytes_with_nul()[0].try_into().unwrap());
         }
         // Create pointer to to_fill[0]
-        let mut c_array_ptr: *mut std::os::raw::c_char = arguments_c_array.as_mut_ptr();
-        let mut c_array_ptr_ptr: *mut *mut std::os::raw::c_char = &mut c_array_ptr;
+        let mut c_array_ptr: *mut c_char = arguments_c_array.as_mut_ptr();
+        let mut c_array_ptr_ptr: *mut *mut c_char = &mut c_array_ptr;
 
         if arguments.is_empty() {
             c_array_ptr_ptr = std::ptr::null_mut();

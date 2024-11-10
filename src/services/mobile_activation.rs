@@ -170,21 +170,17 @@ impl MobileActivationClient<'_> {
         record: Plist,
         session: Option<Plist>,
     ) -> Result<(), MobileActivationError> {
-        let result = if let Some(session) = session {
-            unsafe {
+        let result = unsafe {
+            if let Some(session) = session {
                 unsafe_bindings::mobileactivation_activate_with_session(
                     self.pointer,
                     record.get_pointer(),
                     session.get_pointer(),
                 )
+            } else {
+                    unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
             }
-            .into()
-        } else {
-            unsafe {
-                unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
-            }
-            .into()
-        };
+        }.into();
 
         if result != MobileActivationError::Success {
             return Err(result);
