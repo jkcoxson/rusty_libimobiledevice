@@ -160,9 +160,9 @@ impl MobileSyncClient<'_> {
 
         if result != MobileSyncError::Success {
             return Err((
-                unsafe { CString::from_raw(error_description) }
-                    .into_string()
-                    .unwrap(),
+                unsafe { CStr::from_ptr(error_description) }
+                    .to_string_lossy()
+                    .into_owned(),
                 result,
             ));
         }
