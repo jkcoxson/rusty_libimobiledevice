@@ -579,6 +579,7 @@ impl MobileBackup2Client<'_> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileBackupRequest {
     Backup,
     Restore,
@@ -587,6 +588,7 @@ pub enum MobileBackupRequest {
 }
 
 /// Choose what to restore
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileBackupRestoreFlags {
     /// Show a restore screen on the device
     Springboard,

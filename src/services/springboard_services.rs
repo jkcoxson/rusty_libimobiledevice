@@ -216,6 +216,7 @@ impl SpringboardServicesClient<'_> {
 }
 
 /// A device orientation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
     Unknown,
     Portrait,

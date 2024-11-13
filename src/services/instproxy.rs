@@ -527,7 +527,7 @@ impl InstProxyClient<'_> {
 }
 
 /// The options that can be used when browsing installed apps
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BrowseOption {
     System,
     User,

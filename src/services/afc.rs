@@ -585,6 +585,7 @@ impl TryFrom<HouseArrest<'_>> for AfcClient<'_> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AfcFileMode {
     ReadOnly,
     ReadWrite,
@@ -621,6 +622,7 @@ impl From<AfcFileMode> for u32 {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AfcLockOp {
     Sh,
     Ex,
@@ -637,6 +639,7 @@ impl From<AfcLockOp> for u32 {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinkType {
     HardLink,
     SymbolicLink,

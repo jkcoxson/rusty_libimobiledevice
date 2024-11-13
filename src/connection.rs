@@ -14,6 +14,7 @@ pub struct DeviceConnection<'a> {
 
 pub struct SslData {}
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DeviceConnectionType {
     Usbmuxd,
     Network,

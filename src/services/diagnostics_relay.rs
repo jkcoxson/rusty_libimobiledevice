@@ -268,6 +268,7 @@ impl DiagnosticsRelay<'_> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiagnosticsRelayAction {
     WaitForDisconnect,
     DisplayPass,
