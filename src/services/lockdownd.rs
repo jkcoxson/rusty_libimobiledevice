@@ -19,6 +19,7 @@ pub struct LockdowndClient<'a> {
 }
 
 /// A pair record for lockdown
+#[derive(Debug)]
 pub struct LockdowndPairRecord {
     pub device_certificate: String,
     pub host_certificate: String,

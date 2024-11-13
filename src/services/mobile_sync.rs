@@ -14,6 +14,7 @@ pub struct MobileSyncClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
+#[derive(Debug)]
 pub struct MobileSyncAnchor {
     device_anchor: String,
     computer_anchor: String,
@@ -410,6 +411,7 @@ impl From<MobileSyncAnchor> for unsafe_bindings::mobilesync_anchors_t {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileSyncType {
     Fast,
     Slow,
