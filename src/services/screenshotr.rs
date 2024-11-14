@@ -98,7 +98,7 @@ impl ScreenshotrClient<'_> {
 
         info!("Screenshot size: {}", size);
 
-        Ok(unsafe { std::vec::Vec::from_raw_parts(data as *mut u8, size as usize, size as usize) })
+        Ok(unsafe { std::slice::from_raw_parts(data as *mut u8, size as usize).to_vec() })
     }
 }
 

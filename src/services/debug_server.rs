@@ -314,11 +314,10 @@ impl DebugServer<'_> {
             );
         }
         unsafe {
-            std::vec::Vec::from_raw_parts(
+            std::slice::from_raw_parts(
                 encoded_buffer,
                 encoded_buffer_size as usize,
-                encoded_buffer_size as usize,
-            )
+            ).to_vec()
         }
     }
 
