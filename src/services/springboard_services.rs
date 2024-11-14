@@ -155,7 +155,7 @@ impl SpringboardServicesClient<'_> {
             return Err(result);
         }
 
-        if data == 0 as *mut u8 {
+        if data.is_null() {
             Ok(Vec::new())
         } else {
             Ok(unsafe { std::slice::from_raw_parts(data, size as usize).to_vec() })
