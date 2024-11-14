@@ -542,13 +542,12 @@ impl From<BrowseOption> for Plist {
         let value = match option {
             BrowseOption::System => "System",
             BrowseOption::User => "User",
-            BrowseOption::Internal =>"Internal",
+            BrowseOption::Internal => "Internal",
             BrowseOption::All => "All",
             BrowseOption::None => "None",
-        }.into();
-        dict
-            .dict_set_item("ApplicationType", value)
-            .unwrap();
+        }
+        .into();
+        dict.dict_set_item("ApplicationType", value).unwrap();
         dict
     }
 }

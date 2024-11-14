@@ -178,9 +178,10 @@ impl MobileActivationClient<'_> {
                     session.get_pointer(),
                 )
             } else {
-                    unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
+                unsafe_bindings::mobileactivation_activate(self.pointer, record.get_pointer())
             }
-        }.into();
+        }
+        .into();
 
         if result != MobileActivationError::Success {
             return Err(result);

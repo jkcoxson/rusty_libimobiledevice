@@ -106,7 +106,8 @@ impl PreboardClient<'_> {
             } else {
                 unsafe_bindings::preboard_receive_with_timeout(self.pointer, &mut plist, timeout)
             }
-        }.into();
+        }
+        .into();
 
         if result != PreboardError::Success {
             return Err(result);

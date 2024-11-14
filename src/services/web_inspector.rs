@@ -118,7 +118,8 @@ impl WebInspectorClient<'_> {
                     timeout,
                 )
             }
-        }.into();
+        }
+        .into();
 
         if result != WebInspectorError::Success {
             return Err(result);

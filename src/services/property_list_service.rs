@@ -107,7 +107,8 @@ impl PropertyListServiceClient<'_> {
                     timeout,
                 )
             }
-        }.into();
+        }
+        .into();
 
         if result != PropertyListServiceError::Success {
             return Err(result);

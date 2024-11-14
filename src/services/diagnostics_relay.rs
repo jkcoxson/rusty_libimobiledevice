@@ -1,7 +1,7 @@
 // jkcoxson
 
-use std::os::raw::c_uint;
 use std::ffi::CString;
+use std::os::raw::c_uint;
 
 use crate::{
     bindings as unsafe_bindings, error::DiagnosticsRelayError, idevice::Device,

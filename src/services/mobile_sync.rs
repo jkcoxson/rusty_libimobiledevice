@@ -1,6 +1,9 @@
 // jkcoxson
 
-use std::{ffi::{c_uint, CString}, os::raw::c_char};
+use std::{
+    ffi::{c_uint, CString},
+    os::raw::c_char,
+};
 
 use crate::{
     bindings as unsafe_bindings, error::MobileSyncError, idevice::Device,
@@ -137,10 +140,8 @@ impl MobileSyncClient<'_> {
     ) -> Result<(), (String, MobileSyncError)> {
         let data_class_c_string = CString::new(data_class.into()).unwrap();
 
-        let mut anchor_ptrs: Vec<*mut unsafe_bindings::mobilesync_anchors> = anchors
-            .iter_mut()
-            .map(|v| v.as_c_struct_ptr())
-            .collect();
+        let mut anchor_ptrs: Vec<*mut unsafe_bindings::mobilesync_anchors> =
+            anchors.iter_mut().map(|v| v.as_c_struct_ptr()).collect();
         anchor_ptrs.push(std::ptr::null_mut());
 
         let mut device_data_class_version = 0;
@@ -396,7 +397,7 @@ impl MobileSyncAnchor {
         let computer_anchor_c_string = CString::new(computer_anchor.into()).unwrap();
         let c_struct = unsafe_bindings::mobilesync_anchors {
             device_anchor: device_anchor_c_string.as_ptr() as *mut c_char,
-            computer_anchor: computer_anchor_c_string.as_ptr() as *mut c_char
+            computer_anchor: computer_anchor_c_string.as_ptr() as *mut c_char,
         };
         MobileSyncAnchor {
             c_struct: Box::new(c_struct),

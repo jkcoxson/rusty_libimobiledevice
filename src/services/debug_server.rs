@@ -1,6 +1,10 @@
 // jkcoxson
 
-use std::{convert::TryInto, ffi::CString, os::raw::{c_char, c_int}};
+use std::{
+    convert::TryInto,
+    ffi::CString,
+    os::raw::{c_char, c_int},
+};
 
 use log::info;
 
@@ -139,7 +143,11 @@ impl DebugServer<'_> {
         let data: *mut u8 = unsafe { std::mem::zeroed() };
         let mut size = 0;
         let result = unsafe {
-            unsafe_bindings::debugserver_client_receive_response(self.pointer, data as *mut *mut c_char, &mut size)
+            unsafe_bindings::debugserver_client_receive_response(
+                self.pointer,
+                data as *mut *mut c_char,
+                &mut size,
+            )
         }
         .into();
         if result != DebugServerError::Success {
