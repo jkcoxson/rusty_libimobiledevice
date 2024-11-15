@@ -128,6 +128,7 @@ impl FileRelay<'_> {
 }
 
 /// The different types of interface sources that can have data requested for
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileRelaySources {
     AppleSupport,
     Network,

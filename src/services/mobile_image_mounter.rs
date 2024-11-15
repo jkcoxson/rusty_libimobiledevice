@@ -7,9 +7,9 @@ use std::{
     path::PathBuf,
 };
 
-use libc::c_void;
 use log::{info, trace};
 use plist_plus::Plist;
+use std::os::raw::c_void;
 
 use super::lockdownd::LockdowndService;
 use crate::{bindings as unsafe_bindings, error::MobileImageMounterError, idevice::Device};

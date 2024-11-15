@@ -100,14 +100,14 @@ impl PreboardClient<'_> {
     /// ***Verified:*** False
     pub fn receive(&self, timeout: u32) -> Result<Plist, PreboardError> {
         let mut plist = std::ptr::null_mut();
-        let result = if timeout == 0 {
-            unsafe { unsafe_bindings::preboard_receive(self.pointer, &mut plist) }.into()
-        } else {
-            unsafe {
+        let result = unsafe {
+            if timeout == 0 {
+                unsafe_bindings::preboard_receive(self.pointer, &mut plist)
+            } else {
                 unsafe_bindings::preboard_receive_with_timeout(self.pointer, &mut plist, timeout)
             }
-            .into()
-        };
+        }
+        .into();
 
         if result != PreboardError::Success {
             return Err(result);

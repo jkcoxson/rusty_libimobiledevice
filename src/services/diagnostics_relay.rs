@@ -1,7 +1,7 @@
 // jkcoxson
 
-use libc::c_uint;
 use std::ffi::CString;
+use std::os::raw::c_uint;
 
 use crate::{
     bindings as unsafe_bindings, error::DiagnosticsRelayError, idevice::Device,
@@ -268,6 +268,7 @@ impl DiagnosticsRelay<'_> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiagnosticsRelayAction {
     WaitForDisconnect,
     DisplayPass,

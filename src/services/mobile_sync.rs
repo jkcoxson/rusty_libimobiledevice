@@ -1,6 +1,9 @@
 // jkcoxson
 
-use std::ffi::{c_uint, CString};
+use std::{
+    ffi::{c_uint, CString},
+    os::raw::c_char,
+};
 
 use crate::{
     bindings as unsafe_bindings, error::MobileSyncError, idevice::Device,
@@ -14,9 +17,11 @@ pub struct MobileSyncClient<'a> {
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
+#[derive(Debug)]
 pub struct MobileSyncAnchor {
-    device_anchor: String,
-    computer_anchor: String,
+    c_struct: Box<unsafe_bindings::mobilesync_anchors>,
+    device_anchor: CString,
+    computer_anchor: CString,
 }
 
 impl MobileSyncClient<'_> {
@@ -129,16 +134,14 @@ impl MobileSyncClient<'_> {
     pub fn start(
         &self,
         data_class: impl Into<String>,
-        anchors: Vec<MobileSyncAnchor>,
+        mut anchors: Vec<MobileSyncAnchor>,
         computer_data_class_version: u64,
         sync_type: MobileSyncType,
     ) -> Result<(), (String, MobileSyncError)> {
         let data_class_c_string = CString::new(data_class.into()).unwrap();
 
-        let mut anchor_ptrs = Vec::with_capacity(anchors.len() + 1);
-        for i in anchors {
-            anchor_ptrs.push(unsafe_bindings::mobilesync_anchors_t::from(i));
-        }
+        let mut anchor_ptrs: Vec<*mut unsafe_bindings::mobilesync_anchors> =
+            anchors.iter_mut().map(|v| v.as_c_struct_ptr()).collect();
         anchor_ptrs.push(std::ptr::null_mut());
 
         let mut device_data_class_version = 0;
@@ -160,9 +163,9 @@ impl MobileSyncClient<'_> {
 
         if result != MobileSyncError::Success {
             return Err((
-                unsafe { CString::from_raw(error_description) }
-                    .into_string()
-                    .unwrap(),
+                unsafe { std::ffi::CStr::from_ptr(error_description) }
+                    .to_string_lossy()
+                    .into_owned(),
                 result,
             ));
         }
@@ -390,26 +393,33 @@ impl MobileSyncClient<'_> {
 
 impl MobileSyncAnchor {
     pub fn new(device_anchor: impl Into<String>, computer_anchor: impl Into<String>) -> Self {
+        let device_anchor_c_string = CString::new(device_anchor.into()).unwrap();
+        let computer_anchor_c_string = CString::new(computer_anchor.into()).unwrap();
+        let c_struct = unsafe_bindings::mobilesync_anchors {
+            device_anchor: device_anchor_c_string.as_ptr() as *mut c_char,
+            computer_anchor: computer_anchor_c_string.as_ptr() as *mut c_char,
+        };
         MobileSyncAnchor {
-            device_anchor: device_anchor.into(),
-            computer_anchor: computer_anchor.into(),
+            c_struct: Box::new(c_struct),
+            device_anchor: device_anchor_c_string,
+            computer_anchor: computer_anchor_c_string,
         }
     }
-}
 
-impl From<MobileSyncAnchor> for unsafe_bindings::mobilesync_anchors_t {
-    fn from(anchor: MobileSyncAnchor) -> Self {
-        let device_anchor = CString::new(anchor.device_anchor).unwrap().into_raw();
-        let computer_anchor = CString::new(anchor.computer_anchor).unwrap().into_raw();
+    pub(crate) fn as_c_struct_ptr(&mut self) -> *mut unsafe_bindings::mobilesync_anchors {
+        self.c_struct.as_mut()
+    }
 
-        let x = unsafe_bindings::mobilesync_anchors {
-            device_anchor,
-            computer_anchor,
-        };
-        Box::into_raw(Box::new(x))
+    pub fn device_anchor(&self) -> &str {
+        self.device_anchor.as_c_str().to_str().unwrap()
+    }
+
+    pub fn computer_anchor(&self) -> &str {
+        self.computer_anchor.as_c_str().to_str().unwrap()
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileSyncType {
     Fast,
     Slow,

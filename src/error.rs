@@ -1,7 +1,7 @@
 // jkcoxson
 // Enums for libimobiledevice's error codes
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LockdowndError {
     Success,
     InvalidArg,
@@ -156,7 +156,7 @@ impl From<LockdowndError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IdeviceError {
     Success,
     InvalidArg,
@@ -206,7 +206,7 @@ impl From<IdeviceError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UserPrefError {
     Success,
     InvalidArg,
@@ -256,7 +256,7 @@ impl From<UserPrefError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PropertyListServiceError {
     Success,
     InvalidArg,
@@ -306,7 +306,7 @@ impl From<PropertyListServiceError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ServiceError {
     Success,
     InvalidArg,
@@ -356,7 +356,7 @@ impl From<ServiceError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstProxyError {
     Success,
     InvalidArg,
@@ -588,7 +588,7 @@ impl From<InstProxyError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DebugServerError {
     Success,
     InvalidArg,
@@ -635,7 +635,7 @@ impl From<DebugServerError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WebInspectorError {
     Success,
     InvalidArg,
@@ -685,7 +685,7 @@ impl From<WebInspectorError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SyslogRelayError {
     Success,
     InvalidArg,
@@ -732,7 +732,7 @@ impl From<SyslogRelayError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScreenshotrError {
     Success,
     InvalidArg,
@@ -782,7 +782,7 @@ impl From<ScreenshotrError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SbservicesError {
     Success,
     InvalidArg,
@@ -823,7 +823,7 @@ impl From<SbservicesError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReverseProxyError {
     Success,
     InvalidArg,
@@ -873,7 +873,7 @@ impl From<ReverseProxyError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RestoredError {
     Success,
     InvalidArg,
@@ -920,7 +920,7 @@ impl From<RestoredError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PreboardError {
     Success,
     InvalidArg,
@@ -973,7 +973,7 @@ impl From<PreboardError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NpError {
     Success,
     InvalidArg,
@@ -1014,7 +1014,7 @@ impl From<NpError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileSyncError {
     Success,
     InvalidArg,
@@ -1076,7 +1076,7 @@ impl From<MobileSyncError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileBackup2Error {
     Success,
     InvalidArg,
@@ -1132,7 +1132,7 @@ impl From<MobileBackup2Error> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileBackupError {
     Success,
     InvalidArg,
@@ -1185,7 +1185,7 @@ impl From<MobileBackupError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileActivationError {
     Success,
     InvalidArg,
@@ -1232,7 +1232,7 @@ impl From<MobileActivationError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MobileImageMounterError {
     Success,
     InvalidArg,
@@ -1289,7 +1289,7 @@ impl From<MobileImageMounterError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MisagentError {
     Success,
     InvalidArg,
@@ -1333,7 +1333,7 @@ impl From<MisagentError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HouseArrestError {
     Success,
     InvalidArg,
@@ -1377,7 +1377,7 @@ impl From<HouseArrestError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HeartbeatError {
     Success,
     InvalidArg,
@@ -1427,7 +1427,7 @@ impl From<HeartbeatError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileRelayError {
     Success,
     InvalidArg,
@@ -1477,7 +1477,7 @@ impl From<FileRelayError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiagnosticsRelayError {
     Success,
     InvalidArg,
@@ -1521,7 +1521,7 @@ impl From<DiagnosticsRelayError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompanionProxyError {
     Success,
     InvalidArg,
@@ -1583,7 +1583,7 @@ impl From<CompanionProxyError> for String {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AfcError {
     Success,
     UnknownError,

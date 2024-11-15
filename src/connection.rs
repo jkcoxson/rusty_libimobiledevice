@@ -14,6 +14,7 @@ pub struct DeviceConnection<'a> {
 
 pub struct SslData {}
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DeviceConnectionType {
     Usbmuxd,
     Network,
@@ -80,7 +81,7 @@ impl DeviceConnection<'_> {
     ///
     /// ***Verified:*** False
     pub fn receive(&self, len: u32, timeout: Option<u32>) -> Result<Vec<u8>, IdeviceError> {
-        let mut buffer = vec![0 as u8; len as usize];
+        let mut buffer = vec![0_u8; len as usize];
         let mut received = 0;
 
         let result = match timeout {

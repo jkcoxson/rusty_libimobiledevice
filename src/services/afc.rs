@@ -137,7 +137,7 @@ impl AfcClient<'_> {
             warn!("Cannot use empty string as directory");
             return Err(AfcError::InvalidArg);
         }
-        let mut list: *mut *mut libc::c_char = std::ptr::null_mut::<*mut libc::c_char>();
+        let mut list: *mut *mut c_char = std::ptr::null_mut::<*mut c_char>();
 
         let result = unsafe {
             unsafe_bindings::afc_read_directory(
@@ -152,7 +152,7 @@ impl AfcClient<'_> {
         }
 
         let mut list_vec: Vec<String> = Vec::new();
-        let mut list_ptr: *mut *mut libc::c_char = list;
+        let mut list_ptr: *mut *mut c_char = list;
         while !list_ptr.is_null() {
             if unsafe { *list_ptr }.is_null() {
                 break;
@@ -181,7 +181,7 @@ impl AfcClient<'_> {
             warn!("Cannot use empty string as directory");
             return Err(AfcError::InvalidArg);
         }
-        let mut list: *mut *mut libc::c_char = std::ptr::null_mut::<*mut libc::c_char>();
+        let mut list: *mut *mut c_char = std::ptr::null_mut::<*mut c_char>();
 
         let result = unsafe {
             unsafe_bindings::afc_get_file_info(self.pointer, path_c_string.as_ptr(), &mut list)
@@ -192,7 +192,7 @@ impl AfcClient<'_> {
         }
 
         let mut list_vec: Vec<String> = Vec::new();
-        let mut list_ptr: *mut *mut libc::c_char = list;
+        let mut list_ptr: *mut *mut c_char = list;
         while !list_ptr.is_null() {
             if unsafe { *list_ptr }.is_null() {
                 break;
@@ -585,6 +585,7 @@ impl TryFrom<HouseArrest<'_>> for AfcClient<'_> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AfcFileMode {
     ReadOnly,
     ReadWrite,
@@ -621,6 +622,7 @@ impl From<AfcFileMode> for u32 {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AfcLockOp {
     Sh,
     Ex,
@@ -637,6 +639,7 @@ impl From<AfcLockOp> for u32 {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinkType {
     HardLink,
     SymbolicLink,

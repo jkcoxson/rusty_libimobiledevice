@@ -13,11 +13,11 @@ use crate::services::lockdownd::LockdowndClient;
 use crate::services::misagent::MisagentClient;
 use crate::services::mobile_image_mounter::MobileImageMounter;
 use core::fmt;
-use libc::c_void;
 use log::{info, trace, warn};
 use std::ffi::CStr;
 use std::net::IpAddr;
 use std::os::raw::c_char;
+use std::os::raw::c_void;
 use std::{fmt::Debug, fmt::Formatter, ptr::null_mut};
 
 /// Get a list of UDIDs

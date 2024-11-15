@@ -97,21 +97,18 @@ impl PropertyListServiceClient<'_> {
     /// ***Verified:*** False
     pub fn receive_plist(&self, timeout: u32) -> Result<Plist, PropertyListServiceError> {
         let mut plist_t = std::ptr::null_mut();
-        let result = if timeout == 0 {
-            unsafe {
+        let result = unsafe {
+            if timeout == 0 {
                 unsafe_bindings::property_list_service_receive_plist(self.pointer, &mut plist_t)
-            }
-            .into()
-        } else {
-            unsafe {
+            } else {
                 unsafe_bindings::property_list_service_receive_plist_with_timeout(
                     self.pointer,
                     &mut plist_t,
                     timeout,
                 )
             }
-            .into()
-        };
+        }
+        .into();
 
         if result != PropertyListServiceError::Success {
             return Err(result);
