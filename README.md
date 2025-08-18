@@ -1,5 +1,8 @@
 # rusty_libimobiledevice
 
+NOTE: I have rewritten libimobiledevice in pure Rust, with almost complete feature parity (plus a lot more) with libimobiledevice.
+You can check it out [here](https://github.com/jkcoxson/idevice), and I would definitely recommend that library over this one.
+
 Rusty Libimobiledevice - An ergonomic library to communicate with iOS devices.
 
 **Tested level: 0.00%** - Contribute to this library by battle testing methods!
